@@ -86,15 +86,15 @@ vec3 calcNormal(vec3 p) {
   ));
 }
 
-// Окружение «студии»: тёмный пол, синий свод, два софтбокса.
+// Окружение «студии»: тёмный пол, лаймовый свод, два софтбокса.
 vec3 env(vec3 d) {
   float y = d.y * 0.5 + 0.5;
-  vec3 c = mix(vec3(0.01, 0.012, 0.02), vec3(0.09, 0.2, 0.6), smoothstep(0.3, 1.0, y));
-  c += vec3(0.24, 0.48, 1.0) * pow(max(dot(d, normalize(vec3(-0.6, 0.55, 0.6))), 0.0), 18.0) * 2.4;
-  c += vec3(0.95, 0.95, 1.0) * pow(max(dot(d, normalize(vec3(0.7, 0.35, 0.5))), 0.0), 50.0) * 2.8;
-  c += vec3(0.12, 0.2, 0.55) * pow(max(dot(d, normalize(vec3(0.0, -0.8, 0.4))), 0.0), 6.0) * 0.6;
+  vec3 c = mix(vec3(0.012, 0.014, 0.008), vec3(0.3, 0.42, 0.04), smoothstep(0.3, 1.0, y));
+  c += vec3(0.78, 1.0, 0.16) * pow(max(dot(d, normalize(vec3(-0.6, 0.55, 0.6))), 0.0), 18.0) * 2.4;
+  c += vec3(0.98, 1.0, 0.92) * pow(max(dot(d, normalize(vec3(0.7, 0.35, 0.5))), 0.0), 50.0) * 2.8;
+  c += vec3(0.26, 0.35, 0.04) * pow(max(dot(d, normalize(vec3(0.0, -0.8, 0.4))), 0.0), 6.0) * 0.6;
   // Фронтальный софтбокс: без него лицевые грани отражают тёмный горизонт и знак «гаснет».
-  c += vec3(0.3, 0.52, 1.0) * pow(max(dot(d, normalize(vec3(0.25, 0.3, 1.0))), 0.0), 7.0) * 1.3;
+  c += vec3(0.82, 1.0, 0.22) * pow(max(dot(d, normalize(vec3(0.25, 0.3, 1.0))), 0.0), 7.0) * 1.3;
   return c;
 }
 
@@ -118,14 +118,14 @@ void main() {
   vec3 r = reflect(rd, n);
   float fres = pow(1.0 - max(dot(n, -rd), 0.0), 3.0);
 
-  vec3 base = vec3(0.03, 0.035, 0.06);
+  vec3 base = vec3(0.035, 0.04, 0.02);
   vec3 refl = env(r);
-  vec3 iri = 0.5 + 0.5 * cos(6.2831 * (fres * 0.6 + vec3(0.58, 0.66, 0.78)) + uTime * 0.2);
+  vec3 iri = 0.5 + 0.5 * cos(6.2831 * (fres * 0.6 + vec3(0.08, 0.0, 0.4)) + uTime * 0.2);
   vec3 col = base + refl * mix(0.85, 1.25, fres) + iri * fres * 0.55;
 
   // Лицевая грань чуть светлее боковин: знак читается при любом наклоне.
   vec3 nl = normalize(xform(p + n) - xform(p));
-  col += vec3(0.05, 0.09, 0.22) * smoothstep(0.7, 1.0, abs(nl.z));
+  col += vec3(0.15, 0.2, 0.02) * smoothstep(0.7, 1.0, abs(nl.z));
 
   col = col / (1.0 + col);
   col = pow(col, vec3(0.85));

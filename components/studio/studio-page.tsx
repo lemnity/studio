@@ -6,7 +6,7 @@
  * Вёрстка, типографика и анимации перенесены из исходников simakoov.ru (репозиторий smkv): почти
  * чёрный фон, Gilroy без жирных начертаний, микроподписи в разрядку, заголовок, выезжающий из-под
  * маски, список проектов с превью за курсором, бегущая строка клиентов, цитата, проявляющаяся по
- * словам при прокрутке. Отличия от оригинала: бренд Lemnity (знак, синий акцент вместо салатового),
+ * словам при прокрутке. Отличия от оригинала: бренд Lemnity (знак),
  * тексты от лица студии, справа на первом экране — 3D-объект (studio-hex-sphere.tsx) вместо портрета.
  *
  * Эффекты — в studio-effects.tsx, тексты — в studio-content.ts. Шрифт Gilroy лежит в
@@ -89,7 +89,7 @@ const NOISE = encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>`,
 );
 
-/* Палитра и приёмы smkv/src/theme.ts; акцент заменён на синий Lemnity (оригинал — #c4ee18). */
+/* Палитра и приёмы smkv/src/theme.ts; акцент заменён на лаймовый, как в оригинале (#c4ee18). */
 const STYLES = `
 @font-face { font-family: "StudioGilroy"; font-weight: 400; font-display: swap; src: url(${BASE_PATH}/studio/fonts/gilroy-regular.woff2) format("woff2"); }
 @font-face { font-family: "StudioGilroy"; font-weight: 500; font-display: swap; src: url(${BASE_PATH}/studio/fonts/gilroy-medium.woff2) format("woff2"); }
@@ -101,19 +101,19 @@ const STYLES = `
   --st-text-72: rgba(244, 241, 236, 0.72);
   --st-muted: #8b8b87;
   --st-line: rgba(255, 255, 255, 0.09);
-  --st-accent: #3d7bff;
-  --st-accent-light: #8fb3ff;
-  --st-accent-dark: #1a52db;
-  --st-accent-70: rgba(61, 123, 255, 0.7);
-  --st-accent-45: rgba(61, 123, 255, 0.45);
-  --st-accent-35: rgba(61, 123, 255, 0.35);
-  --st-accent-03: rgba(61, 123, 255, 0.04);
+  --st-accent: #c4ee18;
+  --st-accent-light: #dcff6b;
+  --st-accent-dark: #8fb300;
+  --st-accent-70: rgba(196, 238, 24, 0.7);
+  --st-accent-45: rgba(196, 238, 24, 0.45);
+  --st-accent-35: rgba(196, 238, 24, 0.35);
+  --st-accent-03: rgba(196, 238, 24, 0.04);
   background: var(--st-bg);
   color: var(--st-text);
   font-family: "StudioGilroy", system-ui, sans-serif;
   overflow-x: clip;
 }
-.lmnt-studio ::selection { background: var(--st-accent); color: #fff; }
+.lmnt-studio ::selection { background: var(--st-accent); color: var(--st-bg); }
 .lmnt-studio [id] { scroll-margin-top: 73px; }
 @media (min-width: 900px) { .lmnt-studio [id] { scroll-margin-top: 89px; } }
 .st-micro { font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; font-weight: 500; }
@@ -130,7 +130,7 @@ const STYLES = `
 .st-grain { background-image: url("data:image/svg+xml,${NOISE}"); animation: st-grain 1.2s steps(6) infinite; }
 @keyframes st-grain { 0%{transform:translate(0,0)} 20%{transform:translate(-3%,2%)} 40%{transform:translate(2%,-3%)} 60%{transform:translate(-2%,-1%)} 80%{transform:translate(3%,3%)} 100%{transform:translate(0,0)} }
 .st-sheen {
-  background-image: linear-gradient(100deg, transparent 42%, rgba(235,242,255,0.5) 50%, transparent 58%), linear-gradient(100deg, var(--st-accent-light) 0%, var(--st-accent) 70%, var(--st-accent-dark) 130%);
+  background-image: linear-gradient(100deg, transparent 42%, rgba(248,255,220,0.5) 50%, transparent 58%), linear-gradient(100deg, var(--st-accent-light) 0%, var(--st-accent) 70%, var(--st-accent-dark) 130%);
   background-size: 250% 100%, 100% 100%; background-repeat: no-repeat; background-position: 100% 0, 0 0;
   -webkit-background-clip: text; background-clip: text; color: transparent;
   animation: st-sheen 7s ease-in-out 2s infinite;
@@ -399,7 +399,7 @@ function Hero({ onContact }: { onContact: () => void }) {
               <MagneticButton>
                 <a
                   href="#work"
-                  className="group inline-flex items-center gap-4 rounded-full border border-[var(--st-accent)] px-7 py-3.5 text-[15px] font-medium transition-colors hover:border-[var(--st-accent-light)] hover:bg-[rgba(61,123,255,0.1)] md:px-9 md:py-[18px]"
+                  className="group inline-flex items-center gap-4 rounded-full border border-[var(--st-accent)] px-7 py-3.5 text-[15px] font-medium transition-colors hover:border-[var(--st-accent-light)] hover:bg-[rgba(196, 238, 24,0.1)] md:px-9 md:py-[18px]"
                 >
                   <VariableProximity text="Смотреть работы" />
                   <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
@@ -530,7 +530,7 @@ function ArrowCircle({ size = 44 }: { size?: number }) {
 }
 
 const rowHover =
-  "[&:hover_.st-row-arrow]:-rotate-45 [&:hover_.st-row-arrow]:border-[var(--st-accent)] [&:hover_.st-row-arrow]:bg-[var(--st-accent)] [&:hover_.st-row-arrow]:text-white";
+  "[&:hover_.st-row-arrow]:-rotate-45 [&:hover_.st-row-arrow]:border-[var(--st-accent)] [&:hover_.st-row-arrow]:bg-[var(--st-accent)] [&:hover_.st-row-arrow]:text-[var(--st-bg)]";
 
 function FlagshipRow({ project }: { project: StudioProject }) {
   return (
@@ -548,7 +548,7 @@ function FlagshipRow({ project }: { project: StudioProject }) {
       >
         <span className="self-start pt-2 text-xs tracking-[0.12em] text-[var(--st-accent)]">{project.number}</span>
         <div className="min-w-0">
-          <span className="mb-5 inline-block rounded-full bg-[var(--st-accent)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white md:mb-6">
+          <span className="mb-5 inline-block rounded-full bg-[var(--st-accent)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--st-bg)] md:mb-6">
             Наш продукт
           </span>
           <h3 className="m-0 leading-none">
@@ -807,7 +807,7 @@ function Gallery() {
                   aria-label={`Открыть работу: ${w.alt}`}
                   aria-haspopup="dialog"
                   data-cursor="Открыть"
-                  className="group relative block w-full overflow-hidden rounded border border-[var(--st-line)] bg-[var(--st-surface)] transition-[border-color,box-shadow] duration-[400ms] hover:border-[var(--st-accent-45)] hover:shadow-[0_0_28px_rgba(61,123,255,0.12)] focus-visible:border-[var(--st-accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--st-accent)]"
+                  className="group relative block w-full overflow-hidden rounded border border-[var(--st-line)] bg-[var(--st-surface)] transition-[border-color,box-shadow] duration-[400ms] hover:border-[var(--st-accent-45)] hover:shadow-[0_0_28px_rgba(196, 238, 24,0.12)] focus-visible:border-[var(--st-accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--st-accent)]"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -821,7 +821,7 @@ function Gallery() {
                   />
                   <span aria-hidden className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-transparent from-40% to-[rgba(3,3,3,0.55)] opacity-0 transition-opacity duration-[400ms] group-hover:opacity-100 group-focus-visible:opacity-100">
                     {/* С мышью вместо значка лупы появляется круг курсора «Открыть». */}
-                    <span className="grid h-[52px] w-[52px] scale-[0.8] place-items-center rounded-full bg-[var(--st-accent)] text-white transition-transform duration-[400ms] group-hover:scale-100 [@media(hover:hover)_and_(pointer:fine)]:hidden">
+                    <span className="grid h-[52px] w-[52px] scale-[0.8] place-items-center rounded-full bg-[var(--st-accent)] text-[var(--st-bg)] transition-transform duration-[400ms] group-hover:scale-100 [@media(hover:hover)_and_(pointer:fine)]:hidden">
                       <ZoomIn className="h-5 w-5" />
                     </span>
                   </span>
@@ -887,7 +887,7 @@ function Clients() {
 /* ───────────────────────────── Услуги и процесс ───────────────────────────── */
 
 const cardClass =
-  "flex h-full flex-col gap-4 rounded border border-[var(--st-line)] bg-[var(--st-surface)] p-5 transition-[border-color,box-shadow] duration-300 hover:border-[var(--st-accent-45)] hover:shadow-[0_0_32px_rgba(61,123,255,0.06)] md:p-6";
+  "flex h-full flex-col gap-4 rounded border border-[var(--st-line)] bg-[var(--st-surface)] p-5 transition-[border-color,box-shadow] duration-300 hover:border-[var(--st-accent-45)] hover:shadow-[0_0_32px_rgba(196, 238, 24,0.06)] md:p-6";
 
 function Services() {
   return (
@@ -1084,7 +1084,7 @@ function CreateTogether({ onContact }: { onContact: () => void }) {
       className="group flex shrink-0 items-center gap-6 rounded-full text-left outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[10px] focus-visible:outline-[var(--st-accent)]"
     >
       <span aria-hidden className="relative h-[72px] w-[72px] shrink-0">
-        <span className="st-spin-slow pointer-events-none absolute -inset-[7px] rounded-full border border-dashed border-[rgba(61,123,255,0.55)]" />
+        <span className="st-spin-slow pointer-events-none absolute -inset-[7px] rounded-full border border-dashed border-[rgba(196, 238, 24,0.55)]" />
         <span className="st-round !h-[72px] !w-[72px] !border-[rgba(244,241,236,0.3)] group-hover:!border-[var(--st-accent)] group-hover:shadow-[0_0_24px_var(--st-accent-35)]">
           <MoreHorizontal className="h-5 w-5" />
         </span>
@@ -1267,7 +1267,7 @@ function Contact() {
                     className={cn(
                       "rounded-full border px-4 py-2 text-sm transition-colors",
                       topic === t
-                        ? "border-[var(--st-accent)] bg-[var(--st-accent)] text-white"
+                        ? "border-[var(--st-accent)] bg-[var(--st-accent)] text-[var(--st-bg)]"
                         : "border-[var(--st-line)] text-[var(--st-muted)] hover:border-[var(--st-accent-45)] hover:text-[var(--st-text)]",
                     )}
                   >
@@ -1290,7 +1290,7 @@ function Contact() {
               </p>
             ) : null}
             <MagneticButton strength={6}>
-              <button type="submit" className="group mt-8 inline-flex items-center gap-4 rounded-full bg-[var(--st-accent)] py-2 pl-7 pr-2 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5">
+              <button type="submit" className="group mt-8 inline-flex items-center gap-4 rounded-full bg-[var(--st-accent)] py-2 pl-7 pr-2 text-[15px] font-semibold text-[var(--st-bg)] transition-transform hover:-translate-y-0.5">
                 Отправить
                 <span className="grid h-10 w-10 place-items-center rounded-full bg-[var(--st-bg)] text-[var(--st-accent)] transition-transform group-hover:translate-x-1">
                   <ArrowRight className="h-4 w-4" />
@@ -1353,7 +1353,7 @@ function FloatingCta({ onContact }: { onContact: () => void }) {
           <button
             type="button"
             onClick={onContact}
-            className="st-beat-host pointer-events-auto inline-flex h-[52px] items-center gap-2.5 rounded-full bg-[var(--st-accent)] pl-6 pr-2 text-[15px] font-semibold tracking-[-0.01em] text-white shadow-[0_12px_40px_rgba(0,0,0,0.55),0_0_0_1px_var(--st-accent-35)] transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_48px_rgba(0,0,0,0.6),0_0_24px_var(--st-accent-35)] md:h-14 md:pl-7 md:text-base"
+            className="st-beat-host pointer-events-auto inline-flex h-[52px] items-center gap-2.5 rounded-full bg-[var(--st-accent)] pl-6 pr-2 text-[15px] font-semibold tracking-[-0.01em] text-[var(--st-bg)] shadow-[0_12px_40px_rgba(0,0,0,0.55),0_0_0_1px_var(--st-accent-35)] transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_48px_rgba(0,0,0,0.6),0_0_24px_var(--st-accent-35)] md:h-14 md:pl-7 md:text-base"
           >
             <VariableProximity text="Заказать проект" />
             <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-[var(--st-bg)] text-[var(--st-accent)] md:h-10 md:w-10">

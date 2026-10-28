@@ -78,7 +78,7 @@ const STYLES = `
   width: calc(var(--diameter) * var(--size) / .96 * 1.015 + 1px);
   aspect-ratio: .8660254038;
   clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  background: color-mix(in oklab, var(--rest-color), oklch(90% .105 220) calc(100% * var(--highlight)));
+  background: color-mix(in oklab, var(--rest-color), oklch(91% .21 125) calc(100% * var(--highlight)));
   backface-visibility: hidden;
   transform: translate(-50%, -50%) translateZ(calc(var(--diameter) * .05 * var(--st-hex-lift)));
 }
