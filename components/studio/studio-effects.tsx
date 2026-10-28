@@ -9,6 +9,8 @@
 import { motion, useMotionValue, useReducedMotion, useScroll, useSpring } from "framer-motion";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
+import { cn } from "@/lib/utils";
+
 export const EASE = [0.22, 1, 0.36, 1] as const;
 
 /**
@@ -74,13 +76,15 @@ export function GrainOverlay() {
 /**
  * Точка + отстающее кольцо вместо системного курсора; кольцо растёт над ссылками и кнопками.
  * Над элементом с `data-cursor="…"` вместо кольца раскрывается лаймовый круг с этой подписью
- * (по мотивам illan.ru: «zoom»-появление над кейсами).
+ * (по мотивам illan.ru: «zoom»-появление над кейсами). `data-cursor-tone="dark"` красит круг в тёмный —
+ * для элементов, которые сами заливаются акцентом при наведении.
  */
 export function CustomCursor() {
   const reduce = useReducedMotion();
   const fine = useMediaQuery("(pointer: fine)");
   const [hover, setHover] = useState(false);
   const [label, setLabel] = useState<string | null>(null);
+  const [dark, setDark] = useState(false);
   const [visible, setVisible] = useState(false);
   const x = useMotionValue(-100);
   const y = useMotionValue(-100);
@@ -94,7 +98,9 @@ export function CustomCursor() {
     let lastY = -1;
     const inspect = (target: Element | null) => {
       setHover(!!target?.closest?.("a, button, summary"));
-      setLabel(target?.closest?.("[data-cursor]")?.getAttribute("data-cursor") || null);
+      const labelled = target?.closest?.("[data-cursor]");
+      setLabel(labelled?.getAttribute("data-cursor") || null);
+      setDark(labelled?.getAttribute("data-cursor-tone") === "dark");
     };
     const move = (e: PointerEvent) => {
       lastX = e.clientX;
@@ -142,7 +148,12 @@ export function CustomCursor() {
         initial={false}
         animate={{ opacity: visible && label ? 1 : 0, scale: visible && label ? 1 : 0.2 }}
         transition={{ duration: 0.4, ease: EASE }}
-        className="st-micro pointer-events-none fixed left-0 top-0 z-[70] grid h-[96px] w-[96px] place-items-center rounded-full bg-[var(--st-accent)] text-[10px] tracking-[0.2em] text-[var(--st-bg)] shadow-[0_0_40px_var(--st-accent-35)]"
+        className={cn(
+          "st-micro pointer-events-none fixed left-0 top-0 z-[70] grid h-[96px] w-[96px] place-items-center rounded-full text-[10px] tracking-[0.2em] transition-colors duration-300",
+          dark
+            ? "bg-[var(--st-bg)] text-[var(--st-accent)] shadow-[0_0_40px_rgba(0,0,0,0.35)]"
+            : "bg-[var(--st-accent)] text-[var(--st-bg)] shadow-[0_0_40px_var(--st-accent-35)]",
+        )}
       >
         {label}
       </motion.div>

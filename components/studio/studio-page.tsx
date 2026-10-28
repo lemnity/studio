@@ -579,6 +579,16 @@ function FlagshipRow({ project }: { project: StudioProject }) {
   );
 }
 
+/**
+ * Строка проекта при наведении заливается акцентом снизу вверх, текст и стрелка становятся тёмными.
+ * Заливка — псевдоэлемент под контентом, поэтому дочерние элементы подняты над ним.
+ */
+const rowFill =
+  "before:absolute before:inset-0 before:origin-bottom before:scale-y-0 before:bg-[var(--st-accent)] before:transition-transform before:duration-[450ms] before:ease-[cubic-bezier(0.22,1,0.36,1)] before:content-[''] hover:before:scale-y-100 focus-visible:before:scale-y-100 [&>*]:relative [&>*]:z-[1] " +
+  "[&:hover_.st-row-arrow]:-rotate-45 [&:hover_.st-row-arrow]:border-[var(--st-bg)] [&:hover_.st-row-arrow]:bg-[var(--st-bg)] [&:hover_.st-row-arrow]:text-[var(--st-accent)] " +
+  "[&:focus-visible_.st-row-arrow]:-rotate-45 [&:focus-visible_.st-row-arrow]:border-[var(--st-bg)] [&:focus-visible_.st-row-arrow]:bg-[var(--st-bg)] [&:focus-visible_.st-row-arrow]:text-[var(--st-accent)]";
+const onFill = "transition-colors duration-300 group-hover:text-[var(--st-bg)] group-focus-visible:text-[var(--st-bg)]";
+
 function ProjectRow({ project, onHover }: { project: StudioProject; onHover: (p: StudioProject | null) => void }) {
   return (
     <motion.li
@@ -596,20 +606,21 @@ function ProjectRow({ project, onHover }: { project: StudioProject; onHover: (p:
         rel="noopener noreferrer"
         aria-label={`Открыть проект ${project.title}`}
         data-cursor="Смотреть"
+        data-cursor-tone="dark"
         className={cn(
-          "grid grid-cols-[40px_1fr_auto] items-start gap-x-3 gap-y-2.5 py-6 transition-[background-color,padding] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] [grid-template-areas:'num_title_end'_'num_desc_desc'_'num_thumb_thumb'] hover:bg-[var(--st-accent-03)] md:grid-cols-[64px_minmax(0,1.1fr)_minmax(0,1fr)_132px] md:items-center md:gap-x-8 md:px-2 md:py-7 md:[grid-template-areas:'num_title_desc_end'] md:hover:px-6 [&:hover_.st-row-title]:text-[var(--st-accent-light)]",
-          rowHover,
+          "group relative grid grid-cols-[40px_1fr_auto] items-start gap-x-3 gap-y-2.5 py-6 transition-[padding] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] [grid-template-areas:'num_title_end'_'num_desc_desc'_'num_thumb_thumb'] md:grid-cols-[64px_minmax(0,1.1fr)_minmax(0,1fr)_132px] md:items-center md:gap-x-8 md:px-2 md:py-7 md:[grid-template-areas:'num_title_desc_end'] md:hover:px-6 md:focus-visible:px-6",
+          rowFill,
         )}
       >
-        <span className="pt-2 text-xs tracking-[0.12em] text-[var(--st-muted)] [grid-area:num] md:pt-0">{project.number}</span>
-        <h3 className="st-row-title text-[26px] font-normal leading-[1.1] tracking-[-0.02em] transition-colors [grid-area:title] md:text-[34px] lg:text-[40px]">
+        <span className={cn("pt-2 text-xs tracking-[0.12em] text-[var(--st-muted)] [grid-area:num] md:pt-0", onFill)}>{project.number}</span>
+        <h3 className={cn("text-[26px] font-normal leading-[1.1] tracking-[-0.02em] [grid-area:title] md:text-[34px] lg:text-[40px]", onFill)}>
           <VariableProximity text={project.title} />
         </h3>
         <div className="min-w-0 [grid-area:desc]">
-          <p className="max-w-[420px] text-sm leading-[1.55] text-[var(--st-text-72)]">
+          <p className={cn("max-w-[420px] text-sm leading-[1.55] text-[var(--st-text-72)]", onFill)}>
             <VariableProximity text={project.description} />
           </p>
-          <p className="mt-1.5 text-xs text-[var(--st-muted)]">{project.tags.map((t) => `#${t}`).join("  ")}</p>
+          <p className={cn("mt-1.5 text-xs text-[var(--st-muted)]", onFill)}>{project.tags.map((t) => `#${t}`).join("  ")}</p>
         </div>
         <div className="relative mt-1 aspect-[16/10] overflow-hidden rounded border border-[var(--st-line)] [grid-area:thumb] md:hidden">
           <ProjectImage project={project} />
