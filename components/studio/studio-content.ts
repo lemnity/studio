@@ -6,6 +6,8 @@
  * правят чаще по словам, чем по вёрстке.
  */
 
+import { asset } from "@/lib/utils";
+
 /** Адрес этого сайта: canonical, sitemap, Open Graph. Задаётся при выкатке через NEXT_PUBLIC_SITE_URL. */
 export const STUDIO_SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://studio.lemnity.ru").replace(/\/+$/, "");
 /** Платформа Lemnity и её политика конфиденциальности — сайт студии своих документов не держит. */
@@ -39,10 +41,10 @@ export const STUDIO_PROJECTS: readonly StudioProject[] = [
     title: "Lemnity",
     description: "Наша собственная платформа для создания сайтов, чат-ботов и цифровых продуктов",
     tags: ["SaaS", "Конструктор", "AI", "Продукт"],
-    image: "/studio/projects/lemnity-concept.png",
+    image: asset("/studio/projects/lemnity-concept.png"),
     focus: "40% 50%",
     crop: { x: 0, y: 176, w: 466, h: 216, imgW: 466 },
-    logo: { src: "/studio/clients/lemnity.svg", width: 375, height: 95 },
+    logo: { src: asset("/studio/clients/lemnity.svg"), width: 375, height: 95 },
     url: "https://lemnity.ru",
     flagship: true,
   },
@@ -52,7 +54,7 @@ export const STUDIO_PROJECTS: readonly StudioProject[] = [
     title: "Дом науки и техники",
     description: "Образовательная платформа для профессионалов",
     tags: ["Образование", "Сайт", "Гос. сектор"],
-    image: "/studio/projects/dom-nauki-site.webp",
+    image: asset("/studio/projects/dom-nauki-site.webp"),
     focus: "72% 40%",
     url: "https://web.tumtipb.ru/",
   },
@@ -62,9 +64,9 @@ export const STUDIO_PROJECTS: readonly StudioProject[] = [
     title: "ProStyle",
     description: "Сувенирная продукция и корпоративные подарки",
     tags: ["Бренд", "Интернет-магазин", "Дизайн"],
-    image: "/studio/projects/prostyle-site.webp",
+    image: asset("/studio/projects/prostyle-site.webp"),
     focus: "60% 45%",
-    logo: { src: "/studio/clients/prostyle.svg", width: 340, height: 92 },
+    logo: { src: asset("/studio/clients/prostyle.svg"), width: 340, height: 92 },
     url: "https://prostyle.agency/",
   },
   {
@@ -73,7 +75,7 @@ export const STUDIO_PROJECTS: readonly StudioProject[] = [
     title: "Sphagnum AE",
     description: "Живые субстраты для зелёных крыш, вертикальных садов и интерьеров",
     tags: ["Сайт", "Эко", "B2B"],
-    image: "/studio/projects/sphagnum-concept.webp",
+    image: asset("/studio/projects/sphagnum-concept.webp"),
     focus: "90% 45%",
     url: "https://lemnity.github.io/sphgnm/",
   },
@@ -83,7 +85,7 @@ export const STUDIO_PROJECTS: readonly StudioProject[] = [
     title: "Модный театр TURDUS",
     description: "Иммерсивные спектакли в барах, ресторанах, квартирах и на улицах Екатеринбурга",
     tags: ["Сайт", "Афиша", "Театр"],
-    image: "/studio/projects/turdus-site.webp",
+    image: asset("/studio/projects/turdus-site.webp"),
     focus: "30% 40%",
     url: "https://lemnity.github.io/trds/",
   },
@@ -103,24 +105,24 @@ export type StudioWork = {
 };
 
 export const STUDIO_WORKS: readonly StudioWork[] = [
-  { src: "/studio/works/work-08.webp", width: 720, height: 1080, full: "/studio/works/work-08-full.webp", fullWidth: 1230, fullHeight: 5734, alt: "Лендинг коворкинга Fifty Four", kind: "site" },
-  { src: "/studio/works/work-20.webp", width: 700, height: 497, full: "/studio/works/work-20-full.webp", fullWidth: 700, fullHeight: 497, alt: "Дашборд ОФД", kind: "ui" },
-  { src: "/studio/works/work-13.webp", width: 720, height: 1080, full: "/studio/works/work-13-full.webp", fullWidth: 790, fullHeight: 2352, alt: "Мобильное приложение fashion-магазина", kind: "app" },
-  { src: "/studio/works/work-05.webp", width: 720, height: 509, full: "/studio/works/work-05-full.webp", fullWidth: 843, fullHeight: 596, alt: "Логотип MANSON для службы дезинсекции", kind: "brand" },
-  { src: "/studio/works/work-11.webp", width: 720, height: 1080, full: "/studio/works/work-11-full.webp", fullWidth: 910, fullHeight: 3114, alt: "Сайт производителя дверей iDoors", kind: "site" },
-  { src: "/studio/works/work-25.webp", width: 720, height: 426, full: "/studio/works/work-25-full.webp", fullWidth: 1473, fullHeight: 872, alt: "Таск-менеджер «Планёрка»", kind: "ui" },
-  { src: "/studio/works/work-28.webp", width: 720, height: 750, full: "/studio/works/work-28-full.webp", fullWidth: 1600, fullHeight: 1667, alt: "Интернет-магазин Lemnity", kind: "site" },
-  { src: "/studio/works/work-01.webp", width: 720, height: 728, full: "/studio/works/work-01-full.webp", fullWidth: 1426, fullHeight: 1441, alt: "Мерч: худи с айдентикой события", kind: "brand" },
-  { src: "/studio/works/work-14.webp", width: 720, height: 1080, full: "/studio/works/work-14-full.webp", fullWidth: 1500, fullHeight: 2991, alt: "Интернет-магазин продуктов", kind: "app" },
-  { src: "/studio/works/work-35.webp", width: 720, height: 512, full: "/studio/works/work-35-full.webp", fullWidth: 1440, fullHeight: 1024, alt: "Админ-панель с виджетами", kind: "ui" },
-  { src: "/studio/works/work-16.webp", width: 720, height: 1080, full: "/studio/works/work-16-full.webp", fullWidth: 1566, fullHeight: 2584, alt: "Корпоративный сайт строительной компании", kind: "site" },
-  { src: "/studio/works/work-03.webp", width: 600, height: 338, full: "/studio/works/work-03-full.webp", fullWidth: 880, fullHeight: 495, alt: "Лендинг конференции AntiConf", kind: "site" },
-  { src: "/studio/works/work-37.webp", width: 720, height: 1080, full: "/studio/works/work-37-full.webp", fullWidth: 877, fullHeight: 2062, alt: "Фармацевтический маркетплейс MSP", kind: "site" },
-  { src: "/studio/works/work-12.webp", width: 720, height: 470, full: "/studio/works/work-12-full.webp", fullWidth: 1400, fullHeight: 913, alt: "Логотип Reger Diamond", kind: "brand" },
-  { src: "/studio/works/work-24.webp", width: 715, height: 1073, full: "/studio/works/work-24-full.webp", fullWidth: 715, fullHeight: 1586, alt: "Интернет-магазин Smart Metal", kind: "site" },
-  { src: "/studio/works/work-40.webp", width: 720, height: 410, full: "/studio/works/work-40-full.webp", fullWidth: 1600, fullHeight: 911, alt: "HR-портал сотрудника", kind: "ui" },
-  { src: "/studio/works/work-31.webp", width: 720, height: 1080, full: "/studio/works/work-31-full.webp", fullWidth: 940, fullHeight: 1461, alt: "Интернет-магазин светильников Savoy", kind: "site" },
-  { src: "/studio/works/work-34.webp", width: 720, height: 1080, full: "/studio/works/work-34-full.webp", fullWidth: 1301, fullHeight: 4490, alt: "Лендинг MStroy", kind: "site" },
+  { src: asset("/studio/works/work-08.webp"), width: 720, height: 1080, full: asset("/studio/works/work-08-full.webp"), fullWidth: 1230, fullHeight: 5734, alt: "Лендинг коворкинга Fifty Four", kind: "site" },
+  { src: asset("/studio/works/work-20.webp"), width: 700, height: 497, full: asset("/studio/works/work-20-full.webp"), fullWidth: 700, fullHeight: 497, alt: "Дашборд ОФД", kind: "ui" },
+  { src: asset("/studio/works/work-13.webp"), width: 720, height: 1080, full: asset("/studio/works/work-13-full.webp"), fullWidth: 790, fullHeight: 2352, alt: "Мобильное приложение fashion-магазина", kind: "app" },
+  { src: asset("/studio/works/work-05.webp"), width: 720, height: 509, full: asset("/studio/works/work-05-full.webp"), fullWidth: 843, fullHeight: 596, alt: "Логотип MANSON для службы дезинсекции", kind: "brand" },
+  { src: asset("/studio/works/work-11.webp"), width: 720, height: 1080, full: asset("/studio/works/work-11-full.webp"), fullWidth: 910, fullHeight: 3114, alt: "Сайт производителя дверей iDoors", kind: "site" },
+  { src: asset("/studio/works/work-25.webp"), width: 720, height: 426, full: asset("/studio/works/work-25-full.webp"), fullWidth: 1473, fullHeight: 872, alt: "Таск-менеджер «Планёрка»", kind: "ui" },
+  { src: asset("/studio/works/work-28.webp"), width: 720, height: 750, full: asset("/studio/works/work-28-full.webp"), fullWidth: 1600, fullHeight: 1667, alt: "Интернет-магазин Lemnity", kind: "site" },
+  { src: asset("/studio/works/work-01.webp"), width: 720, height: 728, full: asset("/studio/works/work-01-full.webp"), fullWidth: 1426, fullHeight: 1441, alt: "Мерч: худи с айдентикой события", kind: "brand" },
+  { src: asset("/studio/works/work-14.webp"), width: 720, height: 1080, full: asset("/studio/works/work-14-full.webp"), fullWidth: 1500, fullHeight: 2991, alt: "Интернет-магазин продуктов", kind: "app" },
+  { src: asset("/studio/works/work-35.webp"), width: 720, height: 512, full: asset("/studio/works/work-35-full.webp"), fullWidth: 1440, fullHeight: 1024, alt: "Админ-панель с виджетами", kind: "ui" },
+  { src: asset("/studio/works/work-16.webp"), width: 720, height: 1080, full: asset("/studio/works/work-16-full.webp"), fullWidth: 1566, fullHeight: 2584, alt: "Корпоративный сайт строительной компании", kind: "site" },
+  { src: asset("/studio/works/work-03.webp"), width: 600, height: 338, full: asset("/studio/works/work-03-full.webp"), fullWidth: 880, fullHeight: 495, alt: "Лендинг конференции AntiConf", kind: "site" },
+  { src: asset("/studio/works/work-37.webp"), width: 720, height: 1080, full: asset("/studio/works/work-37-full.webp"), fullWidth: 877, fullHeight: 2062, alt: "Фармацевтический маркетплейс MSP", kind: "site" },
+  { src: asset("/studio/works/work-12.webp"), width: 720, height: 470, full: asset("/studio/works/work-12-full.webp"), fullWidth: 1400, fullHeight: 913, alt: "Логотип Reger Diamond", kind: "brand" },
+  { src: asset("/studio/works/work-24.webp"), width: 715, height: 1073, full: asset("/studio/works/work-24-full.webp"), fullWidth: 715, fullHeight: 1586, alt: "Интернет-магазин Smart Metal", kind: "site" },
+  { src: asset("/studio/works/work-40.webp"), width: 720, height: 410, full: asset("/studio/works/work-40-full.webp"), fullWidth: 1600, fullHeight: 911, alt: "HR-портал сотрудника", kind: "ui" },
+  { src: asset("/studio/works/work-31.webp"), width: 720, height: 1080, full: asset("/studio/works/work-31-full.webp"), fullWidth: 940, fullHeight: 1461, alt: "Интернет-магазин светильников Savoy", kind: "site" },
+  { src: asset("/studio/works/work-34.webp"), width: 720, height: 1080, full: asset("/studio/works/work-34-full.webp"), fullWidth: 1301, fullHeight: 4490, alt: "Лендинг MStroy", kind: "site" },
 ];
 
 /**
@@ -128,18 +130,18 @@ export const STUDIO_WORKS: readonly StudioWork[] = [
  * а не вырезана, и `brightness(0) invert(1)` залил бы его сплошным белым квадратом.
  */
 export const STUDIO_CLIENTS: readonly { name: string; src: string; width: number; height: number; filter?: string }[] = [
-  { name: "Lemnity", src: "/studio/clients/lemnity.svg", width: 375, height: 95 },
-  { name: "ProStyle", src: "/studio/clients/prostyle.svg", width: 340, height: 92 },
-  { name: "iDoors", src: "/studio/clients/i-doors.svg", width: 342, height: 119 },
-  { name: "Fifty Four", src: "/studio/clients/fifty-four.svg", width: 342, height: 112 },
-  { name: "MStroy", src: "/studio/clients/mstroy.svg", width: 369, height: 118 },
-  { name: "Simourg", src: "/studio/clients/simourg.svg", width: 249, height: 49 },
-  { name: "Театр «Либерта»", src: "/studio/clients/teatr-liberta.webp", width: 433, height: 160 },
-  { name: "MSP", src: "/studio/clients/msp.svg", width: 321, height: 109 },
-  { name: "Simval", src: "/studio/clients/simval.svg", width: 344, height: 90 },
-  { name: "Идеальная пара", src: "/studio/clients/idealnaya-para.svg", width: 342, height: 164 },
-  { name: "Dvigex", src: "/studio/clients/dvigex.webp", width: 146, height: 160 },
-  { name: "C", src: "/studio/clients/c-mark.svg", width: 197, height: 197, filter: "grayscale(1)" },
+  { name: "Lemnity", src: asset("/studio/clients/lemnity.svg"), width: 375, height: 95 },
+  { name: "ProStyle", src: asset("/studio/clients/prostyle.svg"), width: 340, height: 92 },
+  { name: "iDoors", src: asset("/studio/clients/i-doors.svg"), width: 342, height: 119 },
+  { name: "Fifty Four", src: asset("/studio/clients/fifty-four.svg"), width: 342, height: 112 },
+  { name: "MStroy", src: asset("/studio/clients/mstroy.svg"), width: 369, height: 118 },
+  { name: "Simourg", src: asset("/studio/clients/simourg.svg"), width: 249, height: 49 },
+  { name: "Театр «Либерта»", src: asset("/studio/clients/teatr-liberta.webp"), width: 433, height: 160 },
+  { name: "MSP", src: asset("/studio/clients/msp.svg"), width: 321, height: 109 },
+  { name: "Simval", src: asset("/studio/clients/simval.svg"), width: 344, height: 90 },
+  { name: "Идеальная пара", src: asset("/studio/clients/idealnaya-para.svg"), width: 342, height: 164 },
+  { name: "Dvigex", src: asset("/studio/clients/dvigex.webp"), width: 146, height: 160 },
+  { name: "C", src: asset("/studio/clients/c-mark.svg"), width: 197, height: 197, filter: "grayscale(1)" },
 ];
 
 /** Фильтр логотипа клиента на тёмном фоне: белый силуэт, если у логотипа нет своего. */

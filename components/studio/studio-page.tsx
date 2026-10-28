@@ -30,7 +30,7 @@ import { ArrowLeft, ArrowRight, Globe, Heart, Mail, Menu, MoreHorizontal, Plus, 
 import { Fragment, useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { LemnityWordmark } from "@/components/lemnity-wordmark";
-import { cn } from "@/lib/utils";
+import { BASE_PATH, cn } from "@/lib/utils";
 
 import {
   STUDIO_CLIENTS,
@@ -91,9 +91,9 @@ const NOISE = encodeURIComponent(
 
 /* Палитра и приёмы smkv/src/theme.ts; акцент заменён на синий Lemnity (оригинал — #c4ee18). */
 const STYLES = `
-@font-face { font-family: "StudioGilroy"; font-weight: 400; font-display: swap; src: url(/studio/fonts/gilroy-regular.woff2) format("woff2"); }
-@font-face { font-family: "StudioGilroy"; font-weight: 500; font-display: swap; src: url(/studio/fonts/gilroy-medium.woff2) format("woff2"); }
-@font-face { font-family: "StudioGilroy"; font-weight: 600; font-display: swap; src: url(/studio/fonts/gilroy-semibold.woff2) format("woff2"); }
+@font-face { font-family: "StudioGilroy"; font-weight: 400; font-display: swap; src: url(${BASE_PATH}/studio/fonts/gilroy-regular.woff2) format("woff2"); }
+@font-face { font-family: "StudioGilroy"; font-weight: 500; font-display: swap; src: url(${BASE_PATH}/studio/fonts/gilroy-medium.woff2) format("woff2"); }
+@font-face { font-family: "StudioGilroy"; font-weight: 600; font-display: swap; src: url(${BASE_PATH}/studio/fonts/gilroy-semibold.woff2) format("woff2"); }
 .lmnt-studio {
   --st-bg: #030303;
   --st-surface: #0d0d0d;

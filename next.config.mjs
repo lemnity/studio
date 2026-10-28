@@ -1,7 +1,12 @@
 /** @type {import('next').NextConfig} */
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Статическая выкладка (GitHub Pages): next build пишет готовый сайт в out/.
+  ...(process.env.STATIC_EXPORT ? { output: "export", trailingSlash: true, images: { unoptimized: true } } : {}),
+  ...(basePath ? { basePath, assetPrefix: basePath } : {}),
 };
 
 export default nextConfig;
