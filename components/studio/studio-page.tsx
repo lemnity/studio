@@ -156,9 +156,9 @@ html[data-st-intro="play"] .st-preloader { display: flex; }
 @keyframes st-beat { 0%,100% { transform: scale(1); } 30% { transform: scale(1.22); } 60% { transform: scale(.95); } }
 .lmnt-studio details > summary::-webkit-details-marker { display: none; }
 .lmnt-studio details[open] .st-faq-icon { transform: rotate(135deg); }
-/* Лаймовый блок: те же компоненты, но токены перевёрнуты — тёмное на акценте. */
-.lmnt-studio .st-lime {
-  background: #c4ee18;
+/* Светлый блок: те же компоненты, но токены перевёрнуты — тёмное на белом. */
+.lmnt-studio .st-light {
+  background: #f4f1ec;
   color: #0a0a0a;
   --st-text: #0a0a0a;
   --st-text-72: rgba(10, 10, 10, 0.72);
@@ -917,7 +917,7 @@ const cardClass =
 
 function Services() {
   return (
-    <section id="services" aria-labelledby="services-title" data-cursor-tone="dark" className="st-lime">
+    <section id="services" aria-labelledby="services-title" data-cursor-tone="dark" className="st-light">
       <div className={cn(container, "py-16 md:py-20")}>
         <SectionHead id="services-title" title="Чем мы занимаемся" text="Сайты, интерфейсы, бренды и цифровые продукты: от идеи до запуска." />
         <div className="grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
@@ -1342,8 +1342,8 @@ function Contact() {
 function FloatingCta({ onContact }: { onContact: () => void }) {
   const reduce = useReducedMotion();
   const [visible, setVisible] = useState(false);
-  // Над лаймовым блоком лаймовая кнопка сливается с фоном — тогда она тёмная.
-  const [onLime, setOnLime] = useState(false);
+  // Над светлым блоком кнопка становится тёмной — так она заметнее на белом.
+  const [onLight, setOnLight] = useState(false);
 
   useEffect(() => {
     let frame = 0;
@@ -1354,8 +1354,8 @@ function FloatingCta({ onContact }: { onContact: () => void }) {
       const contactTop = contact ? contact.getBoundingClientRect().top + y : Infinity;
       setVisible(y > window.innerHeight * 0.6 && y + window.innerHeight < contactTop + 160);
       const ctaY = window.innerHeight - 48;
-      setOnLime(
-        Array.from(document.querySelectorAll(".st-lime")).some((el) => {
+      setOnLight(
+        Array.from(document.querySelectorAll(".st-light")).some((el) => {
           const r = el.getBoundingClientRect();
           return r.top < ctaY && r.bottom > ctaY;
         }),
@@ -1390,7 +1390,7 @@ function FloatingCta({ onContact }: { onContact: () => void }) {
             onClick={onContact}
             className={cn(
               "st-beat-host pointer-events-auto inline-flex h-[52px] items-center gap-2.5 rounded-full pl-6 pr-2 text-[15px] font-semibold tracking-[-0.01em] shadow-[0_12px_40px_rgba(0,0,0,0.55),0_0_0_1px_var(--st-accent-35)] transition-[transform,box-shadow,background-color,color] duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_48px_rgba(0,0,0,0.6),0_0_24px_var(--st-accent-35)] md:h-14 md:pl-7 md:text-base",
-              onLime ? "bg-[var(--st-bg)] text-[var(--st-accent)]" : "bg-[var(--st-accent)] text-[var(--st-bg)]",
+              onLight ? "bg-[var(--st-bg)] text-[var(--st-accent)]" : "bg-[var(--st-accent)] text-[var(--st-bg)]",
             )}
           >
             <VariableProximity text="Заказать проект" />
@@ -1398,7 +1398,7 @@ function FloatingCta({ onContact }: { onContact: () => void }) {
               aria-hidden
               className={cn(
                 "grid h-9 w-9 place-items-center rounded-full transition-colors duration-300 md:h-10 md:w-10",
-                onLime ? "bg-[var(--st-accent)] text-[var(--st-bg)]" : "bg-[var(--st-bg)] text-[var(--st-accent)]",
+                onLight ? "bg-[var(--st-accent)] text-[var(--st-bg)]" : "bg-[var(--st-bg)] text-[var(--st-accent)]",
               )}
             >
               <Heart className="st-beat h-[18px] w-[18px] fill-current" />
@@ -1463,9 +1463,9 @@ export function StudioPage() {
         <Gallery />
         <VelocityTicker />
         <Clients />
-        <PixelEdge from="var(--st-bg)" to="#c4ee18" />
+        <PixelEdge from="var(--st-bg)" to="#f4f1ec" />
         <Services />
-        <PixelEdge from="#c4ee18" to="var(--st-bg)" />
+        <PixelEdge from="#f4f1ec" to="var(--st-bg)" />
         <About onContact={goContact} />
         <Faq />
         <Contact />
