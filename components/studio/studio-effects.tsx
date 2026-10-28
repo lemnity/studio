@@ -76,8 +76,8 @@ export function GrainOverlay() {
 /**
  * Точка + отстающее кольцо вместо системного курсора; кольцо растёт над ссылками и кнопками.
  * Над элементом с `data-cursor="…"` вместо кольца раскрывается лаймовый круг с этой подписью
- * (по мотивам illan.ru: «zoom»-появление над кейсами). `data-cursor-tone="dark"` красит круг в тёмный —
- * для элементов, которые сами заливаются акцентом при наведении.
+ * (по мотивам illan.ru: «zoom»-появление над кейсами). `data-cursor-tone="dark"` красит курсор в тёмный —
+ * над лаймовыми блоками и элементами, которые сами заливаются акцентом при наведении.
  */
 export function CustomCursor() {
   const reduce = useReducedMotion();
@@ -100,7 +100,7 @@ export function CustomCursor() {
       setHover(!!target?.closest?.("a, button, summary"));
       const labelled = target?.closest?.("[data-cursor]");
       setLabel(labelled?.getAttribute("data-cursor") || null);
-      setDark(labelled?.getAttribute("data-cursor-tone") === "dark");
+      setDark(target?.closest?.("[data-cursor-tone]")?.getAttribute("data-cursor-tone") === "dark");
     };
     const move = (e: PointerEvent) => {
       lastX = e.clientX;
@@ -134,13 +134,13 @@ export function CustomCursor() {
         aria-hidden
         style={{ x, y, translateX: "-50%", translateY: "-50%" }}
         animate={{ opacity: visible && !label ? 1 : 0 }}
-        className="pointer-events-none fixed left-0 top-0 z-[70] h-2 w-2 rounded-full bg-[var(--st-accent)]"
+        className={cn("pointer-events-none fixed left-0 top-0 z-[70] h-2 w-2 rounded-full transition-colors duration-300", dark ? "bg-[var(--st-bg)]" : "bg-[var(--st-accent)]")}
       />
       <motion.div
         aria-hidden
         style={{ x: rx, y: ry, translateX: "-50%", translateY: "-50%" }}
         animate={{ opacity: visible && !label ? 1 : 0, scale: hover ? 1.8 : 1 }}
-        className="pointer-events-none fixed left-0 top-0 z-[70] h-9 w-9 rounded-full border border-[var(--st-accent-70)]"
+        className={cn("pointer-events-none fixed left-0 top-0 z-[70] h-9 w-9 rounded-full border transition-colors duration-300", dark ? "border-[rgba(3,3,3,0.7)]" : "border-[var(--st-accent-70)]")}
       />
       <motion.div
         aria-hidden
@@ -308,5 +308,69 @@ export function VariableProximity({
         );
       })}
     </span>
+  );
+}
+
+/**
+ * Пиксельный переход между блоками (по мотивам runrobrun.com): полоса цвета `from`, в которой при
+ * прокрутке снизу вверх поднимаются квадратные «пиксели» цвета `to` — лесенкой по колонкам, с
+ * отдельными квадратами впереди края. К концу полоса целиком цвета `to` и сливается со следующим
+ * блоком. Ячейки обновляются напрямую через style, без ререндера на каждый кадр прокрутки.
+ */
+const PIXEL_COLS = 16;
+const PIXEL_ROWS = 4;
+/** Детерминированный «шум» 0..1: одинаковый на сервере и в браузере, без расхождений гидрации. */
+const noise = (n: number) => {
+  const v = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return v - Math.floor(v);
+};
+
+export function PixelEdge({ from, to }: { from: string; to: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const cells = useRef<(HTMLSpanElement | null)[]>([]);
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end 30%"] });
+
+  useEffect(() => {
+    if (reduce) return;
+    const paint = (p: number) => {
+      for (let c = 0; c < PIXEL_COLS; c++) {
+        // Уровень колонки: общий подъём минус свой разброс, чтобы край шёл ступеньками.
+        const level = p * (PIXEL_ROWS + 2.2) - noise(c) * 2.2;
+        const top = Math.floor(level);
+        for (let r = 0; r < PIXEL_ROWS; r++) {
+          const stray = r === top + 1 && level > 0.4 && noise(c * 7 + r) < 0.3;
+          const el = cells.current[r * PIXEL_COLS + c];
+          if (el) el.style.opacity = r < level || stray ? "1" : "0";
+        }
+      }
+    };
+    paint(scrollYProgress.get());
+    return scrollYProgress.on("change", paint);
+  }, [reduce, scrollYProgress]);
+
+  if (reduce) return null;
+
+  return (
+    <div
+      ref={ref}
+      aria-hidden
+      className="relative grid w-full"
+      style={{ background: from, aspectRatio: `${PIXEL_COLS} / ${PIXEL_ROWS}`, gridTemplateColumns: `repeat(${PIXEL_COLS}, 1fr)` }}
+    >
+      {/* Ряды сверху вниз в разметке, нумерация r — снизу вверх. */}
+      {Array.from({ length: PIXEL_ROWS }, (_, i) => PIXEL_ROWS - 1 - i).map((r) =>
+        Array.from({ length: PIXEL_COLS }, (_, c) => (
+          <span
+            key={`${r}-${c}`}
+            ref={(el) => {
+              cells.current[r * PIXEL_COLS + c] = el;
+            }}
+            // +1px перекрытия: без него между соседними ячейками просвечивают волосяные щели.
+            style={{ background: to, opacity: 0, margin: "0 -0.5px -1px" }}
+          />
+        )),
+      )}
+    </div>
   );
 }

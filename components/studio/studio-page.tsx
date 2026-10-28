@@ -56,6 +56,7 @@ import {
   EASE,
   GrainOverlay,
   MagneticButton,
+  PixelEdge,
   Reveal,
   ScrollProgress,
   VariableProximity,
@@ -155,6 +156,20 @@ html[data-st-intro="play"] .st-preloader { display: flex; }
 @keyframes st-beat { 0%,100% { transform: scale(1); } 30% { transform: scale(1.22); } 60% { transform: scale(.95); } }
 .lmnt-studio details > summary::-webkit-details-marker { display: none; }
 .lmnt-studio details[open] .st-faq-icon { transform: rotate(135deg); }
+/* Лаймовый блок: те же компоненты, но токены перевёрнуты — тёмное на акценте. */
+.lmnt-studio .st-lime {
+  background: #c4ee18;
+  color: #0a0a0a;
+  --st-text: #0a0a0a;
+  --st-text-72: rgba(10, 10, 10, 0.72);
+  --st-muted: rgba(10, 10, 10, 0.62);
+  --st-line: rgba(10, 10, 10, 0.16);
+  --st-surface: rgba(10, 10, 10, 0.035);
+  --st-accent: #0a0a0a;
+  --st-accent-light: #0a0a0a;
+  --st-accent-45: rgba(10, 10, 10, 0.45);
+  --st-accent-35: rgba(10, 10, 10, 0.18);
+}
 .st-input { width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--st-line); padding: 12px 0;
   font-size: 16px; color: var(--st-text); outline: none; transition: border-color .3s; }
 .st-input::placeholder { color: var(--st-muted); }
@@ -399,7 +414,7 @@ function Hero({ onContact }: { onContact: () => void }) {
               <MagneticButton>
                 <a
                   href="#work"
-                  className="group inline-flex items-center gap-4 rounded-full border border-[var(--st-accent)] px-7 py-3.5 text-[15px] font-medium transition-colors hover:border-[var(--st-accent-light)] hover:bg-[rgba(196, 238, 24,0.1)] md:px-9 md:py-[18px]"
+                  className="group inline-flex items-center gap-4 rounded-full border border-[var(--st-accent)] px-7 py-3.5 text-[15px] font-medium transition-colors hover:border-[var(--st-accent-light)] hover:bg-[rgba(196,238,24,0.1)] md:px-9 md:py-[18px]"
                 >
                   <VariableProximity text="Смотреть работы" />
                   <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
@@ -818,7 +833,7 @@ function Gallery() {
                   aria-label={`Открыть работу: ${w.alt}`}
                   aria-haspopup="dialog"
                   data-cursor="Открыть"
-                  className="group relative block w-full overflow-hidden rounded border border-[var(--st-line)] bg-[var(--st-surface)] transition-[border-color,box-shadow] duration-[400ms] hover:border-[var(--st-accent-45)] hover:shadow-[0_0_28px_rgba(196, 238, 24,0.12)] focus-visible:border-[var(--st-accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--st-accent)]"
+                  className="group relative block w-full overflow-hidden rounded border border-[var(--st-line)] bg-[var(--st-surface)] transition-[border-color,box-shadow] duration-[400ms] hover:border-[var(--st-accent-45)] hover:shadow-[0_0_28px_rgba(196,238,24,0.12)] focus-visible:border-[var(--st-accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--st-accent)]"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -898,11 +913,11 @@ function Clients() {
 /* ───────────────────────────── Услуги и процесс ───────────────────────────── */
 
 const cardClass =
-  "flex h-full flex-col gap-4 rounded border border-[var(--st-line)] bg-[var(--st-surface)] p-5 transition-[border-color,box-shadow] duration-300 hover:border-[var(--st-accent-45)] hover:shadow-[0_0_32px_rgba(196, 238, 24,0.06)] md:p-6";
+  "flex h-full flex-col gap-4 rounded border border-[var(--st-line)] bg-[var(--st-surface)] p-5 transition-[border-color,box-shadow] duration-300 hover:border-[var(--st-accent-45)] hover:shadow-[0_0_32px_rgba(196,238,24,0.06)] md:p-6";
 
 function Services() {
   return (
-    <section id="services" aria-labelledby="services-title">
+    <section id="services" aria-labelledby="services-title" data-cursor-tone="dark" className="st-lime">
       <div className={cn(container, "py-16 md:py-20")}>
         <SectionHead id="services-title" title="Чем мы занимаемся" text="Сайты, интерфейсы, бренды и цифровые продукты: от идеи до запуска." />
         <div className="grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
@@ -1095,7 +1110,7 @@ function CreateTogether({ onContact }: { onContact: () => void }) {
       className="group flex shrink-0 items-center gap-6 rounded-full text-left outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[10px] focus-visible:outline-[var(--st-accent)]"
     >
       <span aria-hidden className="relative h-[72px] w-[72px] shrink-0">
-        <span className="st-spin-slow pointer-events-none absolute -inset-[7px] rounded-full border border-dashed border-[rgba(196, 238, 24,0.55)]" />
+        <span className="st-spin-slow pointer-events-none absolute -inset-[7px] rounded-full border border-dashed border-[rgba(196,238,24,0.55)]" />
         <span className="st-round !h-[72px] !w-[72px] !border-[rgba(244,241,236,0.3)] group-hover:!border-[var(--st-accent)] group-hover:shadow-[0_0_24px_var(--st-accent-35)]">
           <MoreHorizontal className="h-5 w-5" />
         </span>
@@ -1327,6 +1342,8 @@ function Contact() {
 function FloatingCta({ onContact }: { onContact: () => void }) {
   const reduce = useReducedMotion();
   const [visible, setVisible] = useState(false);
+  // Над лаймовым блоком лаймовая кнопка сливается с фоном — тогда она тёмная.
+  const [onLime, setOnLime] = useState(false);
 
   useEffect(() => {
     let frame = 0;
@@ -1336,6 +1353,13 @@ function FloatingCta({ onContact }: { onContact: () => void }) {
       const contact = document.getElementById("contact");
       const contactTop = contact ? contact.getBoundingClientRect().top + y : Infinity;
       setVisible(y > window.innerHeight * 0.6 && y + window.innerHeight < contactTop + 160);
+      const ctaY = window.innerHeight - 48;
+      setOnLime(
+        Array.from(document.querySelectorAll(".st-lime")).some((el) => {
+          const r = el.getBoundingClientRect();
+          return r.top < ctaY && r.bottom > ctaY;
+        }),
+      );
     };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
@@ -1364,10 +1388,19 @@ function FloatingCta({ onContact }: { onContact: () => void }) {
           <button
             type="button"
             onClick={onContact}
-            className="st-beat-host pointer-events-auto inline-flex h-[52px] items-center gap-2.5 rounded-full bg-[var(--st-accent)] pl-6 pr-2 text-[15px] font-semibold tracking-[-0.01em] text-[var(--st-bg)] shadow-[0_12px_40px_rgba(0,0,0,0.55),0_0_0_1px_var(--st-accent-35)] transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_48px_rgba(0,0,0,0.6),0_0_24px_var(--st-accent-35)] md:h-14 md:pl-7 md:text-base"
+            className={cn(
+              "st-beat-host pointer-events-auto inline-flex h-[52px] items-center gap-2.5 rounded-full pl-6 pr-2 text-[15px] font-semibold tracking-[-0.01em] shadow-[0_12px_40px_rgba(0,0,0,0.55),0_0_0_1px_var(--st-accent-35)] transition-[transform,box-shadow,background-color,color] duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_48px_rgba(0,0,0,0.6),0_0_24px_var(--st-accent-35)] md:h-14 md:pl-7 md:text-base",
+              onLime ? "bg-[var(--st-bg)] text-[var(--st-accent)]" : "bg-[var(--st-accent)] text-[var(--st-bg)]",
+            )}
           >
             <VariableProximity text="Заказать проект" />
-            <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-[var(--st-bg)] text-[var(--st-accent)] md:h-10 md:w-10">
+            <span
+              aria-hidden
+              className={cn(
+                "grid h-9 w-9 place-items-center rounded-full transition-colors duration-300 md:h-10 md:w-10",
+                onLime ? "bg-[var(--st-accent)] text-[var(--st-bg)]" : "bg-[var(--st-bg)] text-[var(--st-accent)]",
+              )}
+            >
               <Heart className="st-beat h-[18px] w-[18px] fill-current" />
             </span>
           </button>
@@ -1430,7 +1463,9 @@ export function StudioPage() {
         <Gallery />
         <VelocityTicker />
         <Clients />
+        <PixelEdge from="var(--st-bg)" to="#c4ee18" />
         <Services />
+        <PixelEdge from="#c4ee18" to="var(--st-bg)" />
         <About onContact={goContact} />
         <Faq />
         <Contact />
