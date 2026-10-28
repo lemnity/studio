@@ -2,7 +2,9 @@
 
 /**
  * Сфера из шестиугольников для первого экрана: 283 плитки на передней полусфере, по рядам сверху вниз
- * идёт волна — плитка приподнимается и вспыхивает лаймовым, потом возвращается на место.
+ * идёт волна — плитка приподнимается и вспыхивает лаймовым, потом возвращается на место. В покое все
+ * плитки серые; на каждом проходе волны изредка какая-нибудь плитка становится эпицентром — от неё по
+ * поверхности сферы расходится синяя рябь, и плитки приподнимаются, когда через них проходит фронт.
  *
  * Перенос «Hex Sphere / CSS experiment» Павла Трошкина (https://x.com/troshkin_pavel). В оригинале каждая
  * плитка — DOM-элемент с 3D-трансформом, clip-path и анимированными CSS-переменными: браузер каждый кадр
@@ -39,11 +41,32 @@ type Tile = {
   s: [number, number, number];
   size: number;
   offset: number;
+  /** Номер плитки в раскладке (до сортировки по глубине) — зерно выбора эпицентров ряби. */
+  id: number;
   /** Светлота цвета покоя в OKLab (серый, светлее к центру). */
   restL: number;
 };
 
+/** OKLCH → OKLab. */
+const lch = (L: number, C: number, h: number): [number, number, number] => [L, C * Math.cos(rad(h)), C * Math.sin(rad(h))];
+/** Цвет вспышки — oklch(91% .21 125). */
+const LIME_FLASH = lch(0.91, 0.21, 125);
+/** Цвет ряби — oklch(76% .19 258), светлее синего Lemnity (#3d7bff), чтобы читался на тёмной сфере. */
+const RIPPLE_COLOR = lch(0.76, 0.19, 258);
+/** Доля плиток-эпицентров на проходе волны: в среднем пять-шесть ряби за цикл. */
+const RIPPLE_SHARE = 0.022;
+/** Рябь живёт столько секунд, бежит со скоростью RIPPLE_SPEED рад/с, ширина фронта — RIPPLE_WIDTH рад. */
+const RIPPLE_LIFE = 2;
+const RIPPLE_SPEED = 0.4;
+const RIPPLE_WIDTH = 0.11;
+/** Детерминированный «шум» 0..1: на сервере и в браузере выбираются одни и те же плитки. */
+const noise = (n: number) => {
+  const v = Math.sin(n * 12.9898 + 78.233) * 43758.5453;
+  return v - Math.floor(v);
+};
+
 const TILES: Tile[] = [];
+let tileId = 0;
 for (let row = 0; row < LATS.length * 2 - 1; row++) {
   const k = row - (LATS.length - 1);
   const lat = rad(Math.sign(k) * LATS[Math.abs(k)]);
@@ -59,17 +82,13 @@ for (let row = 0; row < LATS.length * 2 - 1; row++) {
       s: [-Math.sin(lat) * Math.sin(lon), Math.cos(lat), -Math.sin(lat) * Math.cos(lon)],
       size,
       offset: 0.035 * Math.sin(lon * 2 + rad(row * 23)) + 0.01 * Math.sin(lon * 5 - rad(row * 11)),
+      id: tileId++,
       restL: 0.1 + 0.12 * depth,
     });
   }
 }
 // Дальние плитки рисуем первыми, как сортировал бы браузер по глубине.
 TILES.sort((a, b) => a.c[2] - b.c[2]);
-
-/** Цвет вспышки — oklch(91% .21 125) в OKLab. */
-const HL_L = 0.91;
-const HL_A = 0.21 * Math.cos(rad(125));
-const HL_B = 0.21 * Math.sin(rad(125));
 
 const toSrgb = (x: number) => {
   const v = x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055;
@@ -89,6 +108,10 @@ function oklab(L: number, a: number, b: number) {
 
 /** Цвет покоя не меняется — считаем один раз на плитку. */
 const REST = TILES.map((t) => oklab(t.restL, 0, 0));
+/** Угловые расстояния между центрами плиток по сфере — по ним бежит рябь. */
+const ANGLES = TILES.map((a) =>
+  Float32Array.from(TILES, (b) => Math.acos(Math.min(1, a.c[0] * b.c[0] + a.c[1] * b.c[1] + a.c[2] * b.c[2]))),
+);
 
 const HEX: readonly (readonly [number, number])[] = [
   [0, -0.5],
@@ -99,39 +122,70 @@ const HEX: readonly (readonly [number, number])[] = [
   [-0.5, -0.25],
 ];
 
+/** Шестиугольник плитки с центром (cx, cy) на экране. */
+function hexPath(ctx: CanvasRenderingContext2D, t: Tile, cx: number, cy: number, w: number, h: number) {
+  const cos = Math.cos(TILT);
+  const sin = Math.sin(TILT);
+  ctx.beginPath();
+  for (let p = 0; p < 6; p++) {
+    const u = HEX[p][0] * w;
+    const v = HEX[p][1] * h;
+    const x = cx + u * t.e[0] + v * t.s[0];
+    const y = cy + u * t.e[1] + v * t.s[1];
+    if (p === 0) ctx.moveTo(x * cos - y * sin, x * sin + y * cos);
+    else ctx.lineTo(x * cos - y * sin, x * sin + y * cos);
+  }
+  ctx.closePath();
+}
+
+const mix = (a: [number, number, number], b: [number, number, number], k: number) =>
+  oklab(a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k);
+
 /** Кадр сферы диаметром `d` в момент `time` (секунды); `null` — статичная сфера без волны. */
 function draw(ctx: CanvasRenderingContext2D, d: number, time: number | null) {
   const R = d * 0.42;
-  const cos = Math.cos(TILT);
-  const sin = Math.sin(TILT);
   ctx.clearRect(-d / 2, -d / 2, d, d);
+  const lifts = new Float32Array(TILES.length);
+  const ripple = new Float32Array(TILES.length);
+
+  if (time !== null) {
+    for (let i = 0; i < TILES.length; i++) {
+      const t = TILES[i];
+      const wave = (time - t.row * ROW_STEP) / WAVE - t.offset;
+      const n = Math.floor(wave);
+      lifts[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * Math.min(1, (wave - n) / 0.4));
+      // Эпицентр выбирается на каждом проходе волны заново; рябь стартует, когда плитка в верхней точке.
+      // Смотрим текущий и прошлый проход: рябь прошлого прохода может ещё бежать.
+      for (const pass of [n, n - 1]) {
+        if (noise(t.id * 31.7 + pass * 7.13) >= RIPPLE_SHARE) continue;
+        const age = time - ((pass + 0.2 + t.offset) * WAVE + t.row * ROW_STEP);
+        if (age < 0 || age >= RIPPLE_LIFE) continue;
+        const front = age * RIPPLE_SPEED;
+        const amp = Math.pow(1 - age / RIPPLE_LIFE, 1.6);
+        const angles = ANGLES[i];
+        for (let j = 0; j < TILES.length; j++) {
+          const g = Math.exp(-(((angles[j] - front) / RIPPLE_WIDTH) ** 2)) * amp;
+          if (g > ripple[j]) ripple[j] = g;
+        }
+      }
+    }
+  }
+
   for (let i = 0; i < TILES.length; i++) {
     const t = TILES[i];
-    let lift = 0;
-    if (time !== null) {
-      const phase = (((time - t.row * ROW_STEP) / WAVE) % 1 + 1) % 1;
-      const tilePhase = ((phase - t.offset) % 1 + 1) % 1;
-      lift = 0.5 - 0.5 * Math.cos(2 * Math.PI * Math.min(1, tilePhase / 0.4));
-    }
-    const hl = lift ** 4;
+    const lift = lifts[i];
+    const rip = ripple[i];
     // Ширина как у ::before в оригинале (+1px против щелей), высота — по пропорции шестиугольника.
     const w = ((d * t.size) / 0.96) * 1.015 + 1;
     const h = w / 0.8660254038;
     // Подъём плитки — вдоль нормали, которая у сферы совпадает с направлением на центр плитки.
-    const r = R + d * 0.05 * lift;
-    const cx = t.c[0] * r;
-    const cy = t.c[1] * r;
-    ctx.beginPath();
-    for (let p = 0; p < 6; p++) {
-      const u = HEX[p][0] * w;
-      const v = HEX[p][1] * h;
-      const x = cx + u * t.e[0] + v * t.s[0];
-      const y = cy + u * t.e[1] + v * t.s[1];
-      if (p === 0) ctx.moveTo(x * cos - y * sin, x * sin + y * cos);
-      else ctx.lineTo(x * cos - y * sin, x * sin + y * cos);
-    }
-    ctx.closePath();
-    ctx.fillStyle = hl < 0.002 ? REST[i] : oklab(t.restL + (HL_L - t.restL) * hl, HL_A * hl, HL_B * hl);
+    const r = R + d * 0.05 * lift + d * 0.03 * rip;
+    hexPath(ctx, t, t.c[0] * r, t.c[1] * r, w, h);
+    const hl = lift ** 4;
+    const blue = Math.min(1, rip * 1.1);
+    // Лайм и синий не смешиваются между собой: плитка берёт цвет того импульса, что сейчас сильнее.
+    if (blue > hl && blue > 0.01) ctx.fillStyle = mix([t.restL, 0, 0], RIPPLE_COLOR, blue);
+    else ctx.fillStyle = hl < 0.002 ? REST[i] : mix([t.restL, 0, 0], LIME_FLASH, hl);
     ctx.fill();
   }
 }
