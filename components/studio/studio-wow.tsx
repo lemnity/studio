@@ -35,7 +35,7 @@ import { cn } from "@/lib/utils";
 
 import { STUDIO_CLIENTS, clientLogoFilter } from "./studio-content";
 import { EASE, useMediaQuery } from "./studio-effects";
-import { STUDIO_INTRO_ATTR, STUDIO_INTRO_KEY, STUDIO_INTRO_TTL_MS } from "./studio-intro";
+import { STUDIO_INTRO_ATTR } from "./studio-intro";
 
 /** Резкий «занавес» illan: медленный старт и финиш, быстрая середина. */
 const CURTAIN = [0.76, 0, 0.24, 1] as const;
@@ -43,7 +43,6 @@ const CURTAIN = [0.76, 0, 0.24, 1] as const;
 /* ───────────────────────────── Заставка ───────────────────────────── */
 
 // Атрибут на <html> ставит загрузочный скрипт из studio-intro.ts до первой отрисовки.
-const INTRO_KEY = STUDIO_INTRO_KEY;
 const INTRO_ATTR = STUDIO_INTRO_ATTR;
 
 let introReady = false;
@@ -82,11 +81,6 @@ export function StudioPreloader() {
       setPhase("gone");
       markIntroReady();
       return;
-    }
-    try {
-      localStorage.setItem(INTRO_KEY, String(Date.now() + STUDIO_INTRO_TTL_MS));
-    } catch {
-      /* приватный режим: заставка покажется ещё раз, это не страшно */
     }
     html.style.overflow = "hidden";
 
