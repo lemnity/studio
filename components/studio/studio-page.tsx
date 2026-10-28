@@ -341,11 +341,13 @@ function HeroObject({ scroll }: { scroll: MotionValue<number> }) {
   const ready = useIntroReady();
   const y = useTransform(scroll, [0, 1], [0, reduce ? 0 : 140]);
   const scale = useTransform(scroll, [0, 1], [1, reduce ? 1 : 0.86]);
+  // Размер резиновый: --st-sphere плавно тянется за шириной экрана (44vw, от 340 до 860px), без ступенек
+  // на брейкпоинтах; по вертикали сфера всегда по центру первого экрана.
   return (
     <motion.div
       aria-hidden
       style={{ y, scale }}
-      className="pointer-events-none relative z-[1] mx-auto mt-2 aspect-square w-full max-w-[420px] md:absolute md:mt-0 md:max-w-none md:right-[150px] md:top-[calc(50%-min(19vw,290px))] md:w-[min(38vw,580px)] lg:right-[190px]"
+      className="pointer-events-none relative z-[1] mx-auto mt-2 aspect-square w-full max-w-[min(100%,520px)] md:absolute md:mt-0 md:max-w-none md:[--st-sphere:clamp(340px,44vw,860px)] md:right-[clamp(120px,11vw,220px)] md:top-[calc(50%-var(--st-sphere)/2)] md:w-[var(--st-sphere)]"
     >
       <motion.div
         initial={reduce ? false : { opacity: 0, scale: 0.8 }}
