@@ -189,9 +189,48 @@ export function MagneticButton({ children, strength = 10 }: { children: ReactNod
 }
 
 /**
+ * Общие обработчики для всех VariableProximity: один pointermove, один scroll и один кадр на всю
+ * страницу. Раньше у каждого экземпляра (их больше двадцати) были свои слушатели, и каждый на каждом
+ * кадре прокрутки сам лез в раскладку.
+ */
+const proximityPainters = new Set<() => void>();
+let proximityPointer: { x: number; y: number } | null = null;
+let proximityFrame = 0;
+let proximityBound = false;
+
+function scheduleProximity() {
+  if (proximityFrame) return;
+  proximityFrame = requestAnimationFrame(() => {
+    proximityFrame = 0;
+    proximityPainters.forEach((paint) => paint());
+  });
+}
+
+function bindProximity() {
+  if (proximityBound) return;
+  proximityBound = true;
+  window.addEventListener(
+    "pointermove",
+    (e) => {
+      proximityPointer = { x: e.clientX, y: e.clientY };
+      scheduleProximity();
+    },
+    { passive: true },
+  );
+  document.documentElement.addEventListener("pointerleave", () => {
+    proximityPointer = null;
+    scheduleProximity();
+  });
+  window.addEventListener("scroll", scheduleProximity, { passive: true });
+}
+
+/**
  * Буквы «набухают» рядом с курсором (по мотивам React Bits «Variable Proximity»). Шрифт статический,
  * поэтому толщину добавляет обводка: ширина глифа не меняется, строка не прыгает. Буквы сгруппированы
  * в неразрывные слова, чтобы перенос строк шёл между словами.
+ *
+ * На буквы текст режется, только пока он рядом с экраном: иначе на странице висели бы тысячи лишних
+ * элементов, которые браузер пересчитывает при каждой раскладке.
  */
 export function VariableProximity({
   text,
@@ -211,13 +250,22 @@ export function VariableProximity({
   const reduce = useReducedMotion();
   const fine = useMediaQuery("(pointer: fine)");
   const active = !reduce && fine;
+  const [near, setNear] = useState(false);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!active || !root) return;
+    const io = new IntersectionObserver(([entry]) => setNear(entry.isIntersecting), { rootMargin: "200px 0px" });
+    io.observe(root);
+    return () => io.disconnect();
+  }, [active]);
 
   useEffect(() => {
     const root = rootRef.current;
     const letters = lettersRef.current.filter((el): el is HTMLSpanElement => !!el);
-    if (!active || !root || letters.length === 0) return;
-    let frame = 0;
-    let pointer: { x: number; y: number } | null = null;
+    if (!active || !near || !root || letters.length === 0) return;
+    const fontSize = parseFloat(getComputedStyle(root).fontSize) || 16;
+    const reach = Math.max(fontSize * radius, minRadiusPx);
     let lit = false;
 
     const clear = () => {
@@ -226,10 +274,8 @@ export function VariableProximity({
       lit = false;
     };
     const paint = () => {
-      frame = 0;
+      const pointer = proximityPointer;
       if (!pointer) return clear();
-      const fontSize = parseFloat(getComputedStyle(root).fontSize) || 16;
-      const reach = Math.max(fontSize * radius, minRadiusPx);
       const box = root.getBoundingClientRect();
       if (
         pointer.x < box.left - reach ||
@@ -248,31 +294,17 @@ export function VariableProximity({
       }
       lit = true;
     };
-    const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(paint);
-    };
-    const onMove = (e: PointerEvent) => {
-      pointer = { x: e.clientX, y: e.clientY };
-      schedule();
-    };
-    const onLeave = () => {
-      pointer = null;
-      schedule();
-    };
 
-    window.addEventListener("pointermove", onMove, { passive: true });
-    document.documentElement.addEventListener("pointerleave", onLeave);
-    window.addEventListener("scroll", schedule, { passive: true });
+    bindProximity();
+    proximityPainters.add(paint);
+    scheduleProximity();
     return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("pointermove", onMove);
-      document.documentElement.removeEventListener("pointerleave", onLeave);
-      window.removeEventListener("scroll", schedule);
+      proximityPainters.delete(paint);
       letters.forEach((el) => (el.style.webkitTextStrokeWidth = "0"));
     };
-  }, [active, text, radius, minRadiusPx, maxStroke]);
+  }, [active, near, text, radius, minRadiusPx, maxStroke]);
 
-  if (!active) return <>{text}</>;
+  if (!active || !near) return <span ref={rootRef}>{text}</span>;
 
   lettersRef.current = [];
   let index = 0;

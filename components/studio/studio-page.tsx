@@ -128,7 +128,9 @@ const STYLES = `
 .st-round { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 9999px; border: 1px solid var(--st-line);
   color: var(--st-text); transition: all .3s ease; }
 .st-round:hover, .st-round:focus-visible { border-color: var(--st-accent); box-shadow: 0 0 24px var(--st-accent-35); }
-.st-grain { background-image: url("data:image/svg+xml,${NOISE}"); animation: st-grain 1.2s steps(6) infinite; }
+.st-grain { background-image: url("data:image/svg+xml,${NOISE}"); animation: st-grain 1.2s steps(6) infinite; will-change: transform; }
+/* На телефонах зерно стоит: полноэкранный анимированный слой — лишняя нагрузка на слабый GPU. */
+@media (hover: none), (max-width: 767px) { .st-grain { animation: none; will-change: auto; } }
 @keyframes st-grain { 0%{transform:translate(0,0)} 20%{transform:translate(-3%,2%)} 40%{transform:translate(2%,-3%)} 60%{transform:translate(-2%,-1%)} 80%{transform:translate(3%,3%)} 100%{transform:translate(0,0)} }
 .st-sheen {
   background-image: linear-gradient(100deg, transparent 42%, rgba(248,255,220,0.5) 50%, transparent 58%), linear-gradient(100deg, var(--st-accent-light) 0%, var(--st-accent) 70%, var(--st-accent-dark) 130%);

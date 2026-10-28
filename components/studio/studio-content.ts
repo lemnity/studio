@@ -41,7 +41,7 @@ export const STUDIO_PROJECTS: readonly StudioProject[] = [
     title: "Lemnity",
     description: "Наша собственная платформа для создания сайтов, чат-ботов и цифровых продуктов",
     tags: ["SaaS", "Конструктор", "AI", "Продукт"],
-    image: asset("/studio/projects/lemnity-concept.png"),
+    image: asset("/studio/projects/lemnity-concept.webp"),
     focus: "40% 50%",
     crop: { x: 0, y: 176, w: 466, h: 216, imgW: 466 },
     logo: { src: asset("/studio/clients/lemnity.svg"), width: 375, height: 95 },

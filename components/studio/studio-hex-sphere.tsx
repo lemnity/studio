@@ -2,16 +2,19 @@
 
 /**
  * Сфера из шестиугольников для первого экрана: 283 плитки на передней полусфере, по рядам сверху вниз
- * идёт волна — плитка приподнимается и вспыхивает голубым, потом возвращается на место. Чистый CSS
- * (@property, sin(), cos(), mod()), JS только раскладывает плитки и ставит анимацию на паузу вне экрана.
+ * идёт волна — плитка приподнимается и вспыхивает лаймовым, потом возвращается на место.
  *
- * Перенос «Hex Sphere / CSS experiment» Павла Трошкина (https://x.com/troshkin_pavel).
+ * Перенос «Hex Sphere / CSS experiment» Павла Трошкина (https://x.com/troshkin_pavel). В оригинале каждая
+ * плитка — DOM-элемент с 3D-трансформом, clip-path и анимированными CSS-переменными: браузер каждый кадр
+ * пересчитывал стили и перерисовывал 283 слоя, и на слабых устройствах первый экран проседал до единиц
+ * кадров в секунду. Здесь та же математика (ортографическая проекция, те же формулы волны и цвета)
+ * рисуется на одном canvas — несколько сотен многоугольников за кадр.
  *
  * Сетка конформная: широты рядов равномерны в проекции Меркатора, поэтому плитки сохраняют форму
  * и уменьшаются к полюсам пропорционально cos(широты).
  */
 
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useRef } from "react";
 
 /** Широты рядов от экватора к полюсу; второе полушарие — зеркально. */
 const LATS = [0, 11.065181, 21.728828, 31.657978, 40.630535, 48.541965, 55.385245, 61.219919, 66.142642, 70.264923, 73.698777];
@@ -19,110 +22,180 @@ const LATS = [0, 11.065181, 21.728828, 31.657978, 40.630535, 48.541965, 55.38524
 const LON_STEP = 360 / 28;
 /** Размер плитки на экваторе в долях диаметра сцены. */
 const EQUATOR_SIZE = 0.090478;
+/** Волна: ряд стартует на ROW_STEP позже предыдущего, полный цикл — 21 шаг. */
+const ROW_STEP = 0.14;
+const WAVE = 21 * ROW_STEP;
+/** Наклон всей сферы (rotateZ(-10deg) в оригинале). */
+const TILT = (-10 * Math.PI) / 180;
 
-const ROWS = Array.from({ length: LATS.length * 2 - 1 }, (_, row) => {
+const rad = (deg: number) => (deg * Math.PI) / 180;
+
+type Tile = {
+  row: number;
+  /** Центр на единичной сфере в координатах CSS: x вправо, y вниз, z к зрителю. */
+  c: [number, number, number];
+  /** Касательные оси плитки: east — вдоль долготы, south — вдоль широты (вниз по экрану). */
+  e: [number, number, number];
+  s: [number, number, number];
+  size: number;
+  offset: number;
+  /** Светлота цвета покоя в OKLab (серый, светлее к центру). */
+  restL: number;
+};
+
+const TILES: Tile[] = [];
+for (let row = 0; row < LATS.length * 2 - 1; row++) {
   const k = row - (LATS.length - 1);
-  const lat = Math.sign(k) * LATS[Math.abs(k)];
+  const lat = rad(Math.sign(k) * LATS[Math.abs(k)]);
   const count = row % 2 === 0 ? 13 : 14;
-  // Округляем до 6 знаков: Math.cos на сервере и в браузере может разойтись в последнем бите — и гидратация
-  // увидит другой style.
-  const size = (EQUATOR_SIZE * Math.cos((lat * Math.PI) / 180)).toFixed(6);
-  const tiles = Array.from({ length: count }, (_, i) => ((i - (count - 1) / 2) * LON_STEP).toFixed(6));
-  return { row, lat, size, tiles };
-});
+  const size = EQUATOR_SIZE * Math.cos(lat);
+  for (let i = 0; i < count; i++) {
+    const lon = rad((i - (count - 1) / 2) * LON_STEP);
+    const depth = Math.cos(lat) * Math.cos(lon);
+    TILES.push({
+      row,
+      c: [Math.cos(lat) * Math.sin(lon), Math.sin(lat), depth],
+      e: [Math.cos(lon), 0, -Math.sin(lon)],
+      s: [-Math.sin(lat) * Math.sin(lon), Math.cos(lat), -Math.sin(lat) * Math.cos(lon)],
+      size,
+      offset: 0.035 * Math.sin(lon * 2 + rad(row * 23)) + 0.01 * Math.sin(lon * 5 - rad(row * 11)),
+      restL: 0.1 + 0.12 * depth,
+    });
+  }
+}
+// Дальние плитки рисуем первыми, как сортировал бы браузер по глубине.
+TILES.sort((a, b) => a.c[2] - b.c[2]);
 
-const STYLES = `
-@property --st-hex-lift { syntax: "<number>"; inherits: true; initial-value: 0; }
-@property --st-hex-phase { syntax: "<number>"; inherits: true; initial-value: 0; }
-.st-hex-host { container-type: size; display: grid; place-items: center; }
-.st-hex-scene {
-  --diameter: min(100cqw, 100cqh);
-  --radius: calc(var(--diameter) * .42);
-  --row-step: .14s;
-  --wave-duration: calc(21 * var(--row-step));
-  position: relative;
-  width: var(--diameter);
-  height: var(--diameter);
-  overflow: clip;
+/** Цвет вспышки — oklch(91% .21 125) в OKLab. */
+const HL_L = 0.91;
+const HL_A = 0.21 * Math.cos(rad(125));
+const HL_B = 0.21 * Math.sin(rad(125));
+
+const toSrgb = (x: number) => {
+  const v = x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055;
+  return Math.round(Math.min(1, Math.max(0, v)) * 255);
+};
+
+/** OKLab → sRGB-строка для fillStyle. */
+function oklab(L: number, a: number, b: number) {
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
+  const r = toSrgb(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s);
+  const g = toSrgb(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s);
+  const bl = toSrgb(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s);
+  return `rgb(${r},${g},${bl})`;
 }
-.st-hex-sphere { position: absolute; inset: 0; transform: rotateZ(-10deg); transform-style: preserve-3d; }
-.st-hex-row {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  animation: st-hex-wave var(--wave-duration) linear calc(var(--row) * var(--row-step) - var(--wave-duration)) infinite;
+
+/** Цвет покоя не меняется — считаем один раз на плитку. */
+const REST = TILES.map((t) => oklab(t.restL, 0, 0));
+
+const HEX: readonly (readonly [number, number])[] = [
+  [0, -0.5],
+  [0.5, -0.25],
+  [0.5, 0.25],
+  [0, 0.5],
+  [-0.5, 0.25],
+  [-0.5, -0.25],
+];
+
+/** Кадр сферы диаметром `d` в момент `time` (секунды); `null` — статичная сфера без волны. */
+function draw(ctx: CanvasRenderingContext2D, d: number, time: number | null) {
+  const R = d * 0.42;
+  const cos = Math.cos(TILT);
+  const sin = Math.sin(TILT);
+  ctx.clearRect(-d / 2, -d / 2, d, d);
+  for (let i = 0; i < TILES.length; i++) {
+    const t = TILES[i];
+    let lift = 0;
+    if (time !== null) {
+      const phase = (((time - t.row * ROW_STEP) / WAVE) % 1 + 1) % 1;
+      const tilePhase = ((phase - t.offset) % 1 + 1) % 1;
+      lift = 0.5 - 0.5 * Math.cos(2 * Math.PI * Math.min(1, tilePhase / 0.4));
+    }
+    const hl = lift ** 4;
+    // Ширина как у ::before в оригинале (+1px против щелей), высота — по пропорции шестиугольника.
+    const w = ((d * t.size) / 0.96) * 1.015 + 1;
+    const h = w / 0.8660254038;
+    // Подъём плитки — вдоль нормали, которая у сферы совпадает с направлением на центр плитки.
+    const r = R + d * 0.05 * lift;
+    const cx = t.c[0] * r;
+    const cy = t.c[1] * r;
+    ctx.beginPath();
+    for (let p = 0; p < 6; p++) {
+      const u = HEX[p][0] * w;
+      const v = HEX[p][1] * h;
+      const x = cx + u * t.e[0] + v * t.s[0];
+      const y = cy + u * t.e[1] + v * t.s[1];
+      if (p === 0) ctx.moveTo(x * cos - y * sin, x * sin + y * cos);
+      else ctx.lineTo(x * cos - y * sin, x * sin + y * cos);
+    }
+    ctx.closePath();
+    ctx.fillStyle = hl < 0.002 ? REST[i] : oklab(t.restL + (HL_L - t.restL) * hl, HL_A * hl, HL_B * hl);
+    ctx.fill();
+  }
 }
-.st-hex-scene[data-paused] .st-hex-row { animation-play-state: paused; }
-.st-hex-tile {
-  --phase-offset: calc(.035 * sin(var(--longitude) * 2 + var(--row) * 23deg) + .01 * sin(var(--longitude) * 5 - var(--row) * 11deg));
-  --tile-phase: mod(calc(var(--st-hex-phase) - var(--phase-offset)), 1);
-  --pulse: clamp(0, var(--tile-phase) / .4, 1);
-  --st-hex-lift: calc(.5 - .5 * cos(360deg * var(--pulse)));
-  --highlight: calc(var(--st-hex-lift) * var(--st-hex-lift) * var(--st-hex-lift) * var(--st-hex-lift));
-  --x: calc(var(--radius) * cos(var(--latitude)) * sin(var(--longitude)));
-  --y: calc(var(--radius) * sin(var(--latitude)));
-  --z: calc(var(--radius) * cos(var(--latitude)) * cos(var(--longitude)));
-  --depth: calc(cos(var(--latitude)) * cos(var(--longitude)));
-  --rest-color: oklch(calc(10% + 12% * var(--depth)) 0 1);
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0;
-  height: 0;
-  transform-style: preserve-3d;
-  transform: translate3d(var(--x), var(--y), var(--z)) rotateY(var(--longitude)) rotateX(calc(-1 * var(--latitude)));
-}
-.st-hex-tile::before {
-  content: "";
-  position: absolute;
-  width: calc(var(--diameter) * var(--size) / .96 * 1.015 + 1px);
-  aspect-ratio: .8660254038;
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  background: color-mix(in oklab, var(--rest-color), oklch(91% .21 125) calc(100% * var(--highlight)));
-  backface-visibility: hidden;
-  transform: translate(-50%, -50%) translateZ(calc(var(--diameter) * .05 * var(--st-hex-lift)));
-}
-@keyframes st-hex-wave { from { --st-hex-phase: 0; } to { --st-hex-phase: 1; } }
-@media (prefers-reduced-motion: reduce) {
-  .st-hex-row { animation: none; --st-hex-phase: 0; }
-  .st-hex-tile { --st-hex-lift: 0; }
-}
-`;
 
 export function StudioHexSphere({ className }: { className?: string }) {
-  const sceneRef = useRef<HTMLDivElement>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Вне экрана волна стоит: 283 плитки с 3D-трансформами не должны считаться впустую.
   useEffect(() => {
-    const scene = sceneRef.current;
-    if (!scene) return;
+    const host = hostRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!host || !canvas || !ctx) return;
+
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const start = performance.now();
+    let d = 0;
+    let frame = 0;
+    let visible = false;
+
+    const render = (now: number) => {
+      frame = 0;
+      if (!d) return;
+      draw(ctx, d, reduce.matches ? null : (now - start) / 1000);
+      if (visible && !reduce.matches && !document.hidden) frame = requestAnimationFrame(render);
+    };
+    const kick = () => {
+      if (!frame) frame = requestAnimationFrame(render);
+    };
+
+    const resize = () => {
+      const box = host.getBoundingClientRect();
+      d = Math.floor(Math.min(box.width, box.height));
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(d * dpr);
+      canvas.height = Math.round(d * dpr);
+      canvas.style.width = `${d}px`;
+      canvas.style.height = `${d}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, (d * dpr) / 2, (d * dpr) / 2);
+      kick();
+    };
+
+    // Вне экрана и в фоновой вкладке волна стоит.
     const io = new IntersectionObserver(([entry]) => {
-      scene.toggleAttribute("data-paused", !entry.isIntersecting);
+      visible = entry.isIntersecting;
+      if (visible) kick();
     });
-    io.observe(scene);
-    return () => io.disconnect();
+    const ro = new ResizeObserver(resize);
+    io.observe(host);
+    ro.observe(host);
+    document.addEventListener("visibilitychange", kick);
+    reduce.addEventListener("change", kick);
+    return () => {
+      cancelAnimationFrame(frame);
+      io.disconnect();
+      ro.disconnect();
+      document.removeEventListener("visibilitychange", kick);
+      reduce.removeEventListener("change", kick);
+    };
   }, []);
 
   return (
-    <div aria-hidden className={`st-hex-host ${className ?? ""}`}>
-      <style href="st-hex-sphere" precedence="default">
-        {STYLES}
-      </style>
-      <div ref={sceneRef} className="st-hex-scene">
-        <div className="st-hex-sphere">
-          {ROWS.map(({ row, lat, size, tiles }) => (
-            <div key={row} className="st-hex-row" style={{ "--row": row } as CSSProperties}>
-              {tiles.map((lon) => (
-                <span
-                  key={lon}
-                  className="st-hex-tile"
-                  style={{ "--latitude": `${lat}deg`, "--longitude": `${lon}deg`, "--size": size } as CSSProperties}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
+    <div ref={hostRef} aria-hidden className={`grid place-items-center overflow-clip ${className ?? ""}`}>
+      <canvas ref={canvasRef} className="block" />
     </div>
   );
 }
