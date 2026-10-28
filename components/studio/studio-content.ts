@@ -130,7 +130,6 @@ export const STUDIO_WORKS: readonly StudioWork[] = [
  * а не вырезана, и `brightness(0) invert(1)` залил бы его сплошным белым квадратом.
  */
 export const STUDIO_CLIENTS: readonly { name: string; src: string; width: number; height: number; filter?: string }[] = [
-  { name: "Lemnity", src: asset("/studio/clients/lemnity.svg"), width: 375, height: 95 },
   { name: "ProStyle", src: asset("/studio/clients/prostyle.svg"), width: 340, height: 92 },
   { name: "iDoors", src: asset("/studio/clients/i-doors.svg"), width: 342, height: 119 },
   { name: "Fifty Four", src: asset("/studio/clients/fifty-four.svg"), width: 342, height: 112 },

@@ -64,6 +64,7 @@ import {
 } from "./studio-effects";
 import { StudioHexSphere } from "./studio-hex-sphere";
 import {
+  ClientSlotCta,
   DrawnCircle,
   DrawnUnderline,
   FooterMark,
@@ -870,7 +871,7 @@ function Gallery() {
 
 function ClientLogo({ client }: { client: (typeof STUDIO_CLIENTS)[number] }) {
   return (
-    <div className="grid h-[92px] w-[168px] shrink-0 place-items-center rounded border border-[var(--st-line)] transition-colors hover:border-[var(--st-accent-45)] hover:bg-[var(--st-accent-03)] md:h-[120px] md:w-[232px] [&:hover_img]:opacity-100">
+    <div aria-hidden className="grid h-[92px] w-[168px] shrink-0 place-items-center rounded border border-[var(--st-line)] transition-colors hover:border-[var(--st-accent-45)] hover:bg-[var(--st-accent-03)] md:h-[120px] md:w-[232px] [&:hover_img]:opacity-100">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={client.src}
@@ -900,10 +901,11 @@ function Clients() {
         </ul>
         <Reveal delay={0.1}>
           {reduce ? (
-            <div aria-hidden className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] md:gap-4 [&>div]:w-auto">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4 [&>div]:w-auto">
               {STUDIO_CLIENTS.map((c) => (
                 <ClientLogo key={c.src} client={c} />
               ))}
+              <ClientSlotCta />
             </div>
           ) : (
             <LogoSlots />

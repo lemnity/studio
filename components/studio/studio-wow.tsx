@@ -4,10 +4,10 @@
  * Эффекты страницы «Лемнити Студия» по мотивам illan.ru (там они собраны на GSAP + ScrollTrigger +
  * SplitType + Lenis + Lottie). Здесь — без новых зависимостей, на framer-motion и CSS:
  *
- *  - StudioPreloader   — заставка с буквами Lemnity, раз в сутки (как у illan);
+ *  - StudioPreloader   — заставка с буквами Lemnity при каждой загрузке;
  *  - SmoothWheel       — плавная прокрутка колесом на ПК (аналог Lenis, lerp ≈ 0.07);
  *  - LineReveal        — заголовок выезжает из маски построчно с лёгким поворотом (SplitType lines);
- *  - VelocityTicker    — бегущая строка, которая разгоняется от прокрутки и меняет направление;
+ *  - VelocityTicker    — две ленты крест-накрест, разгоняются от прокрутки и меняют направление;
  *  - LogoSlots         — ячейки логотипов клиентов, перелистывающиеся по очереди;
  *  - ParallaxMedia     — картинка сдвигается против курсора;
  *  - DrawnCircle / DrawnUnderline — обводка «от руки» (у illan — Lottie);
@@ -302,7 +302,7 @@ const wrap = (min: number, max: number, v: number) => {
 
 const TICKER_WORDS = ["Сайты", "Интерфейсы", "Брендинг", "Продукты", "Приложения", "Lemnity"] as const;
 
-function TickerRow({ baseVelocity, outline, active }: { baseVelocity: number; outline?: boolean; active: boolean }) {
+function TickerRow({ baseVelocity, lime, active }: { baseVelocity: number; lime?: boolean; active: boolean }) {
   const baseX = useMotionValue(0);
   const { scrollY } = useScroll();
   const velocity = useSpring(useVelocity(scrollY), { damping: 50, stiffness: 400 });
@@ -331,13 +331,13 @@ function TickerRow({ baseVelocity, outline, active }: { baseVelocity: number; ou
               <span key={`${copy}-${i}`} className="flex items-center">
                 <span
                   className={cn(
-                    "px-[0.28em] text-[clamp(52px,9vw,148px)] font-normal leading-[1.08] tracking-[-0.04em]",
-                    outline ? "text-transparent [-webkit-text-stroke:1px_rgba(244,241,236,0.38)]" : "text-[var(--st-text)]",
+                    "px-[0.3em] py-[0.06em] text-[clamp(34px,5.6vw,92px)] font-normal leading-[1.08] tracking-[-0.04em]",
+                    lime ? "text-[var(--st-bg)]" : "text-transparent [-webkit-text-stroke:1px_rgba(244,241,236,0.38)]",
                   )}
                 >
                   {w}
                 </span>
-                <span className="text-[clamp(22px,3vw,44px)] text-[var(--st-accent)]">✦</span>
+                <span className={cn("text-[clamp(16px,2vw,32px)]", lime ? "text-[var(--st-bg)]" : "text-[var(--st-accent)]")}>✦</span>
               </span>
             ))}
           </div>
@@ -352,15 +352,37 @@ export function VelocityTicker() {
   const inView = useInView(ref, { margin: "200px 0px" });
   const reduce = useReducedMotion();
   const run = inView && !reduce;
+  // Ленты шире экрана на 12%: под наклоном их концы иначе не доставали бы до краёв. На узком экране
+  // наклон круче — при малой ширине тёмная лента иначе целиком пряталась бы под лаймовой.
   return (
-    <section aria-hidden ref={ref} className="select-none border-y border-[var(--st-line)] py-6 md:py-10">
-      <TickerRow baseVelocity={-2.2} active={run} />
-      <TickerRow baseVelocity={2.2} outline active={run} />
+    <section aria-hidden ref={ref} className="relative h-[clamp(180px,30vw,420px)] select-none overflow-hidden">
+      <div className="absolute -left-[6%] top-1/2 w-[112%] -translate-y-1/2 rotate-[7deg] border-y md:rotate-[3.5deg] border-[var(--st-line)] bg-[var(--st-surface)]">
+        <TickerRow baseVelocity={2} active={run} />
+      </div>
+      <div className="absolute -left-[6%] top-1/2 z-[1] w-[112%] -translate-y-1/2 -rotate-[8deg] bg-[var(--st-accent)] md:-rotate-[4deg] shadow-[0_24px_60px_rgba(0,0,0,0.6)]">
+        <TickerRow baseVelocity={-2.4} lime active={run} />
+      </div>
     </section>
   );
 }
 
 /* ───────────────────────────── Ячейки логотипов ───────────────────────────── */
+
+/**
+ * Последняя ячейка сетки клиентов — приглашение стать следующим. Клиентов 11, и без неё в сетке
+ * на 2, 3 и 4 колонки оставалась бы пустая дыра; с ней ячеек 12 и ряды заполнены ровно.
+ */
+export function ClientSlotCta() {
+  return (
+    <a
+      href="#contact"
+      className="group flex h-[92px] flex-col items-center justify-center gap-1.5 rounded border border-dashed border-[rgba(244,241,236,0.18)] text-center transition-colors hover:border-[var(--st-accent)] hover:bg-[var(--st-accent-03)] focus-visible:border-[var(--st-accent)] focus-visible:outline-none md:h-[132px]"
+    >
+      <span className="st-micro text-[10px] tracking-[0.24em] text-[var(--st-muted)]">Здесь может быть</span>
+      <span className="text-[15px] transition-colors group-hover:text-[var(--st-accent)] md:text-base">ваш логотип →</span>
+    </a>
+  );
+}
 
 /**
  * Все логотипы клиентов сразу. При входе в экран ячейки открываются шторкой волной, а дальше раз в
@@ -396,7 +418,6 @@ export function LogoSlots() {
   return (
     <div
       ref={ref}
-      aria-hidden
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
       className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4"
@@ -408,6 +429,7 @@ export function LogoSlots() {
         return (
           <div
             key={slot}
+            aria-hidden
             className="relative h-[92px] overflow-hidden rounded border border-[var(--st-line)] transition-colors hover:border-[var(--st-accent-45)] hover:bg-[var(--st-accent-03)] md:h-[132px] [&:hover_img]:opacity-100"
           >
             <AnimatePresence initial={false}>
@@ -436,6 +458,7 @@ export function LogoSlots() {
           </div>
         );
       })}
+      <ClientSlotCta />
     </div>
   );
 }
