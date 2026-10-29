@@ -62,6 +62,7 @@ import {
   VariableProximity,
   useMediaQuery,
 } from "./studio-effects";
+import { StudioGame } from "./studio-game";
 import { StudioHexSphere } from "./studio-hex-sphere";
 import {
   ClientSlotCta,
@@ -164,10 +165,10 @@ html[data-st-intro="play"] .st-preloader { display: flex; }
   background: #f4f1ec;
   color: #0a0a0a;
   --st-text: #0a0a0a;
-  --st-text-72: rgba(10, 10, 10, 0.72);
-  --st-muted: rgba(10, 10, 10, 0.62);
-  --st-line: rgba(10, 10, 10, 0.16);
-  --st-surface: rgba(10, 10, 10, 0.035);
+  --st-text-72: rgba(10, 10, 10, 0.82);
+  --st-muted: rgba(10, 10, 10, 0.72);
+  --st-line: rgba(10, 10, 10, 0.12);
+  --st-surface: #fbfaf7;
   --st-accent: #0a0a0a;
   --st-accent-light: #0a0a0a;
   --st-accent-45: rgba(10, 10, 10, 0.45);
@@ -921,29 +922,56 @@ function Clients() {
 const cardClass =
   "flex h-full flex-col gap-4 rounded border border-[var(--st-line)] bg-[var(--st-surface)] p-5 transition-[border-color,box-shadow] duration-300 hover:border-[var(--st-accent-45)] hover:shadow-[0_0_32px_rgba(196,238,24,0.06)] md:p-6";
 
+/**
+ * Раскладка услуг без дыр: на ПК — три карточки, потом две пошире, потом игры во всю строку
+ * (слева текст, справа игровая сцена); на планшете — 2×2, затем MVP и игры во всю ширину.
+ */
+function serviceSpan(i: number, s: (typeof STUDIO_SERVICES)[number]) {
+  if (s.game) return "md:col-span-2 lg:col-span-6";
+  if (i < 3) return "lg:col-span-2";
+  return i === 4 ? "md:col-span-2 lg:col-span-3" : "lg:col-span-3";
+}
+
+function ServiceBody({ service: s }: { service: (typeof STUDIO_SERVICES)[number] }) {
+  return (
+    <>
+      <h3 className="text-xl font-medium leading-[1.25] tracking-[-0.01em] md:text-[22px]">
+        <VariableProximity text={s.title} />
+      </h3>
+      <p className="text-[15px] leading-[1.65] text-[var(--st-text-72)]">
+        <VariableProximity text={s.text} />
+      </p>
+      <ul aria-label="Что входит" className="m-0 mt-auto grid list-none gap-1.5 p-0 pt-2">
+        {s.deliverables.map((d) => (
+          <li key={d} className="relative pl-[18px] text-[13px] leading-normal before:absolute before:left-0 before:top-[0.6em] before:h-px before:w-2 before:bg-[var(--st-accent)]">
+            <VariableProximity text={d} />
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 function Services() {
   return (
     <section id="services" aria-labelledby="services-title" data-cursor-tone="dark" className="st-light">
       <div className={cn(container, "py-16 md:py-20")}>
-        <SectionHead id="services-title" title="Чем мы занимаемся" text="Сайты, интерфейсы, бренды и цифровые продукты: от идеи до запуска." />
-        <div className="grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
+        <SectionHead id="services-title" title="Чем мы занимаемся" text="Сайты, интерфейсы, бренды, цифровые продукты и игры: от идеи до запуска." />
+        <div className="grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-6">
           {STUDIO_SERVICES.map((s, i) => (
-            <Reveal key={s.title} delay={(i % 3) * 0.08}>
-              <article className={cardClass}>
-                <h3 className="text-xl font-medium leading-[1.25] tracking-[-0.01em] md:text-[22px]">
-                  <VariableProximity text={s.title} />
-                </h3>
-                <p className="text-sm leading-[1.65] text-[var(--st-muted)]">
-                  <VariableProximity text={s.text} />
-                </p>
-                <ul aria-label="Что входит" className="m-0 mt-auto grid list-none gap-1.5 p-0 pt-2">
-                  {s.deliverables.map((d) => (
-                    <li key={d} className="relative pl-[18px] text-[13px] leading-normal before:absolute before:left-0 before:top-[0.6em] before:h-px before:w-2 before:bg-[var(--st-accent)]">
-                      <VariableProximity text={d} />
-                    </li>
-                  ))}
-                </ul>
-              </article>
+            <Reveal key={s.title} delay={(i % 3) * 0.08} className={serviceSpan(i, s)}>
+              {s.game ? (
+                <article className={cn(cardClass, "md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] md:gap-8")}>
+                  <div className="flex flex-col gap-4">
+                    <ServiceBody service={s} />
+                  </div>
+                  <StudioGame className="order-first h-[180px] md:order-none md:h-auto md:min-h-[280px]" />
+                </article>
+              ) : (
+                <article className={cardClass}>
+                  <ServiceBody service={s} />
+                </article>
+              )}
             </Reveal>
           ))}
         </div>
@@ -954,7 +982,8 @@ function Services() {
               <VariableProximity text="Как мы работаем" />
             </h3>
           </Reveal>
-          <ol className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
+          {/* На двух колонках пятый шаг растянут на всю ширину — иначе он стоял бы в строке один. */}
+          <ol className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 sm:[&>li:last-child]:col-span-2 lg:[&>li:last-child]:col-span-1">
             {STUDIO_PROCESS.map((p, i) => (
               <li key={p.title} className="flex [&>div]:flex [&>div]:min-w-0 [&>div]:flex-1">
                 <Reveal delay={i * 0.06}>

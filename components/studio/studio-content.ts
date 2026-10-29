@@ -146,7 +146,13 @@ export const STUDIO_CLIENTS: readonly { name: string; src: string; width: number
 /** Фильтр логотипа клиента на тёмном фоне: белый силуэт, если у логотипа нет своего. */
 export const clientLogoFilter = (client: { filter?: string }) => client.filter ?? "brightness(0) invert(1)";
 
-export type StudioService = { title: string; text: string; deliverables: readonly string[] };
+export type StudioService = {
+  title: string;
+  text: string;
+  deliverables: readonly string[];
+  /** В карточке — живая мини-игра (studio-game.tsx). */
+  game?: boolean;
+};
 
 export const STUDIO_SERVICES: readonly StudioService[] = [
   {
@@ -173,6 +179,12 @@ export const STUDIO_SERVICES: readonly StudioService[] = [
     title: "Цифровой продукт и MVP",
     text: "Помогаем превратить идею в работающий продукт: от гипотезы и прототипа до первой версии. Мы сами запустили платформу Lemnity и знаем, что на старте важно, а что можно отложить.",
     deliverables: ["уточнение идеи и состава первой версии", "кликабельный прототип", "дизайн и разработка MVP", "план развития продукта", "запуск и первые доработки"],
+  },
+  {
+    title: "Разработка игр",
+    text: "Делаем казуальные и мини-игры для браузера, Telegram и промо-акций, а также коммерческие игры под задачи бизнеса. Придумываем игровой цикл, рисуем графику и доводим до релиза. Попробуйте: игра в этой карточке живая.",
+    deliverables: ["казуальные игры для браузера и телефона", "мини-игры для Telegram, сайтов и акций", "коммерческие игры с монетизацией", "геймдизайн, графика и анимация", "релиз и поддержка"],
+    game: true,
   },
 ];
 
