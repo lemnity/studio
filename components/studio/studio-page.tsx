@@ -414,7 +414,7 @@ function Hero({ onContact }: { onContact: () => void }) {
               ))}
             </h1>
             <motion.p {...fadeUp(0.7, 0.8)} className="mt-6 max-w-[440px] text-base leading-[1.55] text-[var(--st-text-72)] md:mt-8 md:max-w-[380px] md:text-lg lg:max-w-[440px]">
-              <VariableProximity text="Создаём сайты, интерфейсы, бренды и цифровые продукты, которые помогают людям и бизнесу расти." />
+              <VariableProximity text="Создаём сайты, интерфейсы, бренды, цифровые продукты и казуальные игры, которые помогают людям и бизнесу расти." />
             </motion.p>
             <motion.div {...fadeUp(0.8, 0.8)} className="mt-8 flex flex-wrap items-center gap-6 md:mt-10 sm:gap-8">
               <MagneticButton>
