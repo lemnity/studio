@@ -119,7 +119,7 @@ const STYLES = `
 .lmnt-studio ::selection { background: var(--st-accent); color: var(--st-bg); }
 .lmnt-studio [id] { scroll-margin-top: 73px; }
 @media (min-width: 900px) { .lmnt-studio [id] { scroll-margin-top: 89px; } }
-.st-micro { font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; font-weight: 500; }
+.st-micro { font-size: 16px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; }
 .st-title { font-size: 38px; font-weight: 400; letter-spacing: -0.025em; line-height: 1.05; }
 @media (min-width: 640px) { .st-title { font-size: 46px; } }
 @media (min-width: 1200px) { .st-title { font-size: 56px; } }
@@ -198,7 +198,7 @@ function SectionHead({ id, title, text }: { id: string; title: string; text: str
         <h2 id={id} className="st-title">
           <LineReveal text={title} />
         </h2>
-        <p className="max-w-[300px] text-[13px] leading-relaxed text-[var(--st-muted)] md:pb-1">
+        <p className="max-w-[300px] text-[16px] leading-relaxed text-[var(--st-muted)] md:pb-1">
           <VariableProximity text={text} />
         </p>
       </div>
@@ -237,12 +237,13 @@ function StudioHeader({ onContact }: { onContact: () => void }) {
         )}
       >
         <motion.div initial={{ opacity: 0, y: -24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}>
-          <div className={cn(container, "grid h-[72px] grid-cols-[1fr_auto] items-center md:h-[88px] md:grid-cols-[1fr_auto_1fr]")}>
+          <div className={cn(container, "grid h-[72px] grid-cols-[1fr_auto] items-center md:h-[88px] xl:grid-cols-[1fr_auto_1fr]")}>
             <a href="#top" aria-label="Лемнити Студия, наверх" className="flex items-center gap-3 justify-self-start">
               <LemnityWordmark className="h-[18px] w-auto text-[var(--st-text)] md:h-5" />
-              <span className="st-micro border-l border-[var(--st-line)] pl-3 text-[10px] text-[var(--st-muted)]">Студия</span>
+              <span className="st-micro border-l border-[var(--st-line)] pl-3 text-[16px] text-[var(--st-muted)]">Студия</span>
             </a>
-            <nav aria-label="Разделы" className="hidden items-center gap-10 md:flex lg:gap-12">
+            {/* На 16px меню и фраза справа помещаются в строку только на широком экране; уже — кнопка меню. */}
+            <nav aria-label="Разделы" className="hidden items-center gap-8 xl:flex 2xl:gap-12">
               {NAV.map((n) => (
                 <a key={n.href} href={n.href} className="st-micro st-ul transition-colors hover:text-[var(--st-accent-light)]">
                   <VariableProximity text={n.label} />
@@ -251,12 +252,12 @@ function StudioHeader({ onContact }: { onContact: () => void }) {
             </nav>
             <div className="flex items-center gap-4 justify-self-end">
               <button type="button" aria-label="Открыть меню" onClick={() => setOpen(true)} className="st-round">
-                <Menu className="h-4 w-4 md:hidden" />
-                <MoreHorizontal className="hidden h-4 w-4 md:block" />
+                <Menu className="h-4 w-4 xl:hidden" />
+                <MoreHorizontal className="hidden h-4 w-4 xl:block" />
               </button>
-              <div className="hidden lg:block">
-                <p className="st-micro text-[10px] leading-[1.6] tracking-[0.2em]">Создавать</p>
-                <p className="st-micro text-[10px] leading-[1.6] tracking-[0.2em]">больше, чем ожидают</p>
+              <div className="hidden min-[1400px]:block">
+                <p className="st-micro text-[16px] leading-[1.6] tracking-[0.12em]">Создавать</p>
+                <p className="st-micro text-[16px] leading-[1.6] tracking-[0.12em]">больше, чем ожидают</p>
               </div>
             </div>
           </div>
@@ -307,7 +308,7 @@ function StudioHeader({ onContact }: { onContact: () => void }) {
               <div className="mt-auto border-t border-[var(--st-line)] pt-6">
                 <p className="st-micro mb-4 text-[var(--st-muted)]">Контакты</p>
                 <div className="flex flex-col gap-3">
-                  <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 text-[15px] hover:text-[var(--st-accent-light)]">
+                  <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 text-[16px] hover:text-[var(--st-accent-light)]">
                     <Send className="h-5 w-5 text-[var(--st-accent)]" /> Telegram
                   </a>
                   <button
@@ -316,7 +317,7 @@ function StudioHeader({ onContact }: { onContact: () => void }) {
                       setOpen(false);
                       onContact();
                     }}
-                    className="inline-flex items-center gap-3 text-left text-[15px] hover:text-[var(--st-accent-light)]"
+                    className="inline-flex items-center gap-3 text-left text-[16px] hover:text-[var(--st-accent-light)]"
                   >
                     <Mail className="h-5 w-5 text-[var(--st-accent)]" /> {STUDIO_CONTACT_EMAIL}
                   </button>
@@ -390,7 +391,7 @@ function Hero({ onContact }: { onContact: () => void }) {
       <div className={cn(container, "relative flex flex-col pb-12 pt-[120px] md:min-h-[max(100vh,720px)] md:pb-20 md:pt-[150px] lg:pt-[170px]")}>
         <motion.div style={{ y: copyY, opacity: copyOpacity }} className="relative z-[3]">
           <div className="md:max-w-[52%] lg:max-w-[50%]">
-            <motion.p {...fadeUp(0.2)} className="st-micro text-[10px] tracking-[0.3em] text-[var(--st-muted)] md:text-[11px]">
+            <motion.p {...fadeUp(0.2)} className="st-micro text-[16px] tracking-[0.12em] text-[var(--st-muted)]">
               <VariableProximity text="Лемнити Студия · Разработка · UI/UX · Брендинг" />
             </motion.p>
             <h1 className="mt-5 text-[clamp(52px,15vw,72px)] font-normal leading-[0.95] tracking-[-0.04em] md:mt-6 md:text-[clamp(72px,8.6vw,150px)]">
@@ -420,7 +421,7 @@ function Hero({ onContact }: { onContact: () => void }) {
               <MagneticButton>
                 <a
                   href="#work"
-                  className="group inline-flex items-center gap-4 rounded-full border border-[var(--st-accent)] px-7 py-3.5 text-[15px] font-medium transition-colors hover:border-[var(--st-accent-light)] hover:bg-[rgba(196,238,24,0.1)] md:px-9 md:py-[18px]"
+                  className="group inline-flex items-center gap-4 rounded-full border border-[var(--st-accent)] px-7 py-3.5 text-[16px] font-medium transition-colors hover:border-[var(--st-accent-light)] hover:bg-[rgba(196,238,24,0.1)] md:px-9 md:py-[18px]"
                 >
                   <VariableProximity text="Смотреть работы" />
                   <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
@@ -430,7 +431,7 @@ function Hero({ onContact }: { onContact: () => void }) {
                 <button
                   type="button"
                   onClick={onContact}
-                  className="st-ul text-[15px] underline decoration-[rgba(244,241,236,0.5)] underline-offset-4 transition-colors hover:text-[var(--st-accent-light)] hover:decoration-transparent"
+                  className="st-ul text-[16px] underline decoration-[rgba(244,241,236,0.5)] underline-offset-4 transition-colors hover:text-[var(--st-accent-light)] hover:decoration-transparent"
                 >
                   Написать нам
                 </button>
@@ -440,7 +441,7 @@ function Hero({ onContact }: { onContact: () => void }) {
 
             <motion.div {...fadeIn(0.9)} className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-1 md:hidden">
               {side.map((t) => (
-                <span key={t} className="st-micro text-[10px] leading-[1.9] tracking-[0.22em] text-[var(--st-muted)]">
+                <span key={t} className="st-micro text-[16px] leading-[1.9] tracking-[0.12em] text-[var(--st-muted)]">
                   {t}
                 </span>
               ))}
@@ -455,18 +456,18 @@ function Hero({ onContact }: { onContact: () => void }) {
         <div className="absolute bottom-14 right-12 top-[140px] z-[3] hidden w-[120px] flex-col justify-between md:flex lg:bottom-[72px] lg:top-[170px]">
           <div>
             {STUDIO_HERO_SIDE.top.map((t, i) => (
-              <motion.p key={t} {...fadeIn(0.6 + i * 0.08)} className="st-micro text-[10px] leading-[1.9] tracking-[0.22em]">
+              <motion.p key={t} {...fadeIn(0.6 + i * 0.08)} className="st-micro text-[16px] leading-[1.9] tracking-[0.12em]">
                 {t}
               </motion.p>
             ))}
             <motion.div {...fadeIn(0.84)}>
               <div className="my-5 h-px w-5 bg-[var(--st-muted)]" />
-              <p className="st-micro text-[10px] leading-[1.9] tracking-[0.22em]">{STUDIO_HERO_SIDE.since}</p>
+              <p className="st-micro text-[16px] leading-[1.9] tracking-[0.12em]">{STUDIO_HERO_SIDE.since}</p>
             </motion.div>
           </div>
           <div>
             {STUDIO_HERO_SIDE.places.map((t, i) => (
-              <motion.p key={t} {...fadeIn(0.9 + i * 0.08)} className="st-micro text-[10px] leading-[1.9] tracking-[0.22em]">
+              <motion.p key={t} {...fadeIn(0.9 + i * 0.08)} className="st-micro text-[16px] leading-[1.9] tracking-[0.12em]">
                 {t}
               </motion.p>
             ))}
@@ -567,9 +568,9 @@ function FlagshipRow({ project }: { project: StudioProject }) {
           rowHover,
         )}
       >
-        <span className="self-start pt-2 text-xs tracking-[0.12em] text-[var(--st-accent)]">{project.number}</span>
+        <span className="self-start pt-2 text-[16px] tracking-[0.12em] text-[var(--st-accent)]">{project.number}</span>
         <div className="min-w-0">
-          <span className="mb-5 inline-block rounded-full bg-[var(--st-accent)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--st-bg)] md:mb-6">
+          <span className="mb-5 inline-block rounded-full bg-[var(--st-accent)] px-3 py-1 text-[16px] font-semibold uppercase tracking-[0.12em] text-[var(--st-bg)] md:mb-6">
             Наш продукт
           </span>
           <h3 className="m-0 leading-none">
@@ -580,12 +581,12 @@ function FlagshipRow({ project }: { project: StudioProject }) {
               <span className="text-5xl md:text-7xl">{project.title}</span>
             )}
           </h3>
-          <p className="mt-5 max-w-[440px] text-[15px] leading-normal text-[rgba(244,241,236,0.8)] md:mt-6 md:text-lg">
+          <p className="mt-5 max-w-[440px] text-[16px] leading-normal text-[rgba(244,241,236,0.8)] md:mt-6 md:text-lg">
             <VariableProximity text={project.description} />
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-6">
             <ArrowCircle size={52} />
-            <span className="text-xs text-[var(--st-muted)]">{project.tags.map((t) => `#${t}`).join("  ")}</span>
+            <span className="text-[16px] text-[var(--st-muted)]">{project.tags.map((t) => `#${t}`).join("  ")}</span>
           </div>
         </div>
         <div className="relative col-start-2 aspect-[16/10] overflow-hidden rounded-lg border border-[var(--st-line)] shadow-[0_40px_80px_-40px_var(--st-accent-35)] md:col-start-auto">
@@ -633,15 +634,15 @@ function ProjectRow({ project, onHover }: { project: StudioProject; onHover: (p:
           rowFill,
         )}
       >
-        <span className={cn("pt-2 text-xs tracking-[0.12em] text-[var(--st-muted)] [grid-area:num] md:pt-0", onFill)}>{project.number}</span>
+        <span className={cn("pt-2 text-[16px] tracking-[0.12em] text-[var(--st-muted)] [grid-area:num] md:pt-0", onFill)}>{project.number}</span>
         <h3 className={cn("text-[26px] font-normal leading-[1.1] tracking-[-0.02em] [grid-area:title] md:text-[34px] lg:text-[40px]", onFill)}>
           <VariableProximity text={project.title} />
         </h3>
         <div className="min-w-0 [grid-area:desc]">
-          <p className={cn("max-w-[420px] text-sm leading-[1.55] text-[var(--st-text-72)]", onFill)}>
+          <p className={cn("max-w-[420px] text-[16px] leading-[1.55] text-[var(--st-text-72)]", onFill)}>
             <VariableProximity text={project.description} />
           </p>
-          <p className={cn("mt-1.5 text-xs text-[var(--st-muted)]", onFill)}>{project.tags.map((t) => `#${t}`).join("  ")}</p>
+          <p className={cn("mt-1.5 text-[16px] text-[var(--st-muted)]", onFill)}>{project.tags.map((t) => `#${t}`).join("  ")}</p>
         </div>
         <div className="relative mt-1 aspect-[16/10] overflow-hidden rounded border border-[var(--st-line)] [grid-area:thumb] md:hidden">
           <ProjectImage project={project} />
@@ -667,8 +668,8 @@ function Projects() {
   const x = useSpring(px, { stiffness: 220, damping: 26, mass: 0.5 });
   const y = useSpring(py, { stiffness: 220, damping: 26, mass: 0.5 });
   const follow = (e: React.PointerEvent) => {
-    // Отступ больше радиуса круга курсора «Смотреть» (48px), чтобы превью не наезжало на него.
-    px.set(e.clientX + 64);
+    // Отступ больше радиуса круга курсора «Смотреть» (64px), чтобы превью не наезжало на него.
+    px.set(e.clientX + 80);
     py.set(e.clientY - PREVIEW_H / 2);
   };
 
@@ -779,7 +780,7 @@ function Lightbox({ index, onClose, onChange }: { index: number | null; onClose:
             <span aria-live="polite" className="st-micro shrink-0 tabular-nums text-[var(--st-accent)]">
               {pad(index + 1)} / {pad(total)}
             </span>
-            <h2 id="st-lightbox-title" className="min-w-0 flex-1 truncate text-sm text-[var(--st-muted)]">
+            <h2 id="st-lightbox-title" className="min-w-0 flex-1 truncate text-[16px] text-[var(--st-muted)]">
               {work.alt}
             </h2>
             <button ref={closeRef} type="button" aria-label="Закрыть просмотр" onClick={onClose} className="st-round shrink-0">
@@ -938,12 +939,12 @@ function ServiceBody({ service: s }: { service: (typeof STUDIO_SERVICES)[number]
       <h3 className="text-xl font-medium leading-[1.25] tracking-[-0.01em] md:text-[22px]">
         <VariableProximity text={s.title} />
       </h3>
-      <p className="text-[15px] leading-[1.65] text-[var(--st-text-72)]">
+      <p className="text-[16px] leading-[1.65] text-[var(--st-text-72)]">
         <VariableProximity text={s.text} />
       </p>
       <ul aria-label="Что входит" className="m-0 mt-auto grid list-none gap-1.5 p-0 pt-2">
         {s.deliverables.map((d) => (
-          <li key={d} className="relative pl-[18px] text-[13px] leading-normal before:absolute before:left-0 before:top-[0.6em] before:h-px before:w-2 before:bg-[var(--st-accent)]">
+          <li key={d} className="relative pl-[18px] text-[16px] leading-normal before:absolute before:left-0 before:top-[0.6em] before:h-px before:w-2 before:bg-[var(--st-accent)]">
             <VariableProximity text={d} />
           </li>
         ))}
@@ -988,13 +989,13 @@ function Services() {
               <li key={p.title} className="flex [&>div]:flex [&>div]:min-w-0 [&>div]:flex-1">
                 <Reveal delay={i * 0.06}>
                   <div className={cn(cardClass, "flex-1 gap-2.5")}>
-                    <span aria-hidden className="text-[13px] tracking-[0.2em] text-[var(--st-accent)]">
+                    <span aria-hidden className="text-[16px] tracking-[0.12em] text-[var(--st-accent)]">
                       {pad(i + 1)}
                     </span>
                     <h4 className="text-[17px] font-medium leading-[1.3]">
                       <VariableProximity text={p.title} />
                     </h4>
-                    <p className="text-[13px] leading-[1.6] text-[var(--st-muted)]">
+                    <p className="text-[16px] leading-[1.6] text-[var(--st-muted)]">
                       <VariableProximity text={p.text} />
                     </p>
                   </div>
@@ -1080,7 +1081,7 @@ function Stat({ stat }: { stat: StudioStat }) {
   return (
     <div>
       {stat.kind === "number" ? <CountUp value={stat.value} suffix={stat.suffix} /> : <InfinityMark />}
-      <p className="st-micro mt-3 whitespace-nowrap text-[10px] tracking-[0.2em] opacity-80">
+      <p className="st-micro mt-3 whitespace-nowrap text-[16px] tracking-[0.12em] opacity-80">
         <VariableProximity text={stat.label} />
       </p>
     </div>
@@ -1152,7 +1153,7 @@ function CreateTogether({ onContact }: { onContact: () => void }) {
       </span>
       <span aria-hidden className="transition-colors duration-300 group-hover:text-[var(--st-accent-light)]">
         {["Давайте", "создадим", "что-то вместе"].map((line, i, all) => (
-          <span key={line} className="st-micro flex items-center gap-3 text-[10px] leading-[1.9] tracking-[0.2em]">
+          <span key={line} className="st-micro flex items-center gap-3 text-[16px] leading-[1.9] tracking-[0.12em]">
             <VariableProximity text={line} />
             {i === all.length - 1 ? <Dot /> : null}
           </span>
@@ -1178,14 +1179,14 @@ function About({ onContact }: { onContact: () => void }) {
                 </DrawnUnderline>
               </span>
             </h2>
-            <p className="mt-6 max-w-[360px] text-sm leading-[1.7] text-[var(--st-text-72)]">
+            <p className="mt-6 max-w-[360px] text-[16px] leading-[1.7] text-[var(--st-text-72)]">
               <VariableProximity text="Больше 12 лет в дизайне, продуктовой разработке и визуальных коммуникациях. Соединяем стратегию, дизайн и технологии, чтобы делать продукты с реальной пользой. На этом опыте выросла и наша платформа Lemnity." />
             </p>
             <span className="mt-7 flex items-center gap-3">
               <button
                 type="button"
                 onClick={onContact}
-                className="st-ul text-sm underline decoration-[rgba(244,241,236,0.5)] underline-offset-4 transition-colors hover:text-[var(--st-accent-light)] hover:decoration-transparent"
+                className="st-ul text-[16px] underline decoration-[rgba(244,241,236,0.5)] underline-offset-4 transition-colors hover:text-[var(--st-accent-light)] hover:decoration-transparent"
               >
                 Обсудить проект
               </button>
@@ -1246,7 +1247,7 @@ function Faq() {
                   </span>
                   <Plus className="st-faq-icon h-5 w-5 shrink-0 text-[var(--st-accent)] transition-transform duration-300" />
                 </summary>
-                <p className="max-w-[720px] pb-6 text-[15px] leading-[1.7] text-[var(--st-muted)]">
+                <p className="max-w-[720px] pb-6 text-[16px] leading-[1.7] text-[var(--st-muted)]">
                   <VariableProximity text={f.a} />
                 </p>
               </details>
@@ -1305,10 +1306,10 @@ function Contact() {
             <VariableProximity text="Пара слов о задаче, и мы вернёмся с идеями, сроками и следующим шагом. Обычно отвечаем в течение дня." />
           </p>
           <div className="mt-10 flex flex-col gap-3">
-            <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className="st-ul inline-flex w-fit items-center gap-3 text-[15px] hover:text-[var(--st-accent-light)]">
+            <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className="st-ul inline-flex w-fit items-center gap-3 text-[16px] hover:text-[var(--st-accent-light)]">
               <Send className="h-5 w-5 text-[var(--st-accent)]" /> Telegram
             </a>
-            <a href={`mailto:${STUDIO_CONTACT_EMAIL}`} className="st-ul inline-flex w-fit items-center gap-3 text-[15px] hover:text-[var(--st-accent-light)]">
+            <a href={`mailto:${STUDIO_CONTACT_EMAIL}`} className="st-ul inline-flex w-fit items-center gap-3 text-[16px] hover:text-[var(--st-accent-light)]">
               <Mail className="h-5 w-5 text-[var(--st-accent)]" /> {STUDIO_CONTACT_EMAIL}
             </a>
           </div>
@@ -1326,7 +1327,7 @@ function Contact() {
                     aria-pressed={topic === t}
                     onClick={() => setTopic(t)}
                     className={cn(
-                      "rounded-full border px-4 py-2 text-sm transition-colors",
+                      "rounded-full border px-4 py-2 text-[16px] transition-colors",
                       topic === t
                         ? "border-[var(--st-accent)] bg-[var(--st-accent)] text-[var(--st-bg)]"
                         : "border-[var(--st-line)] text-[var(--st-muted)] hover:border-[var(--st-accent-45)] hover:text-[var(--st-text)]",
@@ -1346,19 +1347,19 @@ function Contact() {
               <textarea id="st-message" className="st-input min-h-28 resize-y" placeholder="Что делаем, для кого и к какому сроку" value={message} onChange={(e) => setMessage(e.target.value)} maxLength={4000} />
             </div>
             {error ? (
-              <p role="alert" className="mt-4 text-sm text-[#ff7b6b]">
+              <p role="alert" className="mt-4 text-[16px] text-[#ff7b6b]">
                 {error}
               </p>
             ) : null}
             <MagneticButton strength={6}>
-              <button type="submit" className="group mt-8 inline-flex items-center gap-4 rounded-full bg-[var(--st-accent)] py-2 pl-7 pr-2 text-[15px] font-semibold text-[var(--st-bg)] transition-transform hover:-translate-y-0.5">
+              <button type="submit" className="group mt-8 inline-flex items-center gap-4 rounded-full bg-[var(--st-accent)] py-2 pl-7 pr-2 text-[16px] font-semibold text-[var(--st-bg)] transition-transform hover:-translate-y-0.5">
                 Отправить
                 <span className="grid h-10 w-10 place-items-center rounded-full bg-[var(--st-bg)] text-[var(--st-accent)] transition-transform group-hover:translate-x-1">
                   <ArrowRight className="h-4 w-4" />
                 </span>
               </button>
             </MagneticButton>
-            <p className="mt-5 text-xs leading-relaxed text-[var(--st-muted)]">
+            <p className="mt-5 text-[16px] leading-relaxed text-[var(--st-muted)]">
               Нажимая кнопку, вы соглашаетесь с{" "}
               <a href={STUDIO_PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-[var(--st-text)]">
                 политикой конфиденциальности
@@ -1424,7 +1425,7 @@ function FloatingCta({ onContact }: { onContact: () => void }) {
             type="button"
             onClick={onContact}
             className={cn(
-              "st-beat-host pointer-events-auto inline-flex h-[52px] items-center gap-2.5 rounded-full pl-6 pr-2 text-[15px] font-semibold tracking-[-0.01em] shadow-[0_12px_40px_rgba(0,0,0,0.55),0_0_0_1px_var(--st-accent-35)] transition-[transform,box-shadow,background-color,color] duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_48px_rgba(0,0,0,0.6),0_0_24px_var(--st-accent-35)] md:h-14 md:pl-7 md:text-base",
+              "st-beat-host pointer-events-auto inline-flex h-[52px] items-center gap-2.5 rounded-full pl-6 pr-2 text-[16px] font-semibold tracking-[-0.01em] shadow-[0_12px_40px_rgba(0,0,0,0.55),0_0_0_1px_var(--st-accent-35)] transition-[transform,box-shadow,background-color,color] duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_48px_rgba(0,0,0,0.6),0_0_24px_var(--st-accent-35)] md:h-14 md:pl-7 md:text-base",
               onLight ? "bg-[var(--st-bg)] text-[var(--st-accent)]" : "bg-[var(--st-accent)] text-[var(--st-bg)]",
             )}
           >
@@ -1446,7 +1447,7 @@ function FloatingCta({ onContact }: { onContact: () => void }) {
 }
 
 function StudioFooter() {
-  const link = "st-micro text-[10px] tracking-[0.2em] text-[var(--st-muted)] transition-colors hover:text-[var(--st-text)]";
+  const link = "st-micro text-[16px] tracking-[0.12em] text-[var(--st-muted)] transition-colors hover:text-[var(--st-text)]";
   return (
     <footer className="border-t border-[var(--st-line)]">
       <div className={cn(container, "pt-14 md:pt-20")}>
@@ -1455,9 +1456,9 @@ function StudioFooter() {
       <div className={cn(container, "grid items-center justify-items-center gap-y-6 py-10 md:grid-cols-[1fr_auto_1fr] md:justify-items-stretch md:py-8")}>
         <div className="flex items-center gap-5 md:justify-self-start">
           <LemnityWordmark className="h-4 w-auto text-[var(--st-text)]" />
-          <span className="st-micro text-[10px] tracking-[0.15em] text-[var(--st-muted)]">© {new Date().getFullYear()}</span>
+          <span className="st-micro text-[16px] tracking-[0.15em] text-[var(--st-muted)]">© {new Date().getFullYear()}</span>
         </div>
-        <p className="st-micro text-center text-[10px] tracking-[0.3em] text-[var(--st-muted)]">Дизайн. Продукты. Идеи.</p>
+        <p className="st-micro text-center text-[16px] tracking-[0.12em] text-[var(--st-muted)]">Дизайн. Продукты. Идеи.</p>
         <nav aria-label="Ссылки" className="flex flex-wrap items-center justify-center gap-6 md:justify-self-end md:gap-8">
           <a href={STUDIO_PLATFORM_URL} target="_blank" rel="noopener noreferrer" className={link}>Платформа</a>
           <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className={link}>Telegram</a>

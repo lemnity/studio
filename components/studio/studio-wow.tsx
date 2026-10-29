@@ -125,8 +125,8 @@ export function StudioPreloader() {
       }}
     >
       <div className="flex items-center justify-between gap-6">
-        <span className="st-micro text-[10px] tracking-[0.3em] text-[var(--st-muted)]">Лемнити Студия</span>
-        <span className="st-micro hidden text-[10px] tracking-[0.3em] text-[var(--st-muted)] sm:inline">Дизайн · Продукты · Идеи</span>
+        <span className="st-micro text-[16px] tracking-[0.12em] text-[var(--st-muted)]">Лемнити Студия</span>
+        <span className="st-micro hidden text-[16px] tracking-[0.12em] text-[var(--st-muted)] sm:inline">Дизайн · Продукты · Идеи</span>
       </div>
 
       <svg viewBox="0 0 169 38" className="mx-auto block w-[min(78vw,880px)] overflow-hidden text-[var(--st-text)]" fill="currentColor">
@@ -378,8 +378,8 @@ export function ClientSlotCta() {
       href="#contact"
       className="group flex h-[92px] flex-col items-center justify-center gap-1.5 rounded border border-dashed border-[rgba(244,241,236,0.18)] text-center transition-colors hover:border-[var(--st-accent)] hover:bg-[var(--st-accent-03)] focus-visible:border-[var(--st-accent)] focus-visible:outline-none md:h-[132px]"
     >
-      <span className="st-micro text-[10px] tracking-[0.24em] text-[var(--st-muted)]">Здесь может быть</span>
-      <span className="text-[15px] transition-colors group-hover:text-[var(--st-accent)] md:text-base">ваш логотип →</span>
+      <span className="st-micro text-[16px] tracking-[0.12em] text-[var(--st-muted)]">Здесь может быть</span>
+      <span className="text-[16px] transition-colors group-hover:text-[var(--st-accent)] md:text-base">ваш логотип →</span>
     </a>
   );
 }

@@ -58,7 +58,7 @@ const STYLES: Record<HexTheme, Style> = {
     faces: true,
     outline: 0,
     hand: true,
-    hint: { text: "👆 Нажмите на соты", bg: "#ff6fa5", fg: "#fff" },
+    hint: { text: "👆 Нажмите на соты", bg: "#3a1e2c", fg: "#fff" },
     praise: ["Супер!", "Вау!", "Отлично!", "Комбо!"],
     shake: false,
     juicy: true,
@@ -84,7 +84,7 @@ const STYLES: Record<HexTheme, Style> = {
     faces: true,
     outline: 0.11,
     hand: true,
-    hint: { text: "👆 ЖМИ НА СОТЫ!", bg: "#ffbe0b", fg: "#2b1036" },
+    hint: { text: "👆 ЖМИ НА СОТЫ!", bg: "#2b1036", fg: "#fff" },
     praise: ["СУПЕР!", "ВАУ!", "КОМБО!", "МЕГА!", "ОГОНЬ!"],
     shake: true,
     juicy: true,
@@ -106,9 +106,13 @@ const STYLES: Record<HexTheme, Style> = {
 };
 
 const ROWS = 5;
+/** Верхняя полоса под подсказку и счёт в долях высоты сцены: соты под неё не заходят. */
+const TOP = 0.17;
 const S3 = Math.sqrt(3);
 /** Через сколько секунд без нажатий игра снова играет сама. */
 const AUTOPLAY_AFTER = 4;
+/** Минимальный кегль любого текста в игре, px: на телефоне сцена низкая, и доли высоты дают мелочь. */
+const MIN_TEXT = 16;
 
 /** `squash` — сплющивание после приземления, плавно гаснет до нуля. */
 type Cell = { color: number; off: number; vy: number; blink: number; wob: number; squash: number };
@@ -503,31 +507,42 @@ export function startHexPop(canvas: HTMLCanvasElement, options: HexPopOptions = 
     g.stroke();
   }
 
+  /** Подсказка в верхней полосе: крупная контрастная плашка, мягко пульсирует, стрелка показывает на поле. */
   function pill(time: number) {
-    const size = H * 0.05;
+    const size = Math.max(MIN_TEXT, H * 0.062);
     const { text, bg, fg } = style.hint;
     g.font = `600 ${Math.round(size)}px ${font}`;
-    const width = g.measureText(text).width;
-    const pad = size * 0.8;
+    const width = g.measureText(text).width + size * 1.6;
     const h = size * 2;
     const x = H * 0.05;
-    const y = H * 0.05;
-    g.globalAlpha = theme === "vanilla" ? 1 : 0.88 + 0.12 * Math.sin(time * 4);
+    const y = (H * TOP - h) / 2 + H * 0.01;
+    const pulse = theme === "vanilla" ? 1 : 1 + 0.035 * Math.sin(time * 3.2);
+    g.save();
+    g.translate(x + width / 2, y + h / 2);
+    g.scale(pulse, pulse);
+    g.shadowColor = "rgba(0, 0, 0, 0.18)";
+    g.shadowBlur = size * 0.6;
+    g.shadowOffsetY = size * 0.15;
     g.fillStyle = bg;
     g.beginPath();
-    g.roundRect(x, y, width + pad * 2, h, theme === "vanilla" ? 3 : h / 2);
+    g.roundRect(-width / 2, -h / 2, width, h, theme === "vanilla" ? 3 : h / 2);
     g.fill();
-    if (theme === "super") {
-      g.strokeStyle = ink;
-      g.lineWidth = size * 0.12;
-      g.stroke();
-    }
-    g.globalAlpha = 1;
+    g.shadowColor = "transparent";
+    // Стрелка вниз, на поле; покачивается в такт пульсу.
+    const bob = Math.sin(time * 3.2) * size * 0.12;
+    g.beginPath();
+    g.moveTo(-width / 2 + size * 1.1, h / 2 - 1);
+    g.lineTo(-width / 2 + size * 1.6, h / 2 + size * 0.45 + bob);
+    g.lineTo(-width / 2 + size * 2.1, h / 2 - 1);
+    g.closePath();
+    g.fill();
     g.fillStyle = fg;
     g.textBaseline = "middle";
-    g.textAlign = "left";
-    g.fillText(text, x + pad, y + h / 2 + 1);
+    g.textAlign = "center";
+    g.fillText(text, 0, 1);
+    g.restore();
     g.textBaseline = "alphabetic";
+    g.textAlign = "left";
   }
 
   function draw(time: number) {
@@ -592,7 +607,7 @@ export function startHexPop(canvas: HTMLCanvasElement, options: HexPopOptions = 
     g.textAlign = "center";
     for (const f of floats) {
       g.globalAlpha = Math.min(1, f.life * 1.5);
-      const size = R * (f.big ? (theme === "super" ? 1.05 : 0.8) : 0.6);
+      const size = Math.max(MIN_TEXT, R * (f.big ? (theme === "super" ? 1.05 : 0.8) : 0.6));
       g.font = `${theme === "modern" ? 500 : 800} ${Math.round(size)}px ${font}`;
       g.lineJoin = "round";
       if (theme === "modern") {
@@ -655,10 +670,10 @@ export function startHexPop(canvas: HTMLCanvasElement, options: HexPopOptions = 
     }
     g.restore();
 
-    g.font = `${theme === "modern" ? 500 : 700} ${Math.round(H * 0.075)}px ${font}`;
+    g.font = `${theme === "modern" ? 500 : 700} ${Math.round(Math.max(MIN_TEXT, H * 0.075))}px ${font}`;
     g.textAlign = "right";
     g.fillStyle = ink;
-    g.fillText(theme === "modern" ? String(score).padStart(5, "0") : String(score), W - H * 0.06, H * 0.13);
+    g.fillText(theme === "modern" ? String(score).padStart(5, "0") : String(score), W - H * 0.06, H * TOP * 0.66);
     g.textAlign = "left";
     if (idle >= AUTOPLAY_AFTER) pill(time);
   }
@@ -671,12 +686,12 @@ export function startHexPop(canvas: HTMLCanvasElement, options: HexPopOptions = 
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    R = (H * 0.8) / ((ROWS + 0.5) * S3);
+    R = (H * (1 - TOP - 0.05)) / ((ROWS + 0.5) * S3);
     const nextCols = Math.max(5, Math.floor((W * 0.94 - 2 * R) / (1.5 * R)) + 1);
     const gridW = (nextCols - 1) * 1.5 * R + 2 * R;
     const gridH = (ROWS + 0.5) * S3 * R;
     ox = (W - gridW) / 2 + R;
-    oy = (H - gridH) / 2 + (S3 * R) / 2 + H * 0.05;
+    oy = H * TOP + (H * (1 - TOP) - gridH) / 2 + (S3 * R) / 2;
     if (nextCols !== cols) {
       cols = nextCols;
       seed = 1;

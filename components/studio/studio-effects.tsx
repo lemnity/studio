@@ -149,7 +149,7 @@ export function CustomCursor() {
         animate={{ opacity: visible && label ? 1 : 0, scale: visible && label ? 1 : 0.2 }}
         transition={{ duration: 0.4, ease: EASE }}
         className={cn(
-          "st-micro pointer-events-none fixed left-0 top-0 z-[70] grid h-[96px] w-[96px] place-items-center rounded-full text-[10px] tracking-[0.2em] transition-colors duration-300",
+          "st-micro pointer-events-none fixed left-0 top-0 z-[70] grid h-[128px] w-[128px] place-items-center rounded-full text-[16px] tracking-[0.12em] transition-colors duration-300",
           dark
             ? "bg-[var(--st-bg)] text-[var(--st-accent)] shadow-[0_0_40px_rgba(0,0,0,0.35)]"
             : "bg-[var(--st-accent)] text-[var(--st-bg)] shadow-[0_0_40px_var(--st-accent-35)]",
