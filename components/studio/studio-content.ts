@@ -32,6 +32,8 @@ export type StudioProject = {
   logo?: { src: string; width: number; height: number };
   url: string;
   flagship?: boolean;
+  /** Проект ещё не запущен: строка без ссылки, вместо стрелки — «Скоро». Адрес оставлен на потом. */
+  soon?: boolean;
 };
 
 export const STUDIO_PROJECTS: readonly StudioProject[] = [
@@ -57,6 +59,7 @@ export const STUDIO_PROJECTS: readonly StudioProject[] = [
     image: asset("/studio/projects/dom-nauki-site.webp"),
     focus: "72% 40%",
     url: "https://web.tumtipb.ru/",
+    soon: true,
   },
   {
     id: "prostyle",

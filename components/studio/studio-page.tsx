@@ -612,6 +612,11 @@ const rowFill =
 const onFill = "transition-colors duration-300 group-hover:text-[var(--st-bg)] group-focus-visible:text-[var(--st-bg)]";
 
 function ProjectRow({ project, onHover }: { project: StudioProject; onHover: (p: StudioProject | null) => void }) {
+  // Незапущенный проект — не ссылка: строка та же, но клик никуда не ведёт.
+  const Row = project.soon ? "div" : "a";
+  const link = project.soon
+    ? {}
+    : { href: project.url, target: "_blank", rel: "noopener noreferrer", "aria-label": `Открыть проект ${project.title}` };
   return (
     <motion.li
       initial={{ opacity: 0, y: 16 }}
@@ -622,12 +627,9 @@ function ProjectRow({ project, onHover }: { project: StudioProject; onHover: (p:
       onPointerLeave={() => onHover(null)}
       className="border-b border-[var(--st-line)]"
     >
-      <a
-        href={project.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`Открыть проект ${project.title}`}
-        data-cursor="Смотреть"
+      <Row
+        {...link}
+        data-cursor={project.soon ? "Скоро" : "Смотреть"}
         data-cursor-tone="dark"
         className={cn(
           "group relative grid grid-cols-[40px_1fr_auto] items-start gap-x-3 gap-y-2.5 py-6 transition-[padding] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] [grid-template-areas:'num_title_end'_'num_desc_desc'_'num_thumb_thumb'] md:grid-cols-[64px_minmax(0,1.1fr)_minmax(0,1fr)_132px] md:items-center md:gap-x-8 md:px-2 md:py-7 md:[grid-template-areas:'num_title_desc_end'] md:hover:px-6 md:focus-visible:px-6",
@@ -648,9 +650,13 @@ function ProjectRow({ project, onHover }: { project: StudioProject; onHover: (p:
           <ProjectImage project={project} />
         </div>
         <div className="justify-self-end [grid-area:end]">
-          <ArrowCircle />
+          {project.soon ? (
+            <span className={cn("st-micro inline-block rounded-full border border-current px-4 py-2 text-[var(--st-muted)]", onFill)}>Скоро</span>
+          ) : (
+            <ArrowCircle />
+          )}
         </div>
-      </a>
+      </Row>
     </motion.li>
   );
 }
@@ -1447,7 +1453,10 @@ function FloatingCta({ onContact }: { onContact: () => void }) {
 }
 
 function StudioFooter() {
-  const link = "st-micro text-[16px] tracking-[0.12em] text-[var(--st-muted)] transition-colors hover:text-[var(--st-text)]";
+  // Нижняя строка подвала — намеренно мельче остального сайта (исключение из минимума 16px): служебные подписи.
+  // «!» нужен, потому что размер и разрядку задаёт и сам .st-micro, а его стили подключаются позже Tailwind.
+  const micro = "st-micro !text-[12px] !tracking-[0.2em] text-[var(--st-muted)]";
+  const link = cn(micro, "transition-colors hover:text-[var(--st-text)]");
   return (
     <footer className="border-t border-[var(--st-line)]">
       <div className={cn(container, "pt-14 md:pt-20")}>
@@ -1456,9 +1465,9 @@ function StudioFooter() {
       <div className={cn(container, "grid items-center justify-items-center gap-y-6 py-10 md:grid-cols-[1fr_auto_1fr] md:justify-items-stretch md:py-8")}>
         <div className="flex items-center gap-5 md:justify-self-start">
           <LemnityWordmark className="h-4 w-auto text-[var(--st-text)]" />
-          <span className="st-micro text-[16px] tracking-[0.15em] text-[var(--st-muted)]">© {new Date().getFullYear()}</span>
+          <span className={micro}>© {new Date().getFullYear()}</span>
         </div>
-        <p className="st-micro text-center text-[16px] tracking-[0.12em] text-[var(--st-muted)]">Дизайн. Продукты. Идеи.</p>
+        <p className={cn(micro, "text-center")}>Дизайн. Продукты. Идеи.</p>
         <nav aria-label="Ссылки" className="flex flex-wrap items-center justify-center gap-6 md:justify-self-end md:gap-8">
           <a href={STUDIO_PLATFORM_URL} target="_blank" rel="noopener noreferrer" className={link}>Платформа</a>
           <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className={link}>Telegram</a>
