@@ -9,8 +9,10 @@
 import { useEffect, useRef } from "react";
 
 import { startHexPop, type HexPop } from "./studio-game-hex";
+import { useStudioLocale } from "./studio-locale";
 
 export function StudioGame({ className }: { className?: string }) {
+  const { t } = useStudioLocale();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<HexPop | null>(null);
 
@@ -18,7 +20,7 @@ export function StudioGame({ className }: { className?: string }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const game = startHexPop(canvas, { still });
+    const game = startHexPop(canvas, { still, text: { hint: t.game.hint, praise: t.game.praise } });
     gameRef.current = game;
     const io = new IntersectionObserver(([entry]) => game.setActive(entry.isIntersecting));
     io.observe(canvas);
@@ -27,12 +29,12 @@ export function StudioGame({ className }: { className?: string }) {
       game.destroy();
       gameRef.current = null;
     };
-  }, []);
+  }, [t]);
 
   return (
     <button
       type="button"
-      aria-label="Мини-игра «Лопай соты»: нажимайте на группы сот одного цвета"
+      aria-label={t.game.aria}
       onPointerDown={(e) => {
         e.preventDefault();
         const box = canvasRef.current?.getBoundingClientRect();

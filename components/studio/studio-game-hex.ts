@@ -15,6 +15,8 @@ export type HexPopOptions = {
   /** Только один статичный кадр — для prefers-reduced-motion. */
   still?: boolean;
   theme?: HexTheme;
+  /** Подписи на языке страницы: подсказка и похвала за большую группу (иначе — из темы, по-русски). */
+  text?: { hint: string; praise: readonly string[] };
 };
 
 export type HexPop = {
@@ -127,7 +129,10 @@ export function startHexPop(canvas: HTMLCanvasElement, options: HexPopOptions = 
   if (!ctx) return { tap() {}, setActive() {}, destroy() {} };
   const g = ctx;
   const theme = options.theme ?? "candy";
-  const style = STYLES[theme];
+  const base = STYLES[theme];
+  const style: Style = options.text
+    ? { ...base, hint: { ...base.hint, text: options.text.hint }, praise: options.text.praise }
+    : base;
   const { palette, ink, font } = style;
 
   let W = 0;

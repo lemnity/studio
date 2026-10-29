@@ -26,29 +26,20 @@ import {
   useTransform,
   type MotionValue,
 } from "framer-motion";
-import { ArrowLeft, ArrowRight, Globe, Heart, Mail, Menu, MoreHorizontal, Plus, Quote, Send, X, ZoomIn } from "lucide-react";
-import { Fragment, useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Globe, Heart, Mail, Menu, MoreHorizontal, Plus, Quote, Send, X, ZoomIn } from "lucide-react";
+import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 
 import { LemnityWordmark } from "@/components/lemnity-wordmark";
 import { BASE_PATH, cn } from "@/lib/utils";
 
 import {
-  STUDIO_CLIENTS,
   STUDIO_CONTACT_EMAIL,
   STUDIO_CONTACT_TG,
-  STUDIO_FAQ,
-  STUDIO_HERO_SIDE,
   STUDIO_PLATFORM_URL,
   STUDIO_PRIVACY_URL,
-  STUDIO_PROCESS,
-  STUDIO_PROJECTS,
-  STUDIO_QUOTE,
-  STUDIO_SERVICES,
-  STUDIO_STATS,
-  STUDIO_TOPICS,
-  STUDIO_WORKS,
   clientLogoFilter,
   type StudioProject,
+  type StudioService,
   type StudioStat,
 } from "./studio-content";
 import {
@@ -64,6 +55,8 @@ import {
 } from "./studio-effects";
 import { StudioGame } from "./studio-game";
 import { StudioHexSphere } from "./studio-hex-sphere";
+import { LOCALES, LOCALE_HTML, LOCALE_LABEL, LOCALE_NAME, LOCALE_PATH, type Locale, type StudioContent, type Ui } from "./studio-i18n";
+import { StudioLocaleProvider, useStudioLocale } from "./studio-locale";
 import {
   ClientSlotCta,
   DrawnCircle,
@@ -78,13 +71,88 @@ import {
   useIntroReady,
 } from "./studio-wow";
 
-const NAV: readonly { label: string; href: string }[] = [
-  { label: "Проекты", href: "#work" },
-  { label: "Работы", href: "#gallery" },
-  { label: "Услуги", href: "#services" },
-  { label: "О студии", href: "#about" },
-  { label: "Контакты", href: "#contact" },
-];
+/** Якоря разделов; подписи — в словаре (t.nav), в том же порядке. */
+const NAV_HREFS = ["#work", "#gallery", "#services", "#about", "#contact"] as const;
+
+/**
+ * Выбор языка — выпадающее меню: кнопка с текущим языком, по клику список из трёх языков. Пункты —
+ * обычные ссылки на статические страницы /, /en/, /tj/ (с учётом basePath GitHub Pages).
+ * Закрывается по клику мимо, по Escape и при выборе.
+ */
+function LangSwitch({ className }: { className?: string }) {
+  const { locale, t } = useStudioLocale();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      buttonRef.current?.focus();
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className={cn("relative", className)}>
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-label={`${t.languageAria}: ${LOCALE_NAME[locale]}`}
+        onClick={() => setOpen((v) => !v)}
+        className="st-micro flex h-11 items-center gap-2 rounded-full border border-[var(--st-line)] px-3.5 transition-colors hover:border-[var(--st-accent-45)] focus-visible:border-[var(--st-accent)] focus-visible:outline-none"
+      >
+        <Globe aria-hidden className="h-4 w-4 text-[var(--st-muted)]" />
+        {LOCALE_LABEL[locale]}
+        <ChevronDown aria-hidden className={cn("h-4 w-4 text-[var(--st-muted)] transition-transform duration-300", open && "rotate-180")} />
+      </button>
+      <AnimatePresence>
+        {open ? (
+          <motion.ul
+            key="langs"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2, ease: EASE }}
+            className="absolute right-0 top-[calc(100%+8px)] z-[70] m-0 min-w-[200px] list-none rounded border border-[var(--st-line)] bg-[var(--st-surface)] p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
+          >
+            {LOCALES.map((l) => (
+              <li key={l}>
+                <a
+                  href={`${BASE_PATH}${LOCALE_PATH[l]}`}
+                  hrefLang={LOCALE_HTML[l]}
+                  lang={LOCALE_HTML[l]}
+                  aria-current={l === locale ? "page" : undefined}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded px-3 py-2.5 text-[16px] transition-colors hover:bg-[rgba(255,255,255,0.06)] focus-visible:bg-[rgba(255,255,255,0.06)] focus-visible:outline-none",
+                    l === locale ? "text-[var(--st-text)]" : "text-[var(--st-muted)] hover:text-[var(--st-text)]",
+                  )}
+                >
+                  <span className={cn("st-micro w-7", l === locale && "text-[var(--st-accent)]")}>{LOCALE_LABEL[l]}</span>
+                  <span className="flex-1">{LOCALE_NAME[l]}</span>
+                  {l === locale ? <Check aria-hidden className="h-4 w-4 text-[var(--st-accent)]" /> : null}
+                </a>
+              </li>
+            ))}
+          </motion.ul>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -211,6 +279,8 @@ const container = "mx-auto w-full max-w-[1440px] px-5 md:px-12";
 /* ───────────────────────────── Шапка и меню ───────────────────────────── */
 
 function StudioHeader({ onContact }: { onContact: () => void }) {
+  const { t } = useStudioLocale();
+  const nav = NAV_HREFS.map((href, i) => ({ href, label: t.nav[i] }));
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { scrollY } = useScroll();
@@ -238,27 +308,24 @@ function StudioHeader({ onContact }: { onContact: () => void }) {
       >
         <motion.div initial={{ opacity: 0, y: -24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}>
           <div className={cn(container, "grid h-[72px] grid-cols-[1fr_auto] items-center md:h-[88px] xl:grid-cols-[1fr_auto_1fr]")}>
-            <a href="#top" aria-label="Лемнити Студия, наверх" className="flex items-center gap-3 justify-self-start">
+            <a href="#top" aria-label={t.homeAria} className="flex items-center gap-3 justify-self-start">
               <LemnityWordmark className="h-[18px] w-auto text-[var(--st-text)] md:h-5" />
-              <span className="st-micro border-l border-[var(--st-line)] pl-3 text-[16px] text-[var(--st-muted)]">Студия</span>
+              <span className="st-micro border-l border-[var(--st-line)] pl-3 text-[16px] text-[var(--st-muted)]">{t.studio}</span>
             </a>
             {/* На 16px меню и фраза справа помещаются в строку только на широком экране; уже — кнопка меню. */}
-            <nav aria-label="Разделы" className="hidden items-center gap-8 xl:flex 2xl:gap-12">
-              {NAV.map((n) => (
+            <nav aria-label={t.sectionsAria} className="hidden items-center gap-8 xl:flex 2xl:gap-12">
+              {nav.map((n) => (
                 <a key={n.href} href={n.href} className="st-micro st-ul transition-colors hover:text-[var(--st-accent-light)]">
                   <VariableProximity text={n.label} />
                 </a>
               ))}
             </nav>
             <div className="flex items-center gap-4 justify-self-end">
-              <button type="button" aria-label="Открыть меню" onClick={() => setOpen(true)} className="st-round">
+              <LangSwitch />
+              <button type="button" aria-label={t.openMenu} onClick={() => setOpen(true)} className="st-round">
                 <Menu className="h-4 w-4 xl:hidden" />
                 <MoreHorizontal className="hidden h-4 w-4 xl:block" />
               </button>
-              <div className="hidden min-[1400px]:block">
-                <p className="st-micro text-[16px] leading-[1.6] tracking-[0.12em]">Создавать</p>
-                <p className="st-micro text-[16px] leading-[1.6] tracking-[0.12em]">больше, чем ожидают</p>
-              </div>
             </div>
           </div>
         </motion.div>
@@ -273,11 +340,11 @@ function StudioHeader({ onContact }: { onContact: () => void }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <button type="button" aria-label="Закрыть меню" className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} />
+            <button type="button" aria-label={t.closeMenu} className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} />
             <motion.aside
               role="dialog"
               aria-modal="true"
-              aria-label="Меню"
+              aria-label={t.menu}
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -286,12 +353,12 @@ function StudioHeader({ onContact }: { onContact: () => void }) {
             >
               <div className="flex items-center justify-between">
                 <LemnityWordmark className="h-5 w-auto text-[var(--st-text)]" />
-                <button type="button" aria-label="Закрыть меню" onClick={() => setOpen(false)} className="st-round">
+                <button type="button" aria-label={t.closeMenu} onClick={() => setOpen(false)} className="st-round">
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <nav aria-label="Разделы" className="mt-16 flex flex-col gap-4 sm:mt-20">
-                {NAV.map((n, i) => (
+              <nav aria-label={t.sectionsAria} className="mt-16 flex flex-col gap-4 sm:mt-20">
+                {nav.map((n, i) => (
                   <motion.a
                     key={n.href}
                     href={n.href}
@@ -306,7 +373,7 @@ function StudioHeader({ onContact }: { onContact: () => void }) {
                 ))}
               </nav>
               <div className="mt-auto border-t border-[var(--st-line)] pt-6">
-                <p className="st-micro mb-4 text-[var(--st-muted)]">Контакты</p>
+                <p className="st-micro mb-4 text-[var(--st-muted)]">{t.contacts}</p>
                 <div className="flex flex-col gap-3">
                   <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 text-[16px] hover:text-[var(--st-accent-light)]">
                     <Send className="h-5 w-5 text-[var(--st-accent)]" /> Telegram
@@ -332,8 +399,6 @@ function StudioHeader({ onContact }: { onContact: () => void }) {
 }
 
 /* ───────────────────────────── Первый экран ───────────────────────────── */
-
-const HERO_LINES = ["Делаем", "сложное", "простым."] as const;
 
 /**
  * 3D-объект справа (у оригинала здесь портрет): сфера из шестиугольников с бегущей волной, на чёрном фоне.
@@ -365,6 +430,7 @@ function HeroObject({ scroll }: { scroll: MotionValue<number> }) {
 }
 
 function Hero({ onContact }: { onContact: () => void }) {
+  const { t } = useStudioLocale();
   const ref = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
@@ -384,7 +450,7 @@ function Hero({ onContact }: { onContact: () => void }) {
     animate: shown,
     transition: { duration: 0.7, delay, ease: EASE },
   });
-  const side = [...STUDIO_HERO_SIDE.top, STUDIO_HERO_SIDE.since, ...STUDIO_HERO_SIDE.places];
+  const side = [...t.heroSide.top, t.heroSide.since, ...t.heroSide.places];
 
   return (
     <section id="top" ref={ref} className="relative overflow-hidden">
@@ -392,22 +458,25 @@ function Hero({ onContact }: { onContact: () => void }) {
         <motion.div style={{ y: copyY, opacity: copyOpacity }} className="relative z-[3]">
           <div className="md:max-w-[52%] lg:max-w-[50%]">
             <motion.p {...fadeUp(0.2)} className="st-micro text-[16px] tracking-[0.12em] text-[var(--st-muted)]">
-              <VariableProximity text="Лемнити Студия · Разработка · UI/UX · Брендинг" />
+              <VariableProximity text={t.heroEyebrow} />
             </motion.p>
-            <h1 className="mt-5 text-[clamp(52px,15vw,72px)] font-normal leading-[0.95] tracking-[-0.04em] md:mt-6 md:text-[clamp(72px,8.6vw,150px)]">
-              {HERO_LINES.map((line, i) => (
+            <h1
+              style={{ "--hero-scale": t.heroScale } as CSSProperties}
+              className="mt-5 text-[calc(clamp(52px,15vw,72px)*var(--hero-scale))] font-normal leading-[0.95] tracking-[-0.04em] md:mt-6 md:text-[calc(clamp(72px,8.6vw,150px)*var(--hero-scale))]"
+            >
+              {t.heroLines.map((line, i) => (
                 <Fragment key={line}>
                   {i > 0 && " "}
                   <span className="-mb-[0.08em] block overflow-hidden pb-[0.08em]">
                     <motion.span
-                      className={cn("block", i === HERO_LINES.length - 1 && "st-sheen")}
+                      className={cn("block", i === t.heroAccent && "st-sheen")}
                       initial={reduce ? false : { y: "110%" }}
                       animate={ready ? { y: "0%" } : undefined}
                       transition={{ duration: 1, delay: 0.35 + i * 0.12, ease: EASE }}
                     >
                       <VariableProximity
                         text={line}
-                        strokeColor={i === HERO_LINES.length - 1 ? "var(--st-accent-light)" : "var(--st-text)"}
+                        strokeColor={i === t.heroAccent ? "var(--st-accent-light)" : "var(--st-text)"}
                       />
                     </motion.span>
                   </span>
@@ -415,7 +484,7 @@ function Hero({ onContact }: { onContact: () => void }) {
               ))}
             </h1>
             <motion.p {...fadeUp(0.7, 0.8)} className="mt-6 max-w-[440px] text-base leading-[1.55] text-[var(--st-text-72)] md:mt-8 md:max-w-[380px] md:text-lg lg:max-w-[440px]">
-              <VariableProximity text="Создаём сайты, интерфейсы, бренды, цифровые продукты и казуальные игры, которые помогают людям и бизнесу расти." />
+              <VariableProximity text={t.heroText} />
             </motion.p>
             <motion.div {...fadeUp(0.8, 0.8)} className="mt-8 flex flex-wrap items-center gap-6 md:mt-10 sm:gap-8">
               <MagneticButton>
@@ -423,7 +492,7 @@ function Hero({ onContact }: { onContact: () => void }) {
                   href="#work"
                   className="group inline-flex items-center gap-4 rounded-full border border-[var(--st-accent)] px-7 py-3.5 text-[16px] font-medium transition-colors hover:border-[var(--st-accent-light)] hover:bg-[rgba(196,238,24,0.1)] md:px-9 md:py-[18px]"
                 >
-                  <VariableProximity text="Смотреть работы" />
+                  <VariableProximity text={t.seeWork} />
                   <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
                 </a>
               </MagneticButton>
@@ -433,16 +502,16 @@ function Hero({ onContact }: { onContact: () => void }) {
                   onClick={onContact}
                   className="st-ul text-[16px] underline decoration-[rgba(244,241,236,0.5)] underline-offset-4 transition-colors hover:text-[var(--st-accent-light)] hover:decoration-transparent"
                 >
-                  Написать нам
+                  {t.writeUs}
                 </button>
                 <Dot />
               </span>
             </motion.div>
 
             <motion.div {...fadeIn(0.9)} className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-1 md:hidden">
-              {side.map((t) => (
-                <span key={t} className="st-micro text-[16px] leading-[1.9] tracking-[0.12em] text-[var(--st-muted)]">
-                  {t}
+              {side.map((label) => (
+                <span key={label} className="st-micro text-[16px] leading-[1.9] tracking-[0.12em] text-[var(--st-muted)]">
+                  {label}
                 </span>
               ))}
               <Globe aria-hidden className="st-spin h-4 w-4 text-[var(--st-muted)]" />
@@ -455,20 +524,20 @@ function Hero({ onContact }: { onContact: () => void }) {
         {/* Боковая колонка, как у оригинала, без подписи автора. */}
         <div className="absolute bottom-14 right-12 top-[140px] z-[3] hidden w-[120px] flex-col justify-between md:flex lg:bottom-[72px] lg:top-[170px]">
           <div>
-            {STUDIO_HERO_SIDE.top.map((t, i) => (
-              <motion.p key={t} {...fadeIn(0.6 + i * 0.08)} className="st-micro text-[16px] leading-[1.9] tracking-[0.12em]">
-                {t}
+            {t.heroSide.top.map((label, i) => (
+              <motion.p key={label} {...fadeIn(0.6 + i * 0.08)} className="st-micro text-[16px] leading-[1.9] tracking-[0.12em]">
+                {label}
               </motion.p>
             ))}
             <motion.div {...fadeIn(0.84)}>
               <div className="my-5 h-px w-5 bg-[var(--st-muted)]" />
-              <p className="st-micro text-[16px] leading-[1.9] tracking-[0.12em]">{STUDIO_HERO_SIDE.since}</p>
+              <p className="st-micro text-[16px] leading-[1.9] tracking-[0.12em]">{t.heroSide.since}</p>
             </motion.div>
           </div>
           <div>
-            {STUDIO_HERO_SIDE.places.map((t, i) => (
-              <motion.p key={t} {...fadeIn(0.9 + i * 0.08)} className="st-micro text-[16px] leading-[1.9] tracking-[0.12em]">
-                {t}
+            {t.heroSide.places.map((label, i) => (
+              <motion.p key={label} {...fadeIn(0.9 + i * 0.08)} className="st-micro text-[16px] leading-[1.9] tracking-[0.12em]">
+                {label}
               </motion.p>
             ))}
             <motion.div {...fadeIn(1.1)}>
@@ -555,14 +624,15 @@ const rowHover =
   "[&:hover_.st-row-arrow]:-rotate-45 [&:hover_.st-row-arrow]:border-[var(--st-accent)] [&:hover_.st-row-arrow]:bg-[var(--st-accent)] [&:hover_.st-row-arrow]:text-[var(--st-bg)]";
 
 function FlagshipRow({ project }: { project: StudioProject }) {
+  const { t } = useStudioLocale();
   return (
     <Reveal className="border-b border-[var(--st-line)]">
       <a
         href={project.url}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label={`Открыть проект ${project.title}`}
-        data-cursor="Смотреть"
+        aria-label={t.openProject(project.title)}
+        data-cursor={t.cursorView}
         className={cn(
           "grid grid-cols-[40px_1fr] items-center gap-x-3 gap-y-5 py-8 transition-colors hover:bg-[var(--st-accent-03)] md:grid-cols-[64px_minmax(0,1fr)_minmax(0,1.15fr)] md:gap-x-8 md:px-2 md:py-10 [&:hover_.st-flag-media]:scale-[1.03]",
           rowHover,
@@ -571,7 +641,7 @@ function FlagshipRow({ project }: { project: StudioProject }) {
         <span className="self-start pt-2 text-[16px] tracking-[0.12em] text-[var(--st-accent)]">{project.number}</span>
         <div className="min-w-0">
           <span className="mb-5 inline-block rounded-full bg-[var(--st-accent)] px-3 py-1 text-[16px] font-semibold uppercase tracking-[0.12em] text-[var(--st-bg)] md:mb-6">
-            Наш продукт
+            {t.ourProduct}
           </span>
           <h3 className="m-0 leading-none">
             {project.logo ? (
@@ -612,11 +682,12 @@ const rowFill =
 const onFill = "transition-colors duration-300 group-hover:text-[var(--st-bg)] group-focus-visible:text-[var(--st-bg)]";
 
 function ProjectRow({ project, onHover }: { project: StudioProject; onHover: (p: StudioProject | null) => void }) {
+  const { t } = useStudioLocale();
   // Незапущенный проект — не ссылка: строка та же, но клик никуда не ведёт.
   const Row = project.soon ? "div" : "a";
   const link = project.soon
     ? {}
-    : { href: project.url, target: "_blank", rel: "noopener noreferrer", "aria-label": `Открыть проект ${project.title}` };
+    : { href: project.url, target: "_blank", rel: "noopener noreferrer", "aria-label": t.openProject(project.title) };
   return (
     <motion.li
       initial={{ opacity: 0, y: 16 }}
@@ -629,7 +700,7 @@ function ProjectRow({ project, onHover }: { project: StudioProject; onHover: (p:
     >
       <Row
         {...link}
-        data-cursor={project.soon ? "Скоро" : "Смотреть"}
+        data-cursor={project.soon ? t.soon : t.cursorView}
         data-cursor-tone="dark"
         className={cn(
           "group relative grid grid-cols-[40px_1fr_auto] items-start gap-x-3 gap-y-2.5 py-6 transition-[padding] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] [grid-template-areas:'num_title_end'_'num_desc_desc'_'num_thumb_thumb'] md:grid-cols-[64px_minmax(0,1.1fr)_minmax(0,1fr)_132px] md:items-center md:gap-x-8 md:px-2 md:py-7 md:[grid-template-areas:'num_title_desc_end'] md:hover:px-6 md:focus-visible:px-6",
@@ -651,7 +722,7 @@ function ProjectRow({ project, onHover }: { project: StudioProject; onHover: (p:
         </div>
         <div className="justify-self-end [grid-area:end]">
           {project.soon ? (
-            <span className={cn("st-micro inline-block rounded-full border border-current px-4 py-2 text-[var(--st-muted)]", onFill)}>Скоро</span>
+            <span className={cn("st-micro inline-block rounded-full border border-current px-4 py-2 text-[var(--st-muted)]", onFill)}>{t.soon}</span>
           ) : (
             <ArrowCircle />
           )}
@@ -665,7 +736,8 @@ const PREVIEW_W = 380;
 const PREVIEW_H = 240;
 
 function Projects() {
-  const [flagship, ...rest] = STUDIO_PROJECTS;
+  const { t, c } = useStudioLocale();
+  const [flagship, ...rest] = c.projects;
   const reduce = useReducedMotion();
   const canHover = useMediaQuery("(hover: hover) and (pointer: fine) and (min-width: 900px)");
   const [hovered, setHovered] = useState<StudioProject | null>(null);
@@ -682,7 +754,7 @@ function Projects() {
   return (
     <section id="work" aria-labelledby="work-title">
       <div className={cn(container, "py-16 md:py-12")}>
-        <SectionHead id="work-title" title="Избранные проекты" text="Продукты, бренды и цифровые решения, которые превращают идеи в работающие вещи." />
+        <SectionHead id="work-title" title={t.workTitle} text={t.workText} />
         <div onPointerMove={canHover ? follow : undefined} className="border-t border-[var(--st-line)]">
           <FlagshipRow project={flagship} />
           <ul className="m-0 list-none p-0">
@@ -726,8 +798,10 @@ function Projects() {
 function Lightbox({ index, onClose, onChange }: { index: number | null; onClose: () => void; onChange: (i: number) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const total = STUDIO_WORKS.length;
-  const work = index === null ? null : STUDIO_WORKS[index];
+  const { t, c } = useStudioLocale();
+  const works = c.works;
+  const total = works.length;
+  const work = index === null ? null : works[index];
 
   const go = useCallback(
     (dir: 1 | -1) => {
@@ -742,9 +816,9 @@ function Lightbox({ index, onClose, onChange }: { index: number | null; onClose:
     scrollRef.current?.scrollTo({ top: 0 });
     for (const n of [index - 1, index + 1]) {
       const img = new Image();
-      img.src = STUDIO_WORKS[(n + total) % total].full;
+      img.src = works[(n + total) % total].full;
     }
-  }, [index, total]);
+  }, [index, total, works]);
 
   const isOpen = index !== null;
   useEffect(() => {
@@ -789,15 +863,15 @@ function Lightbox({ index, onClose, onChange }: { index: number | null; onClose:
             <h2 id="st-lightbox-title" className="min-w-0 flex-1 truncate text-[16px] text-[var(--st-muted)]">
               {work.alt}
             </h2>
-            <button ref={closeRef} type="button" aria-label="Закрыть просмотр" onClick={onClose} className="st-round shrink-0">
+            <button ref={closeRef} type="button" aria-label={t.closeView} onClick={onClose} className="st-round shrink-0">
               <X className="h-5 w-5" />
             </button>
           </div>
           <div className="relative min-h-0 flex-1">
-            <button type="button" aria-label="Предыдущая работа" onClick={() => go(-1)} className="st-round absolute left-2 top-1/2 z-[2] -translate-y-1/2 bg-[rgba(3,3,3,0.6)] backdrop-blur-sm md:left-6">
+            <button type="button" aria-label={t.prevWork} onClick={() => go(-1)} className="st-round absolute left-2 top-1/2 z-[2] -translate-y-1/2 bg-[rgba(3,3,3,0.6)] backdrop-blur-sm md:left-6">
               <ArrowLeft className="h-[18px] w-[18px]" />
             </button>
-            <button type="button" aria-label="Следующая работа" onClick={() => go(1)} className="st-round absolute right-2 top-1/2 z-[2] -translate-y-1/2 bg-[rgba(3,3,3,0.6)] backdrop-blur-sm md:right-6">
+            <button type="button" aria-label={t.nextWork} onClick={() => go(1)} className="st-round absolute right-2 top-1/2 z-[2] -translate-y-1/2 bg-[rgba(3,3,3,0.6)] backdrop-blur-sm md:right-6">
               <ArrowRight className="h-[18px] w-[18px]" />
             </button>
             <div ref={scrollRef} className="h-full overflow-y-auto overscroll-contain">
@@ -825,14 +899,15 @@ function Lightbox({ index, onClose, onChange }: { index: number | null; onClose:
 }
 
 function Gallery() {
+  const { t, c } = useStudioLocale();
   const [active, setActive] = useState<number | null>(null);
   const close = useCallback(() => setActive(null), []);
   return (
     <section id="gallery" aria-labelledby="gallery-title">
       <div className={cn(container, "py-16 md:py-20")}>
-        <SectionHead id="gallery-title" title="Галерея работ" text="Сайты, интерфейсы, приложения и брендинг: подборка работ разных лет." />
+        <SectionHead id="gallery-title" title={t.galleryTitle} text={t.galleryText} />
         <ul className="m-0 list-none columns-2 gap-3 p-0 md:columns-3 md:gap-[18px] min-[1440px]:columns-4 [&>li]:mb-3 md:[&>li]:mb-[18px]">
-          {STUDIO_WORKS.map((w, i) => (
+          {c.works.map((w, i) => (
             <li key={w.src} className="break-inside-avoid">
               <motion.div
                 initial={{ opacity: 0, y: 28 }}
@@ -843,9 +918,9 @@ function Gallery() {
                 <button
                   type="button"
                   onClick={() => setActive(i)}
-                  aria-label={`Открыть работу: ${w.alt}`}
+                  aria-label={t.openWork(w.alt)}
                   aria-haspopup="dialog"
-                  data-cursor="Открыть"
+                  data-cursor={t.cursorOpen}
                   className="group relative block w-full overflow-hidden rounded border border-[var(--st-line)] bg-[var(--st-surface)] transition-[border-color,box-shadow] duration-[400ms] hover:border-[var(--st-accent-45)] hover:shadow-[0_0_28px_rgba(196,238,24,0.12)] focus-visible:border-[var(--st-accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[var(--st-accent)]"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -877,7 +952,7 @@ function Gallery() {
 
 /* ───────────────────────────── Клиенты ───────────────────────────── */
 
-function ClientLogo({ client }: { client: (typeof STUDIO_CLIENTS)[number] }) {
+function ClientLogo({ client }: { client: StudioContent["clients"][number] }) {
   return (
     <div aria-hidden className="grid h-[92px] w-[168px] shrink-0 place-items-center rounded border border-[var(--st-line)] transition-colors hover:border-[var(--st-accent-45)] hover:bg-[var(--st-accent-03)] md:h-[120px] md:w-[232px] [&:hover_img]:opacity-100">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -897,21 +972,22 @@ function ClientLogo({ client }: { client: (typeof STUDIO_CLIENTS)[number] }) {
 }
 
 function Clients() {
+  const { t, c } = useStudioLocale();
   const reduce = useReducedMotion();
   return (
     <section id="clients" aria-labelledby="clients-title">
       <div className={cn(container, "py-16 md:py-20")}>
-        <SectionHead id="clients-title" title="Нам доверяют" text="Компании и команды, с которыми мы запускали бренды, сайты и продукты." />
+        <SectionHead id="clients-title" title={t.clientsTitle} text={t.clientsText} />
         <ul className="sr-only">
-          {STUDIO_CLIENTS.map((c) => (
-            <li key={c.src}>{c.name}</li>
+          {c.clients.map((client) => (
+            <li key={client.src}>{client.name}</li>
           ))}
         </ul>
         <Reveal delay={0.1}>
           {reduce ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4 [&>div]:w-auto">
-              {STUDIO_CLIENTS.map((c) => (
-                <ClientLogo key={c.src} client={c} />
+              {c.clients.map((client) => (
+                <ClientLogo key={client.src} client={client} />
               ))}
               <ClientSlotCta />
             </div>
@@ -933,13 +1009,14 @@ const cardClass =
  * Раскладка услуг без дыр: на ПК — три карточки, потом две пошире, потом игры во всю строку
  * (слева текст, справа игровая сцена); на планшете — 2×2, затем MVP и игры во всю ширину.
  */
-function serviceSpan(i: number, s: (typeof STUDIO_SERVICES)[number]) {
+function serviceSpan(i: number, s: StudioService) {
   if (s.game) return "md:col-span-2 lg:col-span-6";
   if (i < 3) return "lg:col-span-2";
   return i === 4 ? "md:col-span-2 lg:col-span-3" : "lg:col-span-3";
 }
 
-function ServiceBody({ service: s }: { service: (typeof STUDIO_SERVICES)[number] }) {
+function ServiceBody({ service: s }: { service: StudioService }) {
+  const { t } = useStudioLocale();
   return (
     <>
       <h3 className="text-xl font-medium leading-[1.25] tracking-[-0.01em] md:text-[22px]">
@@ -948,7 +1025,7 @@ function ServiceBody({ service: s }: { service: (typeof STUDIO_SERVICES)[number]
       <p className="text-[16px] leading-[1.65] text-[var(--st-text-72)]">
         <VariableProximity text={s.text} />
       </p>
-      <ul aria-label="Что входит" className="m-0 mt-auto grid list-none gap-1.5 p-0 pt-2">
+      <ul aria-label={t.included} className="m-0 mt-auto grid list-none gap-1.5 p-0 pt-2">
         {s.deliverables.map((d) => (
           <li key={d} className="relative pl-[18px] text-[16px] leading-normal before:absolute before:left-0 before:top-[0.6em] before:h-px before:w-2 before:bg-[var(--st-accent)]">
             <VariableProximity text={d} />
@@ -960,12 +1037,13 @@ function ServiceBody({ service: s }: { service: (typeof STUDIO_SERVICES)[number]
 }
 
 function Services() {
+  const { t, c } = useStudioLocale();
   return (
     <section id="services" aria-labelledby="services-title" data-cursor-tone="dark" className="st-light">
       <div className={cn(container, "py-16 md:py-20")}>
-        <SectionHead id="services-title" title="Чем мы занимаемся" text="Сайты, интерфейсы, бренды, цифровые продукты и игры: от идеи до запуска." />
+        <SectionHead id="services-title" title={t.servicesTitle} text={t.servicesText} />
         <div className="grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-6">
-          {STUDIO_SERVICES.map((s, i) => (
+          {c.services.map((s, i) => (
             <Reveal key={s.title} delay={(i % 3) * 0.08} className={serviceSpan(i, s)}>
               {s.game ? (
                 <article className={cn(cardClass, "md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] md:gap-8")}>
@@ -986,12 +1064,12 @@ function Services() {
         <div className="mt-14 md:mt-[72px]">
           <Reveal>
             <h3 className="mb-6 text-[28px] font-normal leading-[1.1] tracking-[-0.02em] md:mb-8 md:text-[34px]">
-              <VariableProximity text="Как мы работаем" />
+              <VariableProximity text={t.processTitle} />
             </h3>
           </Reveal>
           {/* На двух колонках пятый шаг растянут на всю ширину — иначе он стоял бы в строке один. */}
           <ol className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 sm:[&>li:last-child]:col-span-2 lg:[&>li:last-child]:col-span-1">
-            {STUDIO_PROCESS.map((p, i) => (
+            {c.process.map((p, i) => (
               <li key={p.title} className="flex [&>div]:flex [&>div]:min-w-0 [&>div]:flex-1">
                 <Reveal delay={i * 0.06}>
                   <div className={cn(cardClass, "flex-1 gap-2.5")}>
@@ -1062,12 +1140,13 @@ const LEMNISCATE =
   "C20,6 15,4 11,4 C6,4 3,8 3,12 C3,16 6,20 11,20 C15,20 20,18 24,12 Z";
 
 function InfinityMark() {
+  const { t } = useStudioLocale();
   const reduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.6 });
   const stroke = { fill: "none", strokeWidth: 3.6, strokeLinecap: "round", strokeLinejoin: "round" } as const;
   return (
-    <div ref={ref} className={numberClass} role="img" aria-label="бесконечность">
+    <div ref={ref} className={numberClass} role="img" aria-label={t.infinity}>
       <svg aria-hidden viewBox="0 0 48 24" className="h-6 w-12 overflow-visible">
         <motion.path
           d={LEMNISCATE}
@@ -1107,12 +1186,13 @@ function Word({ children, progress, index, total }: { children: string; progress
 }
 
 function QuoteBlock() {
+  const { c } = useStudioLocale();
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const { scrollYProgress: words } = useScroll({ target: ref, offset: ["start 0.92", "start 0.25"] });
   const { scrollYProgress: tilt } = useScroll({ target: ref, offset: ["start end", "start 0.25"] });
   const rotate = useTransform(tilt, [0, 1], [3, 0]);
-  const lines = STUDIO_QUOTE.map((l) => l.split(" "));
+  const lines = c.quote.map((l) => l.split(" "));
   const total = lines.flat().length;
   let i = 0;
 
@@ -1121,7 +1201,7 @@ function QuoteBlock() {
       <Quote aria-hidden className="absolute -left-1 -top-3 h-12 w-12 rotate-180 text-[var(--st-accent)] opacity-[0.22] md:-top-4 md:h-14 md:w-14" />
       <motion.div style={reduce ? undefined : { rotate, transformOrigin: "0% 50%" }}>
         <blockquote className="m-0 text-[30px] font-semibold leading-[1.2] tracking-[-0.02em] sm:text-4xl md:text-[34px] lg:text-[46px]">
-          <span className="sr-only">{STUDIO_QUOTE.join(" ")}</span>
+          <span className="sr-only">{c.quote.join(" ")}</span>
           {lines.map((line, li) => (
             <span key={li} aria-hidden className="block">
               {line.map((w, wi) => {
@@ -1144,11 +1224,12 @@ function QuoteBlock() {
 }
 
 function CreateTogether({ onContact }: { onContact: () => void }) {
+  const { t } = useStudioLocale();
   return (
     <button
       type="button"
       onClick={onContact}
-      aria-label="Давайте создадим что-то вместе: перейти к форме заявки"
+      aria-label={t.togetherAria}
       className="group flex shrink-0 items-center gap-6 rounded-full text-left outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[10px] focus-visible:outline-[var(--st-accent)]"
     >
       <span aria-hidden className="relative h-[72px] w-[72px] shrink-0">
@@ -1158,7 +1239,7 @@ function CreateTogether({ onContact }: { onContact: () => void }) {
         </span>
       </span>
       <span aria-hidden className="transition-colors duration-300 group-hover:text-[var(--st-accent-light)]">
-        {["Давайте", "создадим", "что-то вместе"].map((line, i, all) => (
+        {t.togetherLines.map((line, i, all) => (
           <span key={line} className="st-micro flex items-center gap-3 text-[16px] leading-[1.9] tracking-[0.12em]">
             <VariableProximity text={line} />
             {i === all.length - 1 ? <Dot /> : null}
@@ -1170,6 +1251,7 @@ function CreateTogether({ onContact }: { onContact: () => void }) {
 }
 
 function About({ onContact }: { onContact: () => void }) {
+  const { t, c } = useStudioLocale();
   return (
     <section id="about" aria-labelledby="about-title">
       <div className={cn(container, "grid gap-y-12 py-16 md:grid-cols-[minmax(0,34fr)_auto_minmax(0,66fr)] md:gap-x-8 md:py-12 lg:gap-x-10")}>
@@ -1177,16 +1259,16 @@ function About({ onContact }: { onContact: () => void }) {
           <div className="md:pr-4">
             <h2 id="about-title" className="st-title !text-[38px] sm:!text-[44px] md:!text-[42px] lg:!text-[48px]">
               <span className="block">
-                <LineReveal text="Больше, чем" />
+                <LineReveal text={t.aboutHead[0]} />
               </span>
               <span className="block">
                 <DrawnUnderline delay={0.7}>
-                  <LineReveal text="дизайн" delay={0.12} />
+                  <LineReveal text={t.aboutHead[1]} delay={0.12} />
                 </DrawnUnderline>
               </span>
             </h2>
             <p className="mt-6 max-w-[360px] text-[16px] leading-[1.7] text-[var(--st-text-72)]">
-              <VariableProximity text="Больше 12 лет в дизайне, продуктовой разработке и визуальных коммуникациях. Соединяем стратегию, дизайн и технологии, чтобы делать продукты с реальной пользой. На этом опыте выросла и наша платформа Lemnity." />
+              <VariableProximity text={t.aboutText} />
             </p>
             <span className="mt-7 flex items-center gap-3">
               <button
@@ -1194,7 +1276,7 @@ function About({ onContact }: { onContact: () => void }) {
                 onClick={onContact}
                 className="st-ul text-[16px] underline decoration-[rgba(244,241,236,0.5)] underline-offset-4 transition-colors hover:text-[var(--st-accent-light)] hover:decoration-transparent"
               >
-                Обсудить проект
+                {t.discuss}
               </button>
               <Dot />
             </span>
@@ -1206,7 +1288,7 @@ function About({ onContact }: { onContact: () => void }) {
         <div className="min-w-0">
           <Reveal delay={0.1}>
             <dl className="grid grid-cols-2 gap-y-8 md:grid-cols-4 md:pt-3">
-              {STUDIO_STATS.map((s, i) => (
+              {c.stats.map((s, i) => (
                 <div
                   key={s.label}
                   className={cn(
@@ -1235,17 +1317,18 @@ function About({ onContact }: { onContact: () => void }) {
 /* ───────────────────────────── FAQ ───────────────────────────── */
 
 function Faq() {
+  const { t, c } = useStudioLocale();
   return (
     <section id="faq" aria-labelledby="faq-title">
       <div className={cn(container, "grid items-start gap-8 py-16 md:grid-cols-[1fr_2fr] md:gap-12 md:py-20")}>
         <Reveal>
           <h2 id="faq-title" className="st-title">
-            <LineReveal text="Частые вопросы" />
+            <LineReveal text={t.faqTitle} />
           </h2>
         </Reveal>
         <Reveal delay={0.1}>
           <div className="border-t border-[var(--st-line)]">
-            {STUDIO_FAQ.map((f) => (
+            {c.faq.map((f) => (
               <details key={f.q} className="group border-b border-[var(--st-line)]">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-4 md:py-5">
                   <span className="text-[17px] font-medium leading-[1.3] transition-colors group-hover:text-[var(--st-accent-light)] md:text-xl">
@@ -1267,14 +1350,16 @@ function Faq() {
 
 /* ───────────────────────────── Контакты ───────────────────────────── */
 
-function buildMailto(topic: string, name: string, contact: string, message: string): string {
-  const subject = `Заявка в Лемнити Студию: ${topic}`;
-  const body = [`Имя: ${name}`, `Контакт: ${contact}`, `Тема: ${topic}`, "", message].join("\n");
+function buildMailto(form: Ui["form"], topic: string, name: string, contact: string, message: string): string {
+  const subject = form.subject(topic);
+  const body = [`${form.name}: ${name}`, `${form.contact}: ${contact}`, `${form.topic}: ${topic}`, "", message].join("\n");
   return `mailto:${STUDIO_CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 function Contact() {
-  const [topic, setTopic] = useState(STUDIO_TOPICS[0]);
+  const { t, c } = useStudioLocale();
+  const f = t.form;
+  const [topic, setTopic] = useState(c.topics[0]);
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
   const [message, setMessage] = useState("");
@@ -1289,27 +1374,27 @@ function Contact() {
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return setError("Укажите имя");
-    if (!contact.trim()) return setError("Укажите email или Telegram");
-    if (message.trim().length < 10) return setError("Напишите пару слов о задаче, хотя бы 10 символов");
+    if (!name.trim()) return setError(f.errName);
+    if (!contact.trim()) return setError(f.errContact);
+    if (message.trim().length < 10) return setError(f.errMessage);
     setError(null);
-    window.location.href = buildMailto(topic, name.trim(), contact.trim(), message.trim());
+    window.location.href = buildMailto(f, topic, name.trim(), contact.trim(), message.trim());
   };
 
   return (
     <section ref={sectionRef} id="contact" aria-labelledby="contact-title" className="border-t border-[var(--st-line)]">
       <div className={cn(container, "grid gap-12 py-16 md:grid-cols-2 md:py-24")}>
         <Reveal>
-          <p className="st-micro text-[var(--st-accent)]">Контакты</p>
+          <p className="st-micro text-[var(--st-accent)]">{f.label}</p>
           <h2 id="contact-title" className="mt-4 text-[48px] font-normal leading-[0.95] tracking-[-0.04em] md:text-[88px]">
-            <LineReveal text="Обсудим" />
+            <LineReveal text={f.head[0]} />
             <br />
             <DrawnCircle delay={0.6}>
-              <span className="st-sheen">проект</span>
+              <span className="st-sheen">{f.head[1]}</span>
             </DrawnCircle>
           </h2>
           <p className="mt-6 max-w-[380px] text-base leading-[1.6] text-[var(--st-text-72)]">
-            <VariableProximity text="Пара слов о задаче, и мы вернёмся с идеями, сроками и следующим шагом. Обычно отвечаем в течение дня." />
+            <VariableProximity text={f.text} />
           </p>
           <div className="mt-10 flex flex-col gap-3">
             <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className="st-ul inline-flex w-fit items-center gap-3 text-[16px] hover:text-[var(--st-accent-light)]">
@@ -1324,33 +1409,33 @@ function Contact() {
         <motion.div style={{ y: formY }}>
           <form onSubmit={onSubmit} noValidate className="rounded border border-[var(--st-line)] bg-[var(--st-surface)] p-6 md:p-10">
             <fieldset>
-              <legend className="st-micro mb-4 text-[var(--st-muted)]">Что нужно</legend>
+              <legend className="st-micro mb-4 text-[var(--st-muted)]">{f.need}</legend>
               <div className="flex flex-wrap gap-2">
-                {STUDIO_TOPICS.map((t) => (
+                {c.topics.map((item) => (
                   <button
-                    key={t}
+                    key={item}
                     type="button"
-                    aria-pressed={topic === t}
-                    onClick={() => setTopic(t)}
+                    aria-pressed={topic === item}
+                    onClick={() => setTopic(item)}
                     className={cn(
                       "rounded-full border px-4 py-2 text-[16px] transition-colors",
-                      topic === t
+                      topic === item
                         ? "border-[var(--st-accent)] bg-[var(--st-accent)] text-[var(--st-bg)]"
                         : "border-[var(--st-line)] text-[var(--st-muted)] hover:border-[var(--st-accent-45)] hover:text-[var(--st-text)]",
                     )}
                   >
-                    {t}
+                    {item}
                   </button>
                 ))}
               </div>
             </fieldset>
             <div className="mt-6 grid gap-2">
-              <label className="sr-only" htmlFor="st-name">Имя</label>
-              <input id="st-name" className="st-input" placeholder="Имя" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" maxLength={120} />
-              <label className="sr-only" htmlFor="st-contact">Email или Telegram</label>
-              <input id="st-contact" className="st-input" placeholder="Email или Telegram" value={contact} onChange={(e) => setContact(e.target.value)} maxLength={160} />
-              <label className="sr-only" htmlFor="st-message">Сообщение</label>
-              <textarea id="st-message" className="st-input min-h-28 resize-y" placeholder="Что делаем, для кого и к какому сроку" value={message} onChange={(e) => setMessage(e.target.value)} maxLength={4000} />
+              <label className="sr-only" htmlFor="st-name">{f.name}</label>
+              <input id="st-name" className="st-input" placeholder={f.namePlaceholder} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" maxLength={120} />
+              <label className="sr-only" htmlFor="st-contact">{f.contactPlaceholder}</label>
+              <input id="st-contact" className="st-input" placeholder={f.contactPlaceholder} value={contact} onChange={(e) => setContact(e.target.value)} maxLength={160} />
+              <label className="sr-only" htmlFor="st-message">{f.message}</label>
+              <textarea id="st-message" className="st-input min-h-28 resize-y" placeholder={f.messagePlaceholder} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={4000} />
             </div>
             {error ? (
               <p role="alert" className="mt-4 text-[16px] text-[#ff7b6b]">
@@ -1359,18 +1444,18 @@ function Contact() {
             ) : null}
             <MagneticButton strength={6}>
               <button type="submit" className="group mt-8 inline-flex items-center gap-4 rounded-full bg-[var(--st-accent)] py-2 pl-7 pr-2 text-[16px] font-semibold text-[var(--st-bg)] transition-transform hover:-translate-y-0.5">
-                Отправить
+                {f.send}
                 <span className="grid h-10 w-10 place-items-center rounded-full bg-[var(--st-bg)] text-[var(--st-accent)] transition-transform group-hover:translate-x-1">
                   <ArrowRight className="h-4 w-4" />
                 </span>
               </button>
             </MagneticButton>
             <p className="mt-5 text-[16px] leading-relaxed text-[var(--st-muted)]">
-              Нажимая кнопку, вы соглашаетесь с{" "}
+              {f.consent[0]}{" "}
               <a href={STUDIO_PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-[var(--st-text)]">
-                политикой конфиденциальности
+                {f.consent[1]}
               </a>
-              .
+              {f.consent[2] ? ` ${f.consent[2]}` : ""}.
             </p>
           </form>
         </motion.div>
@@ -1382,6 +1467,7 @@ function Contact() {
 /* ───────────────────────────── Плавающая кнопка и подвал ───────────────────────────── */
 
 function FloatingCta({ onContact }: { onContact: () => void }) {
+  const { t } = useStudioLocale();
   const reduce = useReducedMotion();
   const [visible, setVisible] = useState(false);
   // Над светлым блоком кнопка становится тёмной — так она заметнее на белом.
@@ -1435,7 +1521,7 @@ function FloatingCta({ onContact }: { onContact: () => void }) {
               onLight ? "bg-[var(--st-bg)] text-[var(--st-accent)]" : "bg-[var(--st-accent)] text-[var(--st-bg)]",
             )}
           >
-            <VariableProximity text="Заказать проект" />
+            <VariableProximity text={t.orderProject} />
             <span
               aria-hidden
               className={cn(
@@ -1453,6 +1539,7 @@ function FloatingCta({ onContact }: { onContact: () => void }) {
 }
 
 function StudioFooter() {
+  const { t } = useStudioLocale();
   // Нижняя строка подвала — намеренно мельче остального сайта (исключение из минимума 16px): служебные подписи.
   // «!» нужен, потому что размер и разрядку задаёт и сам .st-micro, а его стили подключаются позже Tailwind.
   const micro = "st-micro !text-[12px] !tracking-[0.2em] text-[var(--st-muted)]";
@@ -1467,11 +1554,11 @@ function StudioFooter() {
           <LemnityWordmark className="h-4 w-auto text-[var(--st-text)]" />
           <span className={micro}>© {new Date().getFullYear()}</span>
         </div>
-        <p className={cn(micro, "text-center")}>Дизайн. Продукты. Идеи.</p>
-        <nav aria-label="Ссылки" className="flex flex-wrap items-center justify-center gap-6 md:justify-self-end md:gap-8">
-          <a href={STUDIO_PLATFORM_URL} target="_blank" rel="noopener noreferrer" className={link}>Платформа</a>
+        <p className={cn(micro, "text-center")}>{t.footerTagline}</p>
+        <nav aria-label={t.linksAria} className="flex flex-wrap items-center justify-center gap-6 md:justify-self-end md:gap-8">
+          <a href={STUDIO_PLATFORM_URL} target="_blank" rel="noopener noreferrer" className={link}>{t.platform}</a>
           <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className={link}>Telegram</a>
-          <a href={STUDIO_PRIVACY_URL} target="_blank" rel="noopener noreferrer" className={link}>Конфиденциальность</a>
+          <a href={STUDIO_PRIVACY_URL} target="_blank" rel="noopener noreferrer" className={link}>{t.privacy}</a>
         </nav>
       </div>
     </footer>
@@ -1491,11 +1578,20 @@ function StudioShell({ children }: { children: ReactNode }) {
   );
 }
 
-export function StudioPage() {
+/** Страница студии на языке `locale` (по умолчанию русский). */
+export function StudioPage({ locale = "ru" }: { locale?: Locale }) {
   const goContact = useCallback(() => {
     document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
+  return (
+    <StudioLocaleProvider locale={locale}>
+      <StudioPageBody onContact={goContact} />
+    </StudioLocaleProvider>
+  );
+}
+
+function StudioPageBody({ onContact: goContact }: { onContact: () => void }) {
   return (
     <StudioShell>
       <StudioPreloader />

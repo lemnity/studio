@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { STUDIO_CLIENTS, clientLogoFilter } from "./studio-content";
 import { EASE, useMediaQuery } from "./studio-effects";
 import { STUDIO_INTRO_ATTR } from "./studio-intro";
+import { useStudioLocale } from "./studio-locale";
 
 /** Резкий «занавес» illan: медленный старт и финиш, быстрая середина. */
 const CURTAIN = [0.76, 0, 0.24, 1] as const;
@@ -71,6 +72,7 @@ export function useIntroReady(): boolean {
 type IntroPhase = "in" | "out" | "gone";
 
 export function StudioPreloader() {
+  const { t } = useStudioLocale();
   const [phase, setPhase] = useState<IntroPhase>("in");
   const counterRef = useRef<HTMLSpanElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
@@ -125,8 +127,8 @@ export function StudioPreloader() {
       }}
     >
       <div className="flex items-center justify-between gap-6">
-        <span className="st-micro text-[16px] tracking-[0.12em] text-[var(--st-muted)]">Лемнити Студия</span>
-        <span className="st-micro hidden text-[16px] tracking-[0.12em] text-[var(--st-muted)] sm:inline">Дизайн · Продукты · Идеи</span>
+        <span className="st-micro text-[16px] tracking-[0.12em] text-[var(--st-muted)]">{t.heroSide.since}</span>
+        <span className="st-micro hidden text-[16px] tracking-[0.12em] text-[var(--st-muted)] sm:inline">{t.preloaderTagline}</span>
       </div>
 
       <svg viewBox="0 0 169 38" className="mx-auto block w-[min(78vw,880px)] overflow-hidden text-[var(--st-text)]" fill="currentColor">
@@ -300,9 +302,8 @@ const wrap = (min: number, max: number, v: number) => {
   return ((((v - min) % r) + r) % r) + min;
 };
 
-const TICKER_WORDS = ["Сайты", "Интерфейсы", "Брендинг", "Продукты", "Приложения", "Lemnity"] as const;
-
 function TickerRow({ baseVelocity, lime, active }: { baseVelocity: number; lime?: boolean; active: boolean }) {
+  const { t } = useStudioLocale();
   const baseX = useMotionValue(0);
   const { scrollY } = useScroll();
   const velocity = useSpring(useVelocity(scrollY), { damping: 50, stiffness: 400 });
@@ -321,7 +322,7 @@ function TickerRow({ baseVelocity, lime, active }: { baseVelocity: number; lime?
     baseX.set(baseX.get() + move);
   });
 
-  const sequence = [...TICKER_WORDS, ...TICKER_WORDS];
+  const sequence = [...t.ticker, ...t.ticker];
   return (
     <div className="overflow-hidden whitespace-nowrap">
       <motion.div style={{ x }} className="flex w-max">
@@ -373,13 +374,14 @@ export function VelocityTicker() {
  * на 2, 3 и 4 колонки оставалась бы пустая дыра; с ней ячеек 12 и ряды заполнены ровно.
  */
 export function ClientSlotCta() {
+  const { t } = useStudioLocale();
   return (
     <a
       href="#contact"
       className="group flex h-[92px] flex-col items-center justify-center gap-1.5 rounded border border-dashed border-[rgba(244,241,236,0.18)] text-center transition-colors hover:border-[var(--st-accent)] hover:bg-[var(--st-accent-03)] focus-visible:border-[var(--st-accent)] focus-visible:outline-none md:h-[132px]"
     >
-      <span className="st-micro text-[16px] tracking-[0.12em] text-[var(--st-muted)]">Здесь может быть</span>
-      <span className="text-[16px] transition-colors group-hover:text-[var(--st-accent)] md:text-base">ваш логотип →</span>
+      <span className="st-micro text-[16px] tracking-[0.12em] text-[var(--st-muted)]">{t.logoInvite[0]}</span>
+      <span className="text-[16px] transition-colors group-hover:text-[var(--st-accent)] md:text-base">{t.logoInvite[1]}</span>
     </a>
   );
 }
