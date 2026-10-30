@@ -242,6 +242,31 @@ html[data-st-intro="play"] .st-preloader { display: flex; }
   --st-accent-45: rgba(10, 10, 10, 0.45);
   --st-accent-35: rgba(10, 10, 10, 0.18);
 }
+/* Ячейка с «бегущим» контуром: при наведении по рамке по кругу бегут два лаймовых блика,
+   свечение вокруг пульсирует. Рамка рисуется псевдоэлементом с маской, поэтому внутрь не попадает. */
+@property --st-cell-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.st-cell { position: relative; isolation: isolate; }
+.st-cell::before {
+  content: ""; position: absolute; inset: -1px; z-index: 1; pointer-events: none;
+  border-radius: inherit; padding: 2px;
+  background: conic-gradient(from var(--st-cell-angle), transparent 0deg, var(--st-accent) 70deg, #eaff9a 95deg, transparent 160deg,
+    transparent 180deg, var(--st-accent) 250deg, #eaff9a 275deg, transparent 340deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: 0; transition: opacity .45s ease;
+  animation: st-cell-spin 14s linear infinite; animation-play-state: paused;
+}
+.st-cell:hover::before, .st-cell:focus-visible::before { opacity: 1; animation-play-state: running; }
+.st-cell:hover, .st-cell:focus-visible { animation: st-cell-glow 7s ease-in-out infinite; }
+@keyframes st-cell-spin { to { --st-cell-angle: 360deg; } }
+@keyframes st-cell-glow {
+  0%, 100% { box-shadow: 0 0 18px rgba(196,238,24,0.16); }
+  50% { box-shadow: 0 0 46px rgba(196,238,24,0.34); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .st-cell::before { animation: none; background: var(--st-accent); }
+  .st-cell:hover, .st-cell:focus-visible { animation: none; box-shadow: 0 0 28px rgba(196,238,24,0.25); }
+}
 .st-input { width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--st-line); padding: 12px 0;
   font-size: 16px; color: var(--st-text); outline: none; transition: border-color .3s; }
 .st-input::placeholder { color: var(--st-muted); }
@@ -692,10 +717,14 @@ function ArrowCircle({ size = 44 }: { size?: number }) {
 const rowHover =
   "[&:hover_.st-row-arrow]:-rotate-45 [&:hover_.st-row-arrow]:border-[var(--st-accent)] [&:hover_.st-row-arrow]:bg-[var(--st-accent)] [&:hover_.st-row-arrow]:text-[var(--st-bg)]";
 
+/**
+ * Lemnity в первом ряду проектов (вариант «Витрина»): тёмная карточка, текст слева, скриншот платформы
+ * справа до края ячейки и плавно уходит в фон; на телефоне скриншот сверху.
+ */
 function FlagshipRow({ project }: { project: StudioProject }) {
   const { t } = useStudioLocale();
   return (
-    <Reveal className="border-b border-[var(--st-line)]">
+    <Reveal className="md:col-span-2 xl:col-span-1">
       <a
         href={project.url}
         target="_blank"
@@ -703,39 +732,94 @@ function FlagshipRow({ project }: { project: StudioProject }) {
         aria-label={t.openProject(project.title)}
         data-cursor={t.cursorView}
         className={cn(
-          "grid grid-cols-[40px_1fr] items-center gap-x-3 gap-y-5 py-8 transition-colors hover:bg-[var(--st-accent-03)] md:grid-cols-[64px_minmax(0,1fr)_minmax(0,1.15fr)] md:gap-x-8 md:px-2 md:py-10 [&:hover_.st-flag-media]:scale-[1.03]",
+          "st-cell grid h-full overflow-hidden rounded-xl border border-[var(--st-line)] bg-[var(--st-surface)] md:min-h-[440px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] [&:hover_.st-flag-media]:scale-[1.04]",
           rowHover,
         )}
       >
-        <span className="self-start pt-2 text-[16px] tracking-[0.12em] text-[var(--st-accent)]">{project.number}</span>
-        <div className="min-w-0">
-          <span className="mb-5 inline-block rounded-full bg-[var(--st-accent)] px-3 py-1 text-[16px] font-semibold uppercase tracking-[0.12em] text-[var(--st-bg)] md:mb-6">
+        <span className="absolute left-6 top-6 z-[2] hidden text-[16px] tracking-[0.12em] text-[var(--st-accent)] lg:block">{project.number}</span>
+        <div className="relative z-[1] flex min-w-0 flex-col justify-center gap-5 p-6 md:gap-6 md:p-10 lg:py-12 lg:pl-12 lg:pr-6">
+          <span className="w-fit rounded-full bg-[var(--st-accent)] px-3 py-1 text-[16px] font-semibold uppercase tracking-[0.12em] text-[var(--st-bg)]">
             {t.ourProduct}
           </span>
           <h3 className="m-0 leading-none">
             {project.logo ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={project.logo.src} alt={project.title} width={project.logo.width} height={project.logo.height} className="block h-[52px] w-auto max-w-full md:h-[76px] lg:h-[92px]" />
+              <img src={project.logo.src} alt={project.title} width={project.logo.width} height={project.logo.height} className="block h-[48px] w-auto max-w-full md:h-[56px]" />
             ) : (
-              <span className="text-5xl md:text-7xl">{project.title}</span>
+              <span className="text-5xl">{project.title}</span>
             )}
           </h3>
-          <p className="mt-5 max-w-[440px] text-[16px] leading-normal text-[rgba(244,241,236,0.8)] md:mt-6 md:text-lg">
+          <p className="max-w-[34ch] text-[17px] leading-[1.5] text-[rgba(244,241,236,0.85)] md:text-lg">
             <VariableProximity text={project.description} />
           </p>
-          <div className="mt-6 flex flex-wrap items-center gap-6">
+          <div className="flex flex-wrap items-center gap-5">
             <ArrowCircle size={52} />
-            <span className="text-[16px] text-[var(--st-muted)]">{project.tags.map((t) => `#${t}`).join("  ")}</span>
+            <span className="text-[16px] text-[var(--st-muted)]">{project.tags.map((tag) => `#${tag}`).join("  ")}</span>
           </div>
         </div>
-        <div className="relative col-start-2 aspect-[16/10] overflow-hidden rounded-lg border border-[var(--st-line)] shadow-[0_40px_80px_-40px_var(--st-accent-35)] md:col-start-auto">
+        {/*
+          Кадр с ноутбуком из концепт-картинки (466 px в ширину): показываем его почти в натуральном размере,
+          вплотную к правому краю ячейки, а не растягиваем на всю высоту — иначе он размывается.
+          Картинка сдвинута вверх на 176 px исходника из 216 видимых, чтобы надписи концепта остались за кадром.
+        */}
+        <div className="relative order-first aspect-[466/216] overflow-hidden lg:order-none lg:self-center">
           <div className="st-flag-media absolute inset-0 transition-transform duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)]">
-            <ParallaxMedia>
-              <ProjectImage project={project} />
-            </ParallaxMedia>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={project.image} alt="" loading="lazy" decoding="async" className="absolute left-0 top-[-81.5%] h-auto w-full max-w-none" />
           </div>
+          {/* Скриншот плавно уходит в подложку карточки: слева на ПК, снизу на телефоне. */}
+          <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[var(--st-surface)] to-transparent to-35% lg:bg-gradient-to-r lg:to-25%" />
         </div>
       </a>
+    </Reveal>
+  );
+}
+
+/**
+ * Игра Lemnity в первом ряду проектов (вариант «Витрина»): картинка во всю ширину карточки, статус
+ * «В доработке» плашкой на картинке, над названием — подпись «Игра · Lemnity».
+ */
+function GameCard({ project, index }: { project: StudioProject; index: number }) {
+  const { t } = useStudioLocale();
+  const Card = project.url ? "a" : "div";
+  const link = project.url
+    ? { href: project.url, target: "_blank", rel: "noopener noreferrer", "aria-label": t.openProject(project.title) }
+    : {};
+  return (
+    <Reveal delay={0.1 + index * 0.08}>
+      <Card
+        {...link}
+        data-cursor={project.url ? t.cursorView : t.gameBadge}
+        className="st-cell group flex h-full flex-col overflow-hidden rounded-xl border border-[var(--st-line)] bg-[var(--st-surface)]"
+      >
+        <div className={cn("relative aspect-[4/3] overflow-hidden border-b border-[var(--st-line)]", project.contain && "bg-[#0d0d0d]")}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={project.image}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            style={{ objectPosition: project.focus }}
+            className={cn(
+              "absolute inset-0 h-full w-full transition-transform duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]",
+              project.contain ? "object-contain p-[8%]" : "object-cover",
+            )}
+          />
+          <span className="st-micro absolute left-3 top-3 inline-flex items-center gap-2 rounded-full bg-[rgba(3,3,3,0.72)] px-3 py-1.5 text-[var(--st-accent)] backdrop-blur-md">
+            <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--st-accent)]" />
+            {t.inDevelopment}
+          </span>
+        </div>
+        <div className="flex flex-col gap-2.5 p-5">
+          <span className="st-micro text-[var(--st-muted)]">{t.gameBadge} · Lemnity</span>
+          <h3 className="text-[24px] font-normal leading-[1.15] tracking-[-0.02em] transition-colors group-hover:text-[var(--st-accent-light)]">
+            <VariableProximity text={project.title} />
+          </h3>
+          <p className="text-[16px] leading-[1.5] text-[var(--st-text-72)]">
+            <VariableProximity text={project.description} />
+          </p>
+        </div>
+      </Card>
     </Reveal>
   );
 }
@@ -753,8 +837,9 @@ const onFill = "transition-colors duration-300 group-hover:text-[var(--st-bg)] g
 function ProjectRow({ project, onHover }: { project: StudioProject; onHover: (p: StudioProject | null) => void }) {
   const { t } = useStudioLocale();
   // Незапущенный проект — не ссылка: строка та же, но клик никуда не ведёт.
-  const Row = project.soon ? "div" : "a";
-  const link = project.soon
+  const linked = !project.soon && !!project.url;
+  const Row = linked ? "a" : "div";
+  const link = !linked
     ? {}
     : { href: project.url, target: "_blank", rel: "noopener noreferrer", "aria-label": t.openProject(project.title) };
   return (
@@ -769,7 +854,7 @@ function ProjectRow({ project, onHover }: { project: StudioProject; onHover: (p:
     >
       <Row
         {...link}
-        data-cursor={project.soon ? t.soon : t.cursorView}
+        data-cursor={project.soon ? t.soon : project.game ? t.gameBadge : t.cursorView}
         data-cursor-tone="dark"
         className={cn(
           "group relative grid grid-cols-[40px_1fr_auto] items-start gap-x-3 gap-y-2.5 py-6 transition-[padding] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] [grid-template-areas:'num_title_end'_'num_desc_desc'_'num_thumb_thumb'] md:grid-cols-[64px_minmax(0,1.1fr)_minmax(0,1fr)_132px] md:items-center md:gap-x-8 md:px-2 md:py-7 md:[grid-template-areas:'num_title_desc_end'] md:hover:px-6 md:focus-visible:px-6",
@@ -790,8 +875,10 @@ function ProjectRow({ project, onHover }: { project: StudioProject; onHover: (p:
           <ProjectImage project={project} />
         </div>
         <div className="justify-self-end [grid-area:end]">
-          {project.soon ? (
-            <span className={cn("st-micro inline-block rounded-full border border-current px-4 py-2 text-[var(--st-muted)]", onFill)}>{t.soon}</span>
+          {project.soon || project.game ? (
+            <span className={cn("st-micro inline-block rounded-full border border-current px-4 py-2 text-[var(--st-muted)]", onFill)}>
+              {project.soon ? t.soon : t.gameBadge}
+            </span>
           ) : (
             <ArrowCircle />
           )}
@@ -806,7 +893,9 @@ const PREVIEW_H = 240;
 
 function Projects() {
   const { t, c } = useStudioLocale();
-  const [flagship, ...rest] = c.projects;
+  const [flagship, ...others] = c.projects;
+  const games = others.filter((p) => p.game);
+  const rest = others.filter((p) => !p.game);
   const reduce = useReducedMotion();
   const canHover = useMediaQuery("(hover: hover) and (pointer: fine) and (min-width: 900px)");
   const [hovered, setHovered] = useState<StudioProject | null>(null);
@@ -825,7 +914,13 @@ function Projects() {
       <div className={cn(container, "py-16 md:py-12")}>
         <SectionHead id="work-title" title={t.workTitle} text={t.workText} />
         <div onPointerMove={canHover ? follow : undefined} className="border-t border-[var(--st-line)]">
-          <FlagshipRow project={flagship} />
+          {/* Первый ряд: Lemnity на 60% ширины и две игры по 20%; на планшете игры под ним, на телефоне — столбиком. */}
+          <div className="grid gap-4 border-b border-[var(--st-line)] py-6 md:grid-cols-2 md:py-8 xl:grid-cols-[3fr_1fr_1fr]">
+            <FlagshipRow project={flagship} />
+            {games.map((g, i) => (
+              <GameCard key={g.id} project={g} index={i} />
+            ))}
+          </div>
           <ul className="m-0 list-none p-0">
             {rest.map((p) => (
               <ProjectRow key={p.id} project={p} onHover={canHover ? setHovered : () => {}} />

@@ -34,6 +34,10 @@ export type StudioProject = {
   flagship?: boolean;
   /** Проект ещё не запущен: строка без ссылки, вместо стрелки — «Скоро». Адрес оставлен на потом. */
   soon?: boolean;
+  /** Игра Lemnity: карточка рядом с Lemnity в первом ряду проектов; без `url` — не ссылка. */
+  game?: boolean;
+  /** Картинка — логотип на прозрачном фоне: вписывается целиком, а не обрезается. */
+  contain?: boolean;
 };
 
 export const STUDIO_PROJECTS: readonly StudioProject[] = [
@@ -49,6 +53,29 @@ export const STUDIO_PROJECTS: readonly StudioProject[] = [
     logo: { src: asset("/studio/clients/lemnity.svg"), width: 375, height: 95 },
     url: "https://lemnity.ru",
     flagship: true,
+  },
+  {
+    id: "spin-meet",
+    number: "",
+    title: "Крути и знакомься",
+    description: "Казуальная игра для знакомств",
+    tags: ["Игра", "Казуальная", "Lemnity"],
+    image: asset("/studio/projects/game-spin-meet.webp"),
+    focus: "50% 50%",
+    contain: true,
+    url: "",
+    game: true,
+  },
+  {
+    id: "rps",
+    number: "",
+    title: "Камень, ножницы, бумага",
+    description: "Карточная версия классики в фэнтези-стиле",
+    tags: ["Игра", "Карточная", "Lemnity"],
+    image: asset("/studio/projects/game-rps.webp"),
+    focus: "50% 66%",
+    url: "",
+    game: true,
   },
   {
     id: "tumtipb",

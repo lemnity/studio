@@ -64,6 +64,9 @@ export type Ui = {
   cursorView: string;
   cursorOpen: string;
   soon: string;
+  gameBadge: string;
+  /** Статус игр Lemnity: ещё дорабатываются. */
+  inDevelopment: string;
   ourProduct: string;
   workTitle: string;
   workText: string;
@@ -148,6 +151,8 @@ const RU: Ui = {
   cursorView: "Смотреть",
   cursorOpen: "Открыть",
   soon: "Скоро",
+  gameBadge: "Игра",
+  inDevelopment: "В доработке",
   ourProduct: "Наш продукт",
   workTitle: "Избранные проекты",
   workText: "Продукты, бренды и цифровые решения, которые превращают идеи в работающие вещи.",
@@ -237,6 +242,8 @@ const EN: Ui = {
   cursorView: "View",
   cursorOpen: "Open",
   soon: "Soon",
+  gameBadge: "Game",
+  inDevelopment: "In development",
   ourProduct: "Our product",
   workTitle: "Selected projects",
   workText: "Products, brands and digital solutions that turn ideas into things that work.",
@@ -327,6 +334,8 @@ const TJ: Ui = {
   cursorView: "Дидан",
   cursorOpen: "Кушодан",
   soon: "Ба зудӣ",
+  gameBadge: "Бозӣ",
+  inDevelopment: "Дар такмил",
   ourProduct: "Маҳсулоти мо",
   workTitle: "Лоиҳаҳои мунтахаб",
   workText: "Маҳсулот, брендҳо ва ҳалли рақамӣ, ки ғояҳоро ба чизҳои коркунанда табдил медиҳанд.",
@@ -407,6 +416,8 @@ type ContentTr = {
 const EN_CONTENT: ContentTr = {
   projects: {
     lemnity: { description: "Our own platform for building websites, chatbots and digital products", tags: ["SaaS", "Builder", "AI", "Product"] },
+    "spin-meet": { title: "Spin & Meet", description: "A casual game for meeting new people", tags: ["Game", "Casual", "Lemnity"] },
+    rps: { title: "Rock, Paper, Scissors", description: "A fantasy card take on the classic", tags: ["Game", "Card game", "Lemnity"] },
     tumtipb: { title: "House of Science and Technology", description: "An educational platform for professionals", tags: ["Education", "Website", "Public sector"] },
     prostyle: { description: "Promotional merchandise and corporate gifts", tags: ["Brand", "Online store", "Design"] },
     sphagnum: { description: "Living substrates for green roofs, vertical gardens and interiors", tags: ["Website", "Eco", "B2B"] },
@@ -510,6 +521,8 @@ const EN_CONTENT: ContentTr = {
 const TJ_CONTENT: ContentTr = {
   projects: {
     lemnity: { description: "Платформаи худи мо барои сохтани сайтҳо, чат-ботҳо ва маҳсулоти рақамӣ", tags: ["SaaS", "Конструктор", "AI", "Маҳсулот"] },
+    "spin-meet": { title: "Чарх зан ва шинос шав", description: "Бозии казуалӣ барои шиносоӣ", tags: ["Бозӣ", "Казуалӣ", "Lemnity"] },
+    rps: { title: "Санг, қайчӣ, коғаз", description: "Версияи кортии бозии классикӣ дар услуби фэнтезӣ", tags: ["Бозӣ", "Кортӣ", "Lemnity"] },
     tumtipb: { title: "Хонаи илм ва техника", description: "Платформаи таълимӣ барои мутахассисон", tags: ["Маориф", "Сайт", "Бахши давлатӣ"] },
     prostyle: { description: "Маҳсулоти тӯҳфавӣ ва тӯҳфаҳои корпоративӣ", tags: ["Бренд", "Мағозаи онлайн", "Дизайн"] },
     sphagnum: { description: "Субстратҳои зинда барои бомҳои сабз, боғҳои амудӣ ва интерйерҳо", tags: ["Сайт", "Эко", "B2B"] },
