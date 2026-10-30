@@ -52,6 +52,8 @@ export type Ui = {
   /** Множитель кегля заголовка первого экрана: длинные слова (таджикское «Мураккабро») иначе не влезают. */
   heroScale: number;
   heroText: string;
+  /** Манифест после первого экрана; фрагменты в [квадратных скобках] выделяются акцентом. */
+  manifesto: string;
   seeWork: string;
   writeUs: string;
   heroSide: { top: readonly string[]; since: string; places: readonly string[] };
@@ -126,6 +128,8 @@ const RU: Ui = {
   heroAccent: 2,
   heroScale: 1,
   heroText: "Создаём сайты, интерфейсы, бренды, цифровые продукты и казуальные игры, которые помогают людям и бизнесу расти.",
+  manifesto:
+    "Лемнити Студия соединяет дизайн и технологии, чтобы создавать сайты, игры и [цифровые продукты]. От идеи до [UX], [UI], [кода] и запуска. За нами — [12 лет опыта] и команда, которой важны качество, ясность и смысл. Дизайнеры, которые думают как инженеры. Инженеры, которые проектируют с чувством. Вместе мы превращаем [сложное] в [простое], которое работает.",
   seeWork: "Смотреть работы",
   writeUs: "Написать нам",
   heroSide: { top: ["Идеи", "Продукты", "Люди"], since: "Лемнити Студия", places: ["Тюмень", "Россия", "Весь мир"] },
@@ -205,6 +209,8 @@ const EN: Ui = {
   heroAccent: 2,
   heroScale: 0.76,
   heroText: "We build websites, interfaces, brands, digital products and casual games that help people and businesses grow.",
+  manifesto:
+    "Lemnity Studio brings design and technology together to create websites, games and [digital products]. From idea to [UX], [UI], [code] and launch. Behind it stand [12 years of experience] and a team that cares about craft, clarity and purpose. Designers who think like engineers. Engineers who design with feeling. Together, we turn [complexity] into [simplicity] that works.",
   seeWork: "See our work",
   writeUs: "Write to us",
   heroSide: { top: ["Ideas", "Products", "People"], since: "Lemnity Studio", places: ["Cyprus", "Russia", "Worldwide"] },
@@ -285,6 +291,8 @@ const TJ: Ui = {
   heroScale: 0.78,
   heroText:
     "Мо сайтҳо, интерфейсҳо, брендҳо, маҳсулоти рақамӣ ва бозиҳои казуалӣ месозем, ки ба одамон ва тиҷорат дар рушд кӯмак мекунанд.",
+  manifesto:
+    "Лемнити Студия дизайн ва технологияро муттаҳид мекунад, то сайтҳо, бозиҳо ва [маҳсулоти рақамӣ] созад. Аз ғоя то [UX], [UI], [код] ва оғоз. Пушти мо [12 сол таҷриба] ва дастае истодааст, ки барояш сифат, равшанӣ ва маъно муҳим аст. Дизайнерҳое, ки мисли муҳандисон фикр мекунанд. Муҳандисоне, ки бо эҳсос тарҳрезӣ мекунанд. Якҷоя мо [мураккабро] [содда] ва коркунанда мекунем.",
   seeWork: "Дидани корҳо",
   writeUs: "Ба мо нависед",
   heroSide: { top: ["Ғояҳо", "Маҳсулот", "Одамон"], since: "Лемнити Студия", places: ["Тоҷикистон", "Русия", "Тамоми ҷаҳон"] },

@@ -551,6 +551,75 @@ function Hero({ onContact }: { onContact: () => void }) {
   );
 }
 
+/* ───────────────────────────── Манифест ───────────────────────────── */
+
+type ManifestoWord = { parts: { text: string; accent: boolean }[]; space: boolean };
+
+/**
+ * Разбирает текст манифеста на слова: фрагменты в [скобках] — акцент. Знак препинания сразу после
+ * выделения («[UX],») склеивается с ним в одно слово, чтобы перенос строки их не разорвал.
+ */
+function parseManifesto(text: string): ManifestoWord[] {
+  const words: ManifestoWord[] = [];
+  let glue = false;
+  for (const [i, segment] of text.split(/\[([^\]]+)\]/).entries()) {
+    const accent = i % 2 === 1;
+    for (const piece of segment.split(/(\s+)/)) {
+      if (!piece) continue;
+      if (/^\s+$/.test(piece)) {
+        if (words.length) words[words.length - 1].space = true;
+        glue = false;
+        continue;
+      }
+      const last = words[words.length - 1];
+      if (glue && last && !last.space) last.parts.push({ text: piece, accent });
+      else words.push({ parts: [{ text: piece, accent }], space: false });
+      glue = true;
+    }
+  }
+  return words;
+}
+
+/** Крупный текст о студии сразу после первого экрана: слова проявляются по мере прокрутки, ключевые — лаймом. */
+function Manifesto() {
+  const { t } = useStudioLocale();
+  const ref = useRef<HTMLParagraphElement>(null);
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.85", "end 0.6"] });
+  const words = parseManifesto(t.manifesto);
+
+  return (
+    <section className="relative">
+      <div className={cn(container, "py-20 md:py-32")}>
+        <p ref={ref} className="m-0 max-w-[1280px] text-[clamp(30px,4.4vw,68px)] font-normal leading-[1.1] tracking-[-0.03em]">
+          <span className="sr-only">{t.manifesto.replace(/[[\]]/g, "")}</span>
+          <span aria-hidden>
+            {words.map((w, i) => {
+              const content = (
+                <>
+                  {w.parts.map((part, pi) => (
+                    <span key={pi} className={part.accent ? "text-[var(--st-accent)]" : undefined}>
+                      {part.text}
+                    </span>
+                  ))}
+                  {w.space ? " " : null}
+                </>
+              );
+              return reduce ? (
+                <span key={i}>{content}</span>
+              ) : (
+                <Word key={i} progress={scrollYProgress} index={i} total={words.length}>
+                  {content}
+                </Word>
+              );
+            })}
+          </span>
+        </p>
+      </div>
+    </section>
+  );
+}
+
 /* ───────────────────────────── Проекты ───────────────────────────── */
 
 /**
@@ -1176,7 +1245,7 @@ function Stat({ stat }: { stat: StudioStat }) {
 /* Scroll Reveal (React Bits): слова проявляются из 10% и теряют размытие, блок выпрямляется. */
 const staggerFor = (total: number) => Math.max(0.05, 2.5 / total);
 
-function Word({ children, progress, index, total }: { children: string; progress: MotionValue<number>; index: number; total: number }) {
+function Word({ children, progress, index, total }: { children: ReactNode; progress: MotionValue<number>; index: number; total: number }) {
   const stagger = staggerFor(total);
   const span = 1 + (total - 1) * stagger;
   const local = useTransform(progress, (p) => Math.min(1, Math.max(0, p * span - index * stagger)));
@@ -1600,6 +1669,7 @@ function StudioPageBody({ onContact: goContact }: { onContact: () => void }) {
       <StudioHeader onContact={goContact} />
       <main>
         <Hero onContact={goContact} />
+        <Manifesto />
         <Projects />
         <Gallery />
         <VelocityTicker />
