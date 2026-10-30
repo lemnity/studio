@@ -1417,6 +1417,76 @@ function Faq() {
   );
 }
 
+/* ───────────────────────────── Что можем сделать вместе ───────────────────────────── */
+
+/**
+ * Крупный список того, что делает студия, через лаймовые косые черты. Каждый пункт не переносится
+ * посередине: строка ломается только между пунктами.
+ *
+ * Анимация: при входе в экран пункты по очереди выплывают снизу из размытия; пока блок на экране,
+ * раз в полторы секунды случайный пункт мягко загорается лаймом. При «уменьшить движение» — статично.
+ */
+function BuildTogether() {
+  const { t } = useStudioLocale();
+  const reduce = useReducedMotion();
+  const listRef = useRef<HTMLUListElement>(null);
+  const entered = useInView(listRef, { once: true, amount: 0.25 });
+  const visible = useInView(listRef, { amount: 0.1 });
+  const [lit, setLit] = useState<number | null>(null);
+  const items = t.buildItems;
+
+  useEffect(() => {
+    if (reduce || !visible || !entered) return;
+    let last = -1;
+    const id = window.setInterval(() => {
+      let next = Math.floor(Math.random() * items.length);
+      if (next === last) next = (next + 1) % items.length;
+      last = next;
+      setLit(next);
+    }, 1500);
+    return () => {
+      window.clearInterval(id);
+      setLit(null);
+    };
+  }, [reduce, visible, entered, items.length]);
+
+  return (
+    <section aria-labelledby="build-title" className="border-t border-[var(--st-line)]">
+      <div className={cn(container, "py-16 md:py-24")}>
+        <Reveal>
+          <h2 id="build-title" className="st-micro text-[var(--st-muted)]">
+            {t.buildTitle}
+          </h2>
+        </Reveal>
+        <ul
+          ref={listRef}
+          className="m-0 mt-8 list-none p-0 text-[clamp(22px,3.7vw,58px)] font-normal leading-[1.14] tracking-[-0.03em] md:mt-12"
+        >
+          {items.map((item, i) => (
+            <motion.li
+              key={item}
+              initial={reduce ? false : { opacity: 0, y: "0.45em", filter: "blur(8px)" }}
+              animate={entered || reduce ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+              transition={{ duration: 0.7, delay: Math.min(1.4, i * 0.045), ease: EASE }}
+              className="mr-[0.28em] inline-block whitespace-nowrap"
+            >
+              <span
+                className={cn(
+                  "transition-colors duration-700 hover:text-[var(--st-accent-light)] hover:duration-200",
+                  lit === i && "text-[var(--st-accent)]",
+                )}
+              >
+                {item}
+              </span>
+              {i < items.length - 1 ? <span aria-hidden className="text-[var(--st-accent)]">&nbsp;/</span> : null}
+            </motion.li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
 /* ───────────────────────────── Контакты ───────────────────────────── */
 
 function buildMailto(form: Ui["form"], topic: string, name: string, contact: string, message: string): string {
@@ -1679,6 +1749,7 @@ function StudioPageBody({ onContact: goContact }: { onContact: () => void }) {
         <PixelEdge from="#f4f1ec" to="var(--st-bg)" />
         <About onContact={goContact} />
         <Faq />
+        <BuildTogether />
         <Contact />
       </main>
       <StudioFooter />

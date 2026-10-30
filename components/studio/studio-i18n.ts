@@ -54,6 +54,9 @@ export type Ui = {
   heroText: string;
   /** Манифест после первого экрана; фрагменты в [квадратных скобках] выделяются акцентом. */
   manifesto: string;
+  /** Блок «что можем сделать вместе» перед формой заявки: подпись и список через косую черту. */
+  buildTitle: string;
+  buildItems: readonly string[];
   seeWork: string;
   writeUs: string;
   heroSide: { top: readonly string[]; since: string; places: readonly string[] };
@@ -128,6 +131,14 @@ const RU: Ui = {
   heroAccent: 2,
   heroScale: 1,
   heroText: "Создаём сайты, интерфейсы, бренды, цифровые продукты и казуальные игры, которые помогают людям и бизнесу расти.",
+  buildTitle: "Что мы можем сделать вместе",
+  buildItems: [
+    "корпоративный сайт", "лендинг", "интернет-магазин", "маркетплейс", "веб-приложение", "личный кабинет",
+    "SaaS-платформа", "мобильное приложение", "дашборд", "CRM-система", "сервис бронирования", "внутренний инструмент",
+    "AI-ассистент", "чат-бот", "MVP стартапа", "кликабельный прототип", "UX-аудит", "дизайн-система", "UI-кит",
+    "логотип", "фирменный стиль", "брендбук", "мерч", "казуальная игра", "мини-игра в Telegram", "промо-игра",
+    "геймификация", "анимация", "презентация", "контент для соцсетей",
+  ],
   manifesto:
     "Лемнити Студия соединяет дизайн и технологии, чтобы создавать сайты, игры и [цифровые продукты]. От идеи до [UX], [UI], [кода] и запуска. За нами — [12 лет опыта] и команда, которой важны качество, ясность и смысл. Дизайнеры, которые думают как инженеры. Инженеры, которые проектируют с чувством. Вместе мы превращаем [сложное] в [простое], которое работает.",
   seeWork: "Смотреть работы",
@@ -209,6 +220,14 @@ const EN: Ui = {
   heroAccent: 2,
   heroScale: 0.76,
   heroText: "We build websites, interfaces, brands, digital products and casual games that help people and businesses grow.",
+  buildTitle: "Things we can build together",
+  buildItems: [
+    "corporate website", "landing page", "online store", "marketplace", "web application", "customer portal",
+    "SaaS platform", "mobile app", "dashboard", "CRM system", "booking service", "internal tool",
+    "AI assistant", "chatbot", "startup MVP", "clickable prototype", "UX audit", "design system", "UI kit",
+    "logo", "brand identity", "brand book", "merch", "casual game", "Telegram mini game", "promo game",
+    "gamification", "animation", "presentation deck", "social content",
+  ],
   manifesto:
     "Lemnity Studio brings design and technology together to create websites, games and [digital products]. From idea to [UX], [UI], [code] and launch. Behind it stand [12 years of experience] and a team that cares about craft, clarity and purpose. Designers who think like engineers. Engineers who design with feeling. Together, we turn [complexity] into [simplicity] that works.",
   seeWork: "See our work",
@@ -291,6 +310,14 @@ const TJ: Ui = {
   heroScale: 0.78,
   heroText:
     "Мо сайтҳо, интерфейсҳо, брендҳо, маҳсулоти рақамӣ ва бозиҳои казуалӣ месозем, ки ба одамон ва тиҷорат дар рушд кӯмак мекунанд.",
+  buildTitle: "Чӣ метавонем якҷоя созем",
+  buildItems: [
+    "сайти корпоративӣ", "лендинг", "мағозаи онлайн", "маркетплейс", "веб-барнома", "кабинети шахсӣ",
+    "платформаи SaaS", "барномаи мобилӣ", "дашборд", "системаи CRM", "хизмати фармоиш", "абзори дохилӣ",
+    "ёрдамчии AI", "чат-бот", "MVP-и стартап", "прототипи кликшаванда", "аудити UX", "дизайн-система", "UI-кит",
+    "логотип", "услуби фирмавӣ", "брендбук", "мерч", "бозии казуалӣ", "мини-бозӣ дар Telegram", "бозии таблиғотӣ",
+    "геймификатсия", "аниматсия", "презентатсия", "контент барои шабакаҳои иҷтимоӣ",
+  ],
   manifesto:
     "Лемнити Студия дизайн ва технологияро муттаҳид мекунад, то сайтҳо, бозиҳо ва [маҳсулоти рақамӣ] созад. Аз ғоя то [UX], [UI], [код] ва оғоз. Пушти мо [12 сол таҷриба] ва дастае истодааст, ки барояш сифат, равшанӣ ва маъно муҳим аст. Дизайнерҳое, ки мисли муҳандисон фикр мекунанд. Муҳандисоне, ки бо эҳсос тарҳрезӣ мекунанд. Якҷоя мо [мураккабро] [содда] ва коркунанда мекунем.",
   seeWork: "Дидани корҳо",
