@@ -1,0 +1,21 @@
+# systemd: приёмник заявок с сайта → группа Telegram (server/lead/lead_service.py).
+# Установка: /etc/systemd/system/lemnity-lead.service; код — /opt/lemnity-lead/lead_service.py;
+# токен и id группы — /etc/lemnity-lead.env (права 600, владелец root).
+[Unit]
+Description=Lemnity Studio lead form -> Telegram
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+EnvironmentFile=-/etc/lemnity-lead.env
+ExecStart=/usr/bin/python3 /opt/lemnity-lead/lead_service.py
+DynamicUser=yes
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

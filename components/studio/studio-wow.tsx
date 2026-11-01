@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Эффекты страницы «Лемнити Студия» по мотивам illan.ru (там они собраны на GSAP + ScrollTrigger +
+ * Эффекты страницы «Студия Лемнити» по мотивам illan.ru (там они собраны на GSAP + ScrollTrigger +
  * SplitType + Lenis + Lottie). Здесь — без новых зависимостей, на framer-motion и CSS:
  *
  *  - StudioPreloader   — заставка с буквами Lemnity при каждой загрузке;

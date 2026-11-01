@@ -1,5 +1,5 @@
 /**
- * Контент страницы «Лемнити Студия» (/studio).
+ * Контент страницы «Студия Лемнити» (/studio).
  *
  * Состав взят с simakoov.ru (услуги, процесс, проекты, галерея, клиенты, FAQ) и переписан от лица
  * студии. Картинки скопированы в public/studio/*. Тексты держим здесь, а не в разметке: страницу
@@ -15,6 +15,12 @@ export const STUDIO_PLATFORM_URL = "https://lemnity.ru";
 export const STUDIO_PRIVACY_URL = "https://lemnity.ru/docs/privacy";
 
 export const STUDIO_CONTACT_EMAIL = "hello@lemnity.ru";
+/**
+ * Приёмник заявок формы (server/lead/lead_service.py на lemnity.digital) — пересылает их в группу Telegram.
+ * Задаётся при сборке: NEXT_PUBLIC_LEAD_URL=https://lemnity.digital/api/lead (абсолютный адрес, чтобы
+ * форма на GitHub Pages слала туда же). Пока не задан, форма по-старому открывает письмо.
+ */
+export const STUDIO_LEAD_URL = process.env.NEXT_PUBLIC_LEAD_URL || "";
 export const STUDIO_CONTACT_TG = "https://t.me/lemnity_ru";
 
 export type StudioProject = {
@@ -236,7 +242,7 @@ export const STUDIO_STATS: readonly StudioStat[] = [
 ];
 
 /** Подписи боковой колонки первого экрана (у оригинала там же подпись автора, у студии её нет). */
-export const STUDIO_HERO_SIDE = { top: ["Идеи", "Продукты", "Люди"], since: "Лемнити Студия", places: ["Тюмень", "Россия", "Весь мир"] };
+export const STUDIO_HERO_SIDE = { top: ["Идеи", "Продукты", "Люди"], since: "Студия Лемнити", places: ["Тюмень", "Россия", "Весь мир"] };
 
 export const STUDIO_QUOTE: readonly string[] = ["Хороший дизайн делает", "сложное понятным,", "а возможное ближе."];
 

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Сайт «Лемнити Студия»: лендинг студии разработки (вынесен из платформы lmntai, где жил на /studio).
+ * Сайт «Студия Лемнити»: лендинг студии разработки (вынесен из платформы lmntai, где жил на /studio).
  *
  * Вёрстка, типографика и анимации перенесены из исходников simakoov.ru (репозиторий smkv): почти
  * чёрный фон, Gilroy без жирных начертаний, микроподписи в разрядку, заголовок, выезжающий из-под
@@ -35,6 +35,7 @@ import { BASE_PATH, cn } from "@/lib/utils";
 import {
   STUDIO_CONTACT_EMAIL,
   STUDIO_CONTACT_TG,
+  STUDIO_LEAD_URL,
   STUDIO_PLATFORM_URL,
   STUDIO_PRIVACY_URL,
   clientLogoFilter,
@@ -1590,14 +1591,19 @@ function buildMailto(form: Ui["form"], topic: string, name: string, contact: str
   return `mailto:${STUDIO_CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
+type SendState = "idle" | "sending" | "sent" | "failed";
+
 function Contact() {
-  const { t, c } = useStudioLocale();
+  const { t, c, locale } = useStudioLocale();
   const f = t.form;
   const [topic, setTopic] = useState(c.topics[0]);
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<SendState>("idle");
+  // Скрытое поле-ловушка: человек его не видит, бот заполняет — сервер такие заявки молча отбрасывает.
+  const [website, setWebsite] = useState("");
 
   // Форма доезжает снизу вместе с прокруткой (у illan: `y: 14rem → 0` от «top 95%» до «top 30%»).
   const sectionRef = useRef<HTMLElement>(null);
@@ -1606,13 +1612,45 @@ function Contact() {
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start 95%", "start 30%"] });
   const formY = useTransform(scrollYProgress, [0, 1], [reduce || !wide ? 0 : 224, 0]);
 
-  const onSubmit = (e: FormEvent) => {
+  // Заявка уходит в группу Telegram через приёмник на сервере; если он недоступен — предлагаем Telegram и почту.
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (state === "sending") return;
     if (!name.trim()) return setError(f.errName);
     if (!contact.trim()) return setError(f.errContact);
     if (message.trim().length < 10) return setError(f.errMessage);
     setError(null);
-    window.location.href = buildMailto(f, topic, name.trim(), contact.trim(), message.trim());
+    if (!STUDIO_LEAD_URL) {
+      window.location.href = buildMailto(f, topic, name.trim(), contact.trim(), message.trim());
+      return;
+    }
+    setState("sending");
+    try {
+      const res = await fetch(STUDIO_LEAD_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          contact: contact.trim(),
+          topic,
+          message: message.trim(),
+          lang: locale,
+          page: window.location.href,
+          website,
+        }),
+      });
+      const data = (await res.json().catch(() => null)) as { ok?: boolean } | null;
+      setState(res.ok && data?.ok ? "sent" : "failed");
+    } catch {
+      setState("failed");
+    }
+  };
+
+  const reset = () => {
+    setName("");
+    setContact("");
+    setMessage("");
+    setState("idle");
   };
 
   return (
@@ -1641,7 +1679,19 @@ function Contact() {
         </Reveal>
 
         <motion.div style={{ y: formY }}>
-          <form onSubmit={onSubmit} noValidate className="rounded border border-[var(--st-line)] bg-[var(--st-surface)] p-6 md:p-10">
+          {state === "sent" ? (
+            <div role="status" className="flex min-h-[420px] flex-col items-start justify-center gap-5 rounded border border-[var(--st-accent-45)] bg-[var(--st-surface)] p-6 md:p-10">
+              <span className="grid h-14 w-14 place-items-center rounded-full bg-[var(--st-accent)] text-[var(--st-bg)]">
+                <Check className="h-6 w-6" />
+              </span>
+              <h3 className="text-[32px] font-normal leading-[1.1] tracking-[-0.02em] md:text-[40px]">{f.sentTitle}</h3>
+              <p className="max-w-[40ch] text-[16px] leading-[1.6] text-[var(--st-text-72)]">{f.sentText}</p>
+              <button type="button" onClick={reset} className="st-ul mt-2 text-[16px] underline underline-offset-4 hover:text-[var(--st-accent-light)]">
+                {f.sendAnother}
+              </button>
+            </div>
+          ) : (
+          <form onSubmit={onSubmit} noValidate aria-busy={state === "sending"} className="rounded border border-[var(--st-line)] bg-[var(--st-surface)] p-6 md:p-10">
             <fieldset>
               <legend className="st-micro mb-4 text-[var(--st-muted)]">{f.need}</legend>
               <div className="flex flex-wrap gap-2">
@@ -1670,15 +1720,41 @@ function Contact() {
               <input id="st-contact" className="st-input" placeholder={f.contactPlaceholder} value={contact} onChange={(e) => setContact(e.target.value)} maxLength={160} />
               <label className="sr-only" htmlFor="st-message">{f.message}</label>
               <textarea id="st-message" className="st-input min-h-28 resize-y" placeholder={f.messagePlaceholder} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={4000} />
+              <input
+                aria-hidden
+                tabIndex={-1}
+                autoComplete="off"
+                name="website"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                className="absolute -left-[9999px] h-px w-px opacity-0"
+              />
             </div>
             {error ? (
               <p role="alert" className="mt-4 text-[16px] text-[#ff7b6b]">
                 {error}
               </p>
             ) : null}
+            {state === "failed" ? (
+              <div role="alert" className="mt-4 grid gap-3 text-[16px] leading-[1.55]">
+                <p className="text-[#ff7b6b]">{f.failText}</p>
+                <div className="flex flex-wrap gap-x-6 gap-y-2">
+                  <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 underline underline-offset-4 hover:text-[var(--st-accent-light)]">
+                    <Send className="h-4 w-4 text-[var(--st-accent)]" /> Telegram
+                  </a>
+                  <a href={buildMailto(f, topic, name.trim(), contact.trim(), message.trim())} className="inline-flex items-center gap-2 underline underline-offset-4 hover:text-[var(--st-accent-light)]">
+                    <Mail className="h-4 w-4 text-[var(--st-accent)]" /> {f.failMail}
+                  </a>
+                </div>
+              </div>
+            ) : null}
             <MagneticButton strength={6}>
-              <button type="submit" className="group mt-8 inline-flex items-center gap-4 rounded-full bg-[var(--st-accent)] py-2 pl-7 pr-2 text-[16px] font-semibold text-[var(--st-bg)] transition-transform hover:-translate-y-0.5">
-                {f.send}
+              <button
+                type="submit"
+                disabled={state === "sending"}
+                className="group mt-8 inline-flex items-center gap-4 rounded-full bg-[var(--st-accent)] py-2 pl-7 pr-2 text-[16px] font-semibold text-[var(--st-bg)] transition-transform hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-70"
+              >
+                {state === "sending" ? f.sending : f.send}
                 <span className="grid h-10 w-10 place-items-center rounded-full bg-[var(--st-bg)] text-[var(--st-accent)] transition-transform group-hover:translate-x-1">
                   <ArrowRight className="h-4 w-4" />
                 </span>
@@ -1692,6 +1768,7 @@ function Contact() {
               {f.consent[2] ? ` ${f.consent[2]}` : ""}.
             </p>
           </form>
+          )}
         </motion.div>
       </div>
     </section>

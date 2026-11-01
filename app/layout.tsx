@@ -7,7 +7,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(STUDIO_SITE_URL),
-  applicationName: "Лемнити Студия",
+  applicationName: "Студия Лемнити",
 };
 
 export const viewport: Viewport = {
