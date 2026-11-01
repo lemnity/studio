@@ -37,6 +37,7 @@ import {
   STUDIO_CONTACT_TG,
   STUDIO_LEAD_URL,
   STUDIO_PLATFORM_URL,
+  PROMO_TOPIC,
   STUDIO_PRIVACY_URL,
   clientLogoFilter,
   type StudioProject,
@@ -56,6 +57,7 @@ import {
 } from "./studio-effects";
 import { STUDIO_CASES, caseByProject, caseBySlug, type StudioCase } from "./studio-cases";
 import { StudioGame } from "./studio-game";
+import { PROMO, PROMO_PATH } from "./studio-promo";
 import { StudioHexSphere } from "./studio-hex-sphere";
 import { LOCALES, LOCALE_HTML, LOCALE_LABEL, LOCALE_NAME, LOCALE_PATH, type Locale, type StudioContent, type Ui } from "./studio-i18n";
 import { StudioLocaleProvider, useStudioLocale } from "./studio-locale";
@@ -1280,6 +1282,75 @@ function Services() {
   );
 }
 
+/* ───────────────────────────── Пакеты и цены ───────────────────────────── */
+
+type Plan = { name: string; price: string; term: string; text: string; items: readonly string[] };
+
+/** Карточка пакета: цена «от», срок, что входит и кнопка заявки. Общая для главной и страницы промо-игр. */
+function PlanCard({ plan, accent, onContact, more }: { plan: Plan; accent?: boolean; onContact: () => void; more?: { href: string; label: string } }) {
+  const { t } = useStudioLocale();
+  return (
+    <article className={cn(cardClass, "flex-1", accent && "border-[var(--st-accent-45)]")}>
+      <h3 className="text-xl font-medium leading-[1.25] tracking-[-0.01em] md:text-[22px]">{plan.name}</h3>
+      <p className="grid gap-2">
+        <span className={cn("text-[32px] font-normal leading-none tracking-[-0.03em] md:text-[36px]", accent && "text-[var(--st-accent)]")}>{plan.price}</span>
+        <span className="text-[16px] text-[var(--st-muted)]">{plan.term}</span>
+      </p>
+      <p className="text-[16px] leading-[1.6] text-[var(--st-text-72)]">{plan.text}</p>
+      <ul aria-label={t.included} className="m-0 grid list-none gap-1.5 p-0">
+        {plan.items.map((d) => (
+          <li key={d} className="relative pl-[18px] text-[16px] leading-normal before:absolute before:left-0 before:top-[0.6em] before:h-px before:w-2 before:bg-[var(--st-accent)]">
+            {d}
+          </li>
+        ))}
+      </ul>
+      <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-3 pt-4">
+        <button
+          type="button"
+          onClick={onContact}
+          className="group inline-flex items-center gap-3 rounded-full border border-[var(--st-accent)] px-5 py-2.5 text-[16px] font-medium transition-colors hover:border-[var(--st-accent-light)] hover:bg-[rgba(196,238,24,0.1)]"
+        >
+          {t.pricing.discuss}
+          <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+        </button>
+        {more ? (
+          <a href={more.href} className="st-ul text-[16px] text-[var(--st-muted)] transition-colors hover:text-[var(--st-text)]">
+            {more.label}
+          </a>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
+/** Ориентиры «от» по основным пакетам. Карточка промо-игры ведёт на её страницу — она есть только на русском. */
+function Pricing({ onContact }: { onContact: () => void }) {
+  const { t, locale } = useStudioLocale();
+  const p = t.pricing;
+  return (
+    <section id="pricing" aria-labelledby="pricing-title">
+      <div className={cn(container, "py-16 md:py-20")}>
+        <SectionHead id="pricing-title" title={p.title} text={p.text} />
+        <ul className="m-0 grid list-none gap-3 p-0 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
+          {p.plans.map((plan, i) => (
+            <li key={plan.name} className="flex">
+              <Reveal delay={i * 0.06} className="flex min-w-0 flex-1">
+                <PlanCard
+                  plan={plan}
+                  accent={plan.promo}
+                  onContact={onContact}
+                  more={plan.promo && locale === "ru" ? { href: `${BASE_PATH}${PROMO_PATH}`, label: p.more } : undefined}
+                />
+              </Reveal>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-6 text-[16px] leading-[1.6] text-[var(--st-muted)]">{p.note}</p>
+      </div>
+    </section>
+  );
+}
+
 /* ───────────────────────────── О студии ───────────────────────────── */
 
 const numberClass = "flex h-11 items-center text-4xl font-normal leading-none tracking-[-0.02em] md:text-[40px]";
@@ -1615,10 +1686,10 @@ function buildMailto(form: Ui["form"], topic: string, name: string, contact: str
 
 type SendState = "idle" | "sending" | "sent" | "failed";
 
-function Contact() {
+function Contact({ initialTopic = 0 }: { initialTopic?: number }) {
   const { t, c, locale } = useStudioLocale();
   const f = t.form;
-  const [topic, setTopic] = useState(c.topics[0]);
+  const [topic, setTopic] = useState(c.topics[initialTopic] ?? c.topics[0]);
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
   const [message, setMessage] = useState("");
@@ -2253,6 +2324,181 @@ export function StudioCasePage({ slug }: { slug: string }) {
   );
 }
 
+/* ───────────────────────────── Промо-игра для бренда ───────────────────────────── */
+
+function PromoBody({ onContact }: { onContact: () => void }) {
+  return (
+    <main>
+      <section className={cn(container, "pb-12 pt-[120px] md:pb-16 md:pt-[160px]")}>
+        <Reveal>
+          <a href={`${BASE_PATH}/#pricing`} className="st-micro st-ul inline-flex items-center gap-2 text-[var(--st-muted)] hover:text-[var(--st-text)]">
+            <ArrowLeft className="h-4 w-4" /> Все пакеты
+          </a>
+        </Reveal>
+        <Reveal>
+          <p className="st-micro mt-10 text-[var(--st-accent)]">{PROMO.label}</p>
+          <h1 className="mt-5 text-[clamp(48px,8.5vw,140px)] font-normal leading-[0.92] tracking-[-0.045em]">
+            {PROMO.title[0]}
+            <br />
+            <span className="st-sheen">{PROMO.title[1]}</span>
+          </h1>
+          <p className="mt-6 max-w-[48ch] text-[18px] leading-[1.55] text-[var(--st-text-72)] md:text-[20px]">{PROMO.lead}</p>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <div className="mt-10 flex flex-wrap items-center gap-6 sm:gap-8">
+            <MagneticButton>
+              <button
+                type="button"
+                onClick={onContact}
+                className="group inline-flex items-center gap-4 rounded-full border border-[var(--st-accent)] px-7 py-3.5 text-[16px] font-medium transition-colors hover:border-[var(--st-accent-light)] hover:bg-[rgba(196,238,24,0.1)] md:px-9 md:py-[18px]"
+              >
+                {PROMO.cta}
+                <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+              </button>
+            </MagneticButton>
+            <a href="#demo" className="st-ul text-[16px] underline decoration-[rgba(244,241,236,0.5)] underline-offset-4 transition-colors hover:text-[var(--st-accent-light)] hover:decoration-transparent">
+              {PROMO.tryDemo}
+            </a>
+          </div>
+        </Reveal>
+      </section>
+
+      <section id="demo" aria-labelledby="demo-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "grid items-center gap-8 py-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] md:gap-12 md:py-20")}>
+          <Reveal>
+            <p className="st-micro text-[var(--st-accent)]">{PROMO.demo.label}</p>
+            <h2 id="demo-title" className="st-title mt-4">{PROMO.demo.title}</h2>
+            <p className="mt-6 max-w-[40ch] text-[16px] leading-[1.65] text-[var(--st-text-72)]">{PROMO.demo.text}</p>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <div className="overflow-hidden rounded border border-[var(--st-line)] bg-[var(--st-surface)]">
+              <StudioGame className="h-[320px] md:h-[440px]" />
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <section aria-labelledby="goals-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <Reveal>
+            <h2 id="goals-title" className="st-title mb-8 md:mb-10">{PROMO.goalsTitle}</h2>
+          </Reveal>
+          <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
+            {PROMO.goals.map((g, i) => (
+              <li key={g.title} className="flex">
+                <Reveal delay={i * 0.06} className="flex min-w-0 flex-1">
+                  <div className={cn(cardClass, "flex-1 gap-2.5")}>
+                    <span aria-hidden className="text-[16px] tracking-[0.12em] text-[var(--st-accent)]">{pad(i + 1)}</span>
+                    <h3 className="text-xl font-medium leading-[1.25]">{g.title}</h3>
+                    <p className="text-[16px] leading-[1.6] text-[var(--st-muted)]">{g.text}</p>
+                  </div>
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+          <Reveal>
+            <h3 className="mb-5 mt-14 text-[28px] font-normal leading-[1.1] tracking-[-0.02em] md:text-[34px]">{PROMO.mechanicsTitle}</h3>
+            <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
+              {PROMO.mechanics.map((m) => (
+                <li key={m} className="rounded-full border border-[var(--st-line)] px-4 py-2 text-[16px] text-[var(--st-text-72)]">{m}</li>
+              ))}
+            </ul>
+          </Reveal>
+        </div>
+      </section>
+
+      <section aria-labelledby="formats-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <SectionHead id="formats-title" title={PROMO.plansTitle} text={PROMO.plansText} />
+          <ul className="m-0 grid list-none gap-3 p-0 md:grid-cols-2 md:gap-4">
+            {PROMO.plans.map((plan, i) => (
+              <li key={plan.name} className="flex">
+                <Reveal delay={i * 0.08} className="flex min-w-0 flex-1">
+                  <PlanCard plan={plan} accent={i === 0} onContact={onContact} />
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-6 text-[16px] leading-[1.6] text-[var(--st-muted)]">{PROMO.plansNote}</p>
+        </div>
+      </section>
+
+      <section aria-labelledby="occasions-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <SectionHead id="occasions-title" title={PROMO.occasionsTitle} text={PROMO.occasionsText} />
+          <ul className="m-0 grid list-none border-t border-[var(--st-line)] p-0 sm:grid-cols-2 lg:grid-cols-3">
+            {PROMO.occasions.map((o) => (
+              <li key={o.title} className="flex items-baseline justify-between gap-6 border-b border-[var(--st-line)] py-5 sm:pr-8">
+                <span className="text-[20px] leading-[1.25] md:text-[22px]">{o.title}</span>
+                <span className="text-right text-[16px] text-[var(--st-muted)]">{o.text}</span>
+              </li>
+            ))}
+          </ul>
+          <Reveal>
+            <h3 className="mb-6 mt-14 text-[28px] font-normal leading-[1.1] tracking-[-0.02em] md:mb-8 md:text-[34px]">{PROMO.processTitle}</h3>
+          </Reveal>
+          <ol className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
+            {PROMO.process.map((step, i) => (
+              <li key={step.title} className="flex">
+                <Reveal delay={i * 0.06} className="flex min-w-0 flex-1">
+                  <div className={cn(cardClass, "flex-1 gap-2.5")}>
+                    <span className="st-micro text-[var(--st-accent)]">{step.when}</span>
+                    <h4 className="text-[17px] font-medium leading-[1.3]">{step.title}</h4>
+                    <p className="text-[16px] leading-[1.6] text-[var(--st-muted)]">{step.text}</p>
+                  </div>
+                </Reveal>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section aria-labelledby="promo-faq-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "grid items-start gap-8 py-16 md:grid-cols-[1fr_2fr] md:gap-12 md:py-20")}>
+          <Reveal>
+            <h2 id="promo-faq-title" className="st-title">{PROMO.faqTitle}</h2>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <div className="border-t border-[var(--st-line)]">
+              {PROMO.faq.map((f) => (
+                <details key={f.q} className="group border-b border-[var(--st-line)]">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-4 md:py-5">
+                    <span className="text-[17px] font-medium leading-[1.3] transition-colors group-hover:text-[var(--st-accent-light)] md:text-xl">{f.q}</span>
+                    <Plus className="st-faq-icon h-5 w-5 shrink-0 text-[var(--st-accent)] transition-transform duration-300" />
+                  </summary>
+                  <p className="max-w-[720px] pb-6 text-[16px] leading-[1.7] text-[var(--st-muted)]">{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <Contact initialTopic={PROMO_TOPIC} />
+    </main>
+  );
+}
+
+/** Страница «Промо-игра для бренда» (/promo-game/). Только на русском, как и кейсы. */
+export function StudioPromoPage() {
+  const goContact = useCallback(() => {
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+  return (
+    <StudioLocaleProvider locale="ru">
+      <StudioShell>
+        <SmoothWheel />
+        <ScrollProgress />
+        <StudioHeader onContact={goContact} home={`${BASE_PATH}/`} />
+        <PromoBody onContact={goContact} />
+        <StudioFooter />
+        <GrainOverlay />
+        <CustomCursor />
+      </StudioShell>
+    </StudioLocaleProvider>
+  );
+}
+
 /* ───────────────────────────── Страница ───────────────────────────── */
 
 function StudioShell({ children }: { children: ReactNode }) {
@@ -2296,6 +2542,7 @@ function StudioPageBody({ onContact: goContact }: { onContact: () => void }) {
         <PixelEdge from="var(--st-bg)" to="#f4f1ec" />
         <Services />
         <PixelEdge from="#f4f1ec" to="var(--st-bg)" />
+        <Pricing onContact={goContact} />
         <About onContact={goContact} />
         <Faq />
         <BuildTogether />

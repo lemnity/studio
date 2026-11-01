@@ -100,6 +100,16 @@ export type Ui = {
   aboutHead: readonly [string, string];
   aboutText: string;
   discuss: string;
+  /** Блок «Пакеты и цены» на главной: ориентиры «от», чтобы заказчик понимал порядок цифр до заявки. */
+  pricing: {
+    title: string;
+    text: string;
+    note: string;
+    discuss: string;
+    /** Подпись ссылки на страницу промо-игр (она есть только на русском). */
+    more: string;
+    plans: readonly { name: string; price: string; term: string; text: string; items: readonly string[]; promo?: boolean }[];
+  };
   faqTitle: string;
   form: {
     subject: (topic: string) => string;
@@ -207,6 +217,44 @@ const RU: Ui = {
   aboutText:
     "Больше 12 лет в дизайне, продуктовой разработке и визуальных коммуникациях. Соединяем стратегию, дизайн и технологии, чтобы делать продукты с реальной пользой. На этом опыте выросла и наша платформа Lemnity.",
   discuss: "Обсудить проект",
+  pricing: {
+    title: "Пакеты и цены",
+    text: "Цены «от» — для ориентира. Точную смету называем после короткого созвона.",
+    note: "Цены без НДС. Если задача не похожа ни на один пакет, оценим её отдельно.",
+    discuss: "Обсудить",
+    more: "Подробнее о промо-играх",
+    plans: [
+      {
+        name: "Лендинг или сайт-визитка",
+        price: "от 70 000 ₽",
+        term: "за 10 дней",
+        text: "Лендинг или небольшой сайт для бизнеса, которым потом легко управлять самим.",
+        items: ["дизайн под ваш бренд", "адаптив для телефона", "формы заявок и аналитика", "обучение работе с сайтом"],
+      },
+      {
+        name: "Промо-игра для бренда",
+        price: "от 150 000 ₽",
+        term: "2–3 недели",
+        text: "Игра для акции: собирает подписчиков, контакты и продажи через промокоды.",
+        items: ["механика под цель акции", "графика в стиле бренда", "браузер, сайт или Telegram", "призы, промокоды, таблица лидеров"],
+        promo: true,
+      },
+      {
+        name: "Сайт, магазин или ПО под ключ",
+        price: "от 250 000 ₽",
+        term: "4–8 недель",
+        text: "Корпоративный сайт, интернет-магазин, веб-сервис или программа для бизнеса: CRM, личные кабинеты, внутренние системы.",
+        items: ["структура и прототип", "индивидуальный дизайн", "каталог, корзина, интеграции", "своя логика, роли и админка", "запуск и проверка на устройствах"],
+      },
+      {
+        name: "Поддержка и развитие",
+        price: "от 15 000 ₽",
+        term: "в месяц",
+        text: "Остаёмся на связи после запуска: правки, доработки и новые разделы.",
+        items: ["часы на доработки каждый месяц", "обновления и резервные копии", "ответ в течение рабочего дня", "план развития сайта"],
+      },
+    ],
+  },
   faqTitle: "Частые вопросы",
   form: {
     subject: (topic) => `Заявка в Студию Лемнити: ${topic}`,
@@ -317,6 +365,44 @@ const EN: Ui = {
   aboutText:
     "Over 12 years in design, product development and visual communication. We combine strategy, design and technology to build products that are genuinely useful. Our Lemnity platform grew out of the same experience.",
   discuss: "Discuss a project",
+  pricing: {
+    title: "Packages and prices",
+    text: "“From” prices are a guide. We give an exact estimate after a short call.",
+    note: "Prices exclude VAT. If your task doesn't fit any package, we'll estimate it separately.",
+    discuss: "Discuss",
+    more: "",
+    plans: [
+      {
+        name: "Landing page or small website",
+        price: "from ₽70,000",
+        term: "in 10 days",
+        text: "A landing page or small business website you can easily manage yourself.",
+        items: ["design in your brand style", "mobile-friendly layout", "request forms and analytics", "training on how to manage it"],
+      },
+      {
+        name: "Promo game for a brand",
+        price: "from ₽150,000",
+        term: "2–3 weeks",
+        text: "A game for your campaign that brings subscribers, contacts and sales through promo codes.",
+        items: ["mechanics built around the campaign goal", "graphics in your brand style", "browser, website or Telegram", "prizes, promo codes, leaderboard"],
+        promo: true,
+      },
+      {
+        name: "Turnkey website, store or software",
+        price: "from ₽250,000",
+        term: "4–8 weeks",
+        text: "A corporate website, online store, web service or business software: CRM, customer accounts, internal systems.",
+        items: ["structure and prototype", "custom design", "catalog, cart, integrations", "custom logic, roles and admin panel", "launch and device testing"],
+      },
+      {
+        name: "Support and growth",
+        price: "from ₽15,000",
+        term: "per month",
+        text: "We stay in touch after launch: fixes, improvements and new sections.",
+        items: ["monthly hours for improvements", "updates and backups", "reply within a business day", "a growth plan for the site"],
+      },
+    ],
+  },
   faqTitle: "Frequently asked questions",
   form: {
     subject: (topic) => `Request to Lemnity Studio: ${topic}`,
@@ -428,6 +514,44 @@ const TJ: Ui = {
   aboutText:
     "Зиёда аз 12 сол дар дизайн, таҳияи маҳсулот ва коммуникатсияҳои визуалӣ. Стратегия, дизайн ва технологияҳоро муттаҳид мекунем, то маҳсулоти воқеан муфид созем. Платформаи мо Lemnity низ аз ҳамин таҷриба ба вуҷуд омадааст.",
   discuss: "Муҳокимаи лоиҳа",
+  pricing: {
+    title: "Бастаҳо ва нархҳо",
+    text: "Нархҳои «аз» барои мувофиқат. Сметаи дақиқро пас аз сӯҳбати кӯтоҳ мегӯем.",
+    note: "Нархҳо бе ААИ. Агар вазифа ба ягон баста монанд набошад, онро алоҳида арзёбӣ мекунем.",
+    discuss: "Муҳокима",
+    more: "",
+    plans: [
+      {
+        name: "Лендинг ё сайти визитка",
+        price: "аз 70 000 ₽",
+        term: "дар 10 рӯз",
+        text: "Лендинг ё сайти хурд барои тиҷорат, ки баъд идора карданаш осон аст.",
+        items: ["дизайн дар услуби бренди шумо", "мутобиқ барои телефон", "шаклҳои дархост ва таҳлил", "омӯзиши кор бо сайт"],
+      },
+      {
+        name: "Бозии промо барои бренд",
+        price: "аз 150 000 ₽",
+        term: "2–3 ҳафта",
+        text: "Бозӣ барои аксия: обуначиён, тамосҳо ва фурӯшро тавассути промокодҳо ҷамъ мекунад.",
+        items: ["механика мувофиқи мақсади аксия", "графика дар услуби бренд", "браузер, сайт ё Telegram", "ҷоизаҳо, промокодҳо, ҷадвали пешсафон"],
+        promo: true,
+      },
+      {
+        name: "Сайт, мағоза ё нармафзор пурра",
+        price: "аз 250 000 ₽",
+        term: "4–8 ҳафта",
+        text: "Сайти корпоративӣ, мағозаи онлайн, веб-хизматрасонӣ ё барнома барои тиҷорат: CRM, кабинетҳои шахсӣ, системаҳои дохилӣ.",
+        items: ["сохтор ва прототип", "дизайни инфиродӣ", "каталог, сабад, интегратсияҳо", "мантиқи худ, нақшҳо ва панели админ", "оғоз ва санҷиш дар дастгоҳҳо"],
+      },
+      {
+        name: "Дастгирӣ ва рушд",
+        price: "аз 15 000 ₽",
+        term: "дар як моҳ",
+        text: "Пас аз оғоз дар тамос мемонем: ислоҳҳо, такмил ва бахшҳои нав.",
+        items: ["соатҳо барои такмил ҳар моҳ", "навсозӣ ва нусхаҳои эҳтиётӣ", "ҷавоб дар давоми рӯзи корӣ", "нақшаи рушди сайт"],
+      },
+    ],
+  },
   faqTitle: "Саволҳои маъмул",
   form: {
     subject: (topic) => `Дархост ба Студияи Лемнити: ${topic}`,
@@ -571,7 +695,7 @@ const EN_CONTENT: ContentTr = {
     },
     {
       q: "How much does it cost?",
-      a: "The price depends on the task, scope and timeline, so there is no fixed price list. Tell us what you need: we'll estimate the project and explain what the cost is made of.",
+      a: "See the “Packages and prices” section for a guide: a landing page from ₽70,000, a promo game from ₽150,000, a turnkey website from ₽250,000. The exact price depends on the scope and timeline: tell us what you need and we'll give an estimate and explain what it is made of.",
     },
     {
       q: "What technologies do you use?",
@@ -590,7 +714,7 @@ const EN_CONTENT: ContentTr = {
       a: "Yes. After launch we stay in touch: we fix issues, improve and grow the project. We agree on the support format in advance.",
     },
   ],
-  topics: ["Website", "Brand and identity", "Product and UI", "Other"],
+  topics: ["Website", "Brand and identity", "Product and UI", "Game or promo", "Other"],
 };
 
 const TJ_CONTENT: ContentTr = {
@@ -676,7 +800,7 @@ const TJ_CONTENT: ContentTr = {
     },
     {
       q: "Нархаш чанд аст?",
-      a: "Нарх аз вазифа, ҳаҷм ва мӯҳлат вобаста аст, бинобар ин нархномаи собит нест. Нависед, ки чӣ кор кардан лозим аст: лоиҳаро арзёбӣ карда, мефаҳмонем, ки арзиш аз чӣ иборат аст.",
+      a: "Барои мувофиқат бахши «Бастаҳо ва нархҳо»-ро бинед: лендинг аз 70 000 ₽, бозии промо аз 150 000 ₽, сайти пурра аз 250 000 ₽. Нархи дақиқ аз ҳаҷм ва мӯҳлат вобаста аст: нависед, ки чӣ лозим аст, арзёбӣ карда мефаҳмонем, ки арзиш аз чӣ иборат аст.",
     },
     {
       q: "Бо кадом технологияҳо кор мекунед?",
@@ -695,7 +819,7 @@ const TJ_CONTENT: ContentTr = {
       a: "Бале. Пас аз оғоз дар тамос мемонем: камбудиҳоро ислоҳ мекунем, лоиҳаро такмил медиҳем ва рушд медиҳем. Шакли дастгириро пешакӣ муҳокима мекунем.",
     },
   ],
-  topics: ["Сайт", "Бренд ва айдентика", "Маҳсулот ва UI", "Дигар"],
+  topics: ["Сайт", "Бренд ва айдентика", "Маҳсулот ва UI", "Бозӣ ё промо", "Дигар"],
 };
 
 const CONTENT_TR: Record<Exclude<Locale, "ru">, ContentTr> = { en: EN_CONTENT, tj: TJ_CONTENT };
