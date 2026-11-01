@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { STUDIO_SITE_URL } from "@/components/studio/studio-content";
+import { STUDIO_OG_IMAGE, STUDIO_SITE_URL } from "@/components/studio/studio-content";
 import { LOCALE_OG, LOCALE_PATH, UI } from "@/components/studio/studio-i18n";
 import { StudioWorksPage } from "@/components/studio/studio-page";
 
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
       tg: `${STUDIO_SITE_URL}/tj/works/`,
     },
   },
-  openGraph: { type: "website", locale: LOCALE_OG.ru, url, title: UI.ru.works.meta.title, description: UI.ru.works.meta.description },
+  openGraph: { type: "website", locale: LOCALE_OG.ru, url, title: UI.ru.works.meta.title, description: UI.ru.works.meta.description, images: [STUDIO_OG_IMAGE] },
 };
 
 export default function WorksPage() {

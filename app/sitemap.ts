@@ -9,23 +9,28 @@ export const dynamic = "force-static";
 
 /** Три языковые версии (у каждой — ссылки на остальные, hreflang), страницы кейсов и промо-игр. */
 export default function sitemap(): MetadataRoute.Sitemap {
+  const lastModified = new Date();
   const languages = Object.fromEntries(LOCALES.map((l) => [LOCALE_HTML[l], `${STUDIO_SITE_URL}${LOCALE_PATH[l]}`]));
   const pages: MetadataRoute.Sitemap = LOCALES.map((l) => ({
     url: `${STUDIO_SITE_URL}${LOCALE_PATH[l]}`,
+    lastModified,
     changeFrequency: "monthly",
     priority: l === "ru" ? 1 : 0.8,
     alternates: { languages },
   }));
   const cases: MetadataRoute.Sitemap = STUDIO_CASES.map((c) => ({
     url: `${STUDIO_SITE_URL}/cases/${c.slug}/`,
+    lastModified,
     changeFrequency: "monthly",
     priority: 0.7,
   }));
   const works: MetadataRoute.Sitemap = LOCALES.map((l) => ({
     url: `${STUDIO_SITE_URL}${LOCALE_PATH[l]}works/`,
+    lastModified,
     changeFrequency: "monthly",
     priority: 0.8,
   }));
-  const promo: MetadataRoute.Sitemap = [{ url: `${STUDIO_SITE_URL}${PROMO_PATH}`, changeFrequency: "monthly", priority: 0.8 }];
+  const promo: MetadataRoute.Sitemap = [{ url: `${STUDIO_SITE_URL}${PROMO_PATH}`, lastModified,
+    changeFrequency: "monthly", priority: 0.8 }];
   return [...pages, ...works, ...promo, ...cases];
 }

@@ -23,6 +23,9 @@ export const STUDIO_CONTACT_EMAIL = "hello@lemnity.ru";
 export const STUDIO_LEAD_URL = process.env.NEXT_PUBLIC_LEAD_URL || "";
 export const STUDIO_CONTACT_TG = "https://t.me/lemnity_ru";
 
+/** Картинка-превью ссылки (1200×630) для Telegram, VK и поисковиков. */
+export const STUDIO_OG_IMAGE = { url: "/studio/og/home.png", width: 1200, height: 630 };
+
 export type StudioProject = {
   id: string;
   number: string;

@@ -5,8 +5,8 @@
 
 import type { Metadata } from "next";
 
-import { STUDIO_SITE_URL } from "./studio-content";
-import { LOCALES, LOCALE_HTML, LOCALE_OG, LOCALE_PATH, localizeContent, type Locale } from "./studio-i18n";
+import { STUDIO_OG_IMAGE, STUDIO_SITE_URL } from "./studio-content";
+import { LOCALES, LOCALE_HTML, LOCALE_OG, LOCALE_PATH, UI, localizeContent, type Locale } from "./studio-i18n";
 import { STUDIO_INTRO_BOOT_SCRIPT } from "./studio-intro";
 import { StudioPage } from "./studio-page";
 
@@ -80,8 +80,9 @@ export function studioMetadata(locale: Locale): Metadata {
       url,
       title,
       description,
+      images: [STUDIO_OG_IMAGE],
     },
-    twitter: { card: "summary_large_image", title, description },
+    twitter: { card: "summary_large_image", title, description, images: [STUDIO_OG_IMAGE.url] },
   };
 }
 
@@ -99,6 +100,16 @@ function jsonLd(locale: Locale) {
         areaServed: seo.areaServed,
         address: { "@type": "PostalAddress", addressLocality: seo.areaServed[0], addressCountry: seo.country },
         serviceType: seo.services,
+        hasOfferCatalog: {
+          "@type": "OfferCatalog",
+          name: UI[locale].pricing.title,
+          itemListElement: UI[locale].pricing.plans.map((p) => ({
+            "@type": "Offer",
+            name: p.name,
+            description: p.text,
+            priceSpecification: { "@type": "PriceSpecification", minPrice: Number(p.price.replace(/\D/g, "")), priceCurrency: "RUB" },
+          })),
+        },
       },
       {
         "@type": "FAQPage",

@@ -5,6 +5,9 @@
 
 export const PROMO_PATH = "/promo-game/";
 
+/** Превью ссылки на страницу (1200×630). */
+export const PROMO_OG_IMAGE = { url: "/studio/og/promo-game.png", width: 1200, height: 630 };
+
 export const PROMO = {
   meta: {
     title: "Промо-игра для бренда — Студия Лемнити",
