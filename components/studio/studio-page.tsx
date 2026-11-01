@@ -54,6 +54,7 @@ import {
   VariableProximity,
   useMediaQuery,
 } from "./studio-effects";
+import { STUDIO_CASES, caseByProject, caseBySlug, type StudioCase } from "./studio-cases";
 import { StudioGame } from "./studio-game";
 import { StudioHexSphere } from "./studio-hex-sphere";
 import { LOCALES, LOCALE_HTML, LOCALE_LABEL, LOCALE_NAME, LOCALE_PATH, type Locale, type StudioContent, type Ui } from "./studio-i18n";
@@ -304,9 +305,10 @@ const container = "mx-auto w-full max-w-[1440px] px-5 md:px-12";
 
 /* ───────────────────────────── Шапка и меню ───────────────────────────── */
 
-function StudioHeader({ onContact }: { onContact: () => void }) {
+/** `home` — префикс якорей меню: на странице кейса разделы лежат на главной («/#work»), на главной — пусто. */
+function StudioHeader({ onContact, home = "" }: { onContact: () => void; home?: string }) {
   const { t } = useStudioLocale();
-  const nav = NAV_HREFS.map((href, i) => ({ href, label: t.nav[i] }));
+  const nav = NAV_HREFS.map((href, i) => ({ href: `${home}${href}`, label: t.nav[i] }));
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { scrollY } = useScroll();
@@ -334,7 +336,7 @@ function StudioHeader({ onContact }: { onContact: () => void }) {
       >
         <motion.div initial={{ opacity: 0, y: -24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}>
           <div className={cn(container, "grid h-[72px] grid-cols-[1fr_auto] items-center md:h-[88px] xl:grid-cols-[1fr_auto_1fr]")}>
-            <a href="#top" aria-label={t.homeAria} className="flex items-center gap-3 justify-self-start">
+            <a href={`${home}#top`} aria-label={t.homeAria} className="flex items-center gap-3 justify-self-start">
               <LemnityWordmark className="h-[18px] w-auto text-[var(--st-text)] md:h-5" />
               <span className="st-micro border-l border-[var(--st-line)] pl-3 text-[16px] text-[var(--st-muted)]">{t.studio}</span>
             </a>
@@ -836,13 +838,17 @@ const rowFill =
 const onFill = "transition-colors duration-300 group-hover:text-[var(--st-bg)] group-focus-visible:text-[var(--st-bg)]";
 
 function ProjectRow({ project, onHover }: { project: StudioProject; onHover: (p: StudioProject | null) => void }) {
-  const { t } = useStudioLocale();
-  // Незапущенный проект — не ссылка: строка та же, но клик никуда не ведёт.
-  const linked = !project.soon && !!project.url;
+  const { t, locale } = useStudioLocale();
+  // Строка ведёт на кейс проекта (пока кейсы только на русском), иначе — на сайт проекта.
+  // Незапущенный проект без кейса — не ссылка: строка та же, но клик никуда не ведёт.
+  const study = locale === "ru" ? caseByProject(project.id) : undefined;
+  const linked = !!study || (!project.soon && !!project.url);
   const Row = linked ? "a" : "div";
-  const link = !linked
-    ? {}
-    : { href: project.url, target: "_blank", rel: "noopener noreferrer", "aria-label": t.openProject(project.title) };
+  const link = study
+    ? { href: `${BASE_PATH}/cases/${study.slug}/`, "aria-label": `Кейс: ${project.title}` }
+    : !linked
+      ? {}
+      : { href: project.url, target: "_blank", rel: "noopener noreferrer", "aria-label": t.openProject(project.title) };
   return (
     <motion.li
       initial={{ opacity: 0, y: 16 }}
@@ -855,7 +861,7 @@ function ProjectRow({ project, onHover }: { project: StudioProject; onHover: (p:
     >
       <Row
         {...link}
-        data-cursor={project.soon ? t.soon : project.game ? t.gameBadge : t.cursorView}
+        data-cursor={study ? "Кейс" : project.soon ? t.soon : project.game ? t.gameBadge : t.cursorView}
         data-cursor-tone="dark"
         className={cn(
           "group relative grid grid-cols-[40px_1fr_auto] items-start gap-x-3 gap-y-2.5 py-6 transition-[padding] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] [grid-template-areas:'num_title_end'_'num_desc_desc'_'num_thumb_thumb'] md:grid-cols-[64px_minmax(0,1.1fr)_minmax(0,1fr)_132px] md:items-center md:gap-x-8 md:px-2 md:py-7 md:[grid-template-areas:'num_title_desc_end'] md:hover:px-6 md:focus-visible:px-6",
@@ -1873,6 +1879,205 @@ function StudioFooter() {
         </nav>
       </div>
     </footer>
+  );
+}
+
+/* ───────────────────────────── Кейс проекта ───────────────────────────── */
+
+/** Скриншот в рамке «окна браузера»: точки и адрес сверху. */
+function BrowserShot({ src, url, alt, priority }: { src: string; url?: string; alt: string; priority?: boolean }) {
+  return (
+    <figure className="m-0 overflow-hidden rounded-xl border border-[var(--st-line)] bg-[var(--st-surface)] shadow-[0_40px_90px_-50px_rgba(0,0,0,0.9)]">
+      <div className="flex items-center gap-3 border-b border-[var(--st-line)] px-4 py-3">
+        <span aria-hidden className="flex gap-1.5">
+          <i className="h-2.5 w-2.5 rounded-full bg-[rgba(255,255,255,0.14)]" />
+          <i className="h-2.5 w-2.5 rounded-full bg-[rgba(255,255,255,0.14)]" />
+          <i className="h-2.5 w-2.5 rounded-full bg-[rgba(255,255,255,0.14)]" />
+        </span>
+        {url ? <span className="truncate text-[14px] text-[var(--st-muted)]">{url.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span> : null}
+      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} width={1440} height={900} loading={priority ? "eager" : "lazy"} decoding="async" className="block h-auto w-full" />
+    </figure>
+  );
+}
+
+function CaseSection({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Reveal>
+      <section className="grid gap-6 border-t border-[var(--st-line)] py-12 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:gap-12 md:py-16">
+        <h2 className="st-micro text-[var(--st-muted)]">{label}</h2>
+        <div className="min-w-0">{children}</div>
+      </section>
+    </Reveal>
+  );
+}
+
+function CaseBody({ study, onContact }: { study: StudioCase; onContact: () => void }) {
+  const index = STUDIO_CASES.indexOf(study);
+  const next = STUDIO_CASES[(index + 1) % STUDIO_CASES.length];
+  return (
+    <main>
+      <section className={cn(container, "pb-12 pt-[120px] md:pb-16 md:pt-[160px]")}>
+        <Reveal>
+          <a href={`${BASE_PATH}/#work`} className="st-micro st-ul inline-flex items-center gap-2 text-[var(--st-muted)] hover:text-[var(--st-text)]">
+            <ArrowLeft className="h-4 w-4" /> Все проекты
+          </a>
+        </Reveal>
+        <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-end">
+          <Reveal>
+            <p className="st-micro text-[var(--st-accent)]">Кейс · {String(index + 1).padStart(2, "0")}</p>
+            <h1 className="mt-5 text-[clamp(44px,7vw,112px)] font-normal leading-[0.95] tracking-[-0.04em]">{study.title}</h1>
+            <p className="mt-6 max-w-[44ch] text-[18px] leading-[1.55] text-[var(--st-text-72)] md:text-[20px]">{study.lead}</p>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <dl className="m-0 grid gap-5 border-l border-[var(--st-line)] pl-6 text-[16px]">
+              <div>
+                <dt className="st-micro text-[var(--st-muted)]">Клиент</dt>
+                <dd className="m-0 mt-1.5">{study.client}</dd>
+              </div>
+              <div>
+                <dt className="st-micro text-[var(--st-muted)]">Сфера</dt>
+                <dd className="m-0 mt-1.5">{study.industry}</dd>
+              </div>
+              <div>
+                <dt className="st-micro text-[var(--st-muted)]">Что сделали</dt>
+                <dd className="m-0 mt-1.5">{study.services.join(" · ")}</dd>
+              </div>
+              {study.status ? (
+                <div>
+                  <dt className="st-micro text-[var(--st-muted)]">Статус</dt>
+                  <dd className="m-0 mt-1.5 inline-flex items-center gap-2 text-[var(--st-accent)]">
+                    <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--st-accent)]" />
+                    {study.status}
+                  </dd>
+                </div>
+              ) : null}
+              {study.url ? (
+                <a
+                  href={study.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group mt-1 inline-flex w-fit items-center gap-3 rounded-full border border-[var(--st-accent)] px-6 py-3 transition-colors hover:bg-[rgba(196,238,24,0.1)]"
+                >
+                  {study.urlLabel ?? "Открыть сайт"}
+                  <ArrowRight className="h-4 w-4 -rotate-45 transition-transform group-hover:rotate-0" />
+                </a>
+              ) : null}
+            </dl>
+          </Reveal>
+        </div>
+      </section>
+
+      <div className={container}>
+        <Reveal>
+          <BrowserShot src={study.shots.hero} url={study.url} alt={`${study.title}: первый экран сайта`} priority />
+        </Reveal>
+
+        <Reveal>
+          <dl className="m-0 grid gap-px overflow-hidden rounded-xl border border-[var(--st-line)] bg-[var(--st-line)] py-0 sm:grid-cols-3 my-12 md:my-16">
+            {study.facts.map((f) => (
+              <div key={f.label} className="bg-[var(--st-bg)] p-6 md:p-8">
+                <dt className="sr-only">{f.label}</dt>
+                <dd className="m-0">
+                  <span className="block text-[36px] font-normal leading-none tracking-[-0.03em] text-[var(--st-accent)] md:text-[44px]">{f.value}</span>
+                  <span className="mt-3 block text-[16px] text-[var(--st-text-72)]">{f.label}</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </Reveal>
+
+        <CaseSection label="О клиенте">
+          <p className="max-w-[60ch] text-[18px] leading-[1.6] md:text-[20px]">{study.about}</p>
+        </CaseSection>
+        <CaseSection label="Задача">
+          <p className="max-w-[60ch] text-[18px] leading-[1.6] md:text-[20px]">{study.task}</p>
+        </CaseSection>
+        <CaseSection label="Что сделали">
+          <ol className="m-0 grid list-none gap-0 p-0">
+            {study.solution.map((item, i) => (
+              <li key={item} className="grid grid-cols-[48px_minmax(0,1fr)] gap-4 border-b border-[var(--st-line)] py-4 last:border-b-0 md:py-5">
+                <span className="text-[16px] tracking-[0.12em] text-[var(--st-accent)]">{String(i + 1).padStart(2, "0")}</span>
+                <span className="text-[17px] leading-[1.55] md:text-[18px]">{item}</span>
+              </li>
+            ))}
+          </ol>
+        </CaseSection>
+
+        <Reveal>
+          <div className="grid gap-4 py-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.42fr)] md:items-start">
+            {study.shots.desktop.map((src, i) => (
+              <BrowserShot key={src} src={src} url={study.url} alt={`${study.title}: экран ${i + 2}`} />
+            ))}
+            <figure className="m-0 mx-auto w-[60%] max-w-[260px] overflow-hidden rounded-[28px] border border-[var(--st-line)] bg-[var(--st-surface)] p-2 md:w-full">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={study.shots.mobile} alt={`${study.title}: версия для телефона`} width={390} height={844} loading="lazy" decoding="async" className="block h-auto w-full rounded-[22px]" />
+            </figure>
+          </div>
+        </Reveal>
+
+        <CaseSection label="Ключевые возможности">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {study.features.map((f) => (
+              <article key={f.title} className="st-cell rounded-xl border border-[var(--st-line)] bg-[var(--st-surface)] p-5 md:p-6">
+                <h3 className="text-[20px] font-normal leading-[1.2] tracking-[-0.01em]">{f.title}</h3>
+                <p className="mt-2 text-[16px] leading-[1.55] text-[var(--st-text-72)]">{f.text}</p>
+              </article>
+            ))}
+          </div>
+        </CaseSection>
+        <CaseSection label="Технологии">
+          <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
+            {study.stack.map((s) => (
+              <li key={s} className="rounded-full border border-[var(--st-line)] px-4 py-2 text-[16px]">
+                {s}
+              </li>
+            ))}
+          </ul>
+        </CaseSection>
+
+        <Reveal>
+          <div className="grid gap-6 border-t border-[var(--st-line)] py-14 md:grid-cols-2 md:py-20">
+            <button type="button" onClick={onContact} className="group text-left">
+              <span className="st-micro text-[var(--st-muted)]">Похожая задача?</span>
+              <span className="mt-3 flex items-center gap-4 text-[clamp(30px,4vw,56px)] leading-[1.05] tracking-[-0.03em] transition-colors group-hover:text-[var(--st-accent-light)]">
+                Обсудим проект <ArrowRight className="h-8 w-8 transition-transform group-hover:translate-x-2" />
+              </span>
+            </button>
+            <a href={`${BASE_PATH}/cases/${next.slug}/`} className="group text-left md:text-right">
+              <span className="st-micro text-[var(--st-muted)]">Следующий кейс</span>
+              <span className="mt-3 flex items-center gap-4 text-[clamp(30px,4vw,56px)] leading-[1.05] tracking-[-0.03em] transition-colors group-hover:text-[var(--st-accent-light)] md:justify-end">
+                {next.title} <ArrowRight className="h-8 w-8 transition-transform group-hover:translate-x-2" />
+              </span>
+            </a>
+          </div>
+        </Reveal>
+      </div>
+      <Contact />
+    </main>
+  );
+}
+
+/** Страница кейса проекта (/cases/<slug>/). Шапка, контакты и подвал — те же, что на главной. */
+export function StudioCasePage({ slug }: { slug: string }) {
+  const study = caseBySlug(slug);
+  const goContact = useCallback(() => {
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+  if (!study) return null;
+  return (
+    <StudioLocaleProvider locale="ru">
+      <StudioShell>
+        <SmoothWheel />
+        <ScrollProgress />
+        <StudioHeader onContact={goContact} home={`${BASE_PATH}/`} />
+        <CaseBody study={study} onContact={goContact} />
+        <StudioFooter />
+        <GrainOverlay />
+        <CustomCursor />
+      </StudioShell>
+    </StudioLocaleProvider>
   );
 }
 
