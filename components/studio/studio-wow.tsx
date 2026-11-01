@@ -4,7 +4,7 @@
  * Эффекты страницы «Студия Лемнити» по мотивам illan.ru (там они собраны на GSAP + ScrollTrigger +
  * SplitType + Lenis + Lottie). Здесь — без новых зависимостей, на framer-motion и CSS:
  *
- *  - StudioPreloader   — заставка с буквами Lemnity при каждой загрузке;
+ *  - StudioPreloader   — заставка с буквами Lemnity, держится до реальной загрузки страницы и картинок;
  *  - SmoothWheel       — плавная прокрутка колесом на ПК (аналог Lenis, lerp ≈ 0.07);
  *  - LineReveal        — заголовок выезжает из маски построчно с лёгким поворотом (SplitType lines);
  *  - VelocityTicker    — две ленты крест-накрест, разгоняются от прокрутки и меняют направление;
@@ -86,23 +86,81 @@ export function StudioPreloader() {
     }
     html.style.overflow = "hidden";
 
+    // Настоящая загрузка: ждём саму страницу (window load), шрифты и все картинки страницы — превью проектов,
+    // работ, логотипы, игры. Картинки заранее кладём в кеш браузера, поэтому после заставки они показываются
+    // сразу, а не догружаются на глазах. Полноразмерные картинки лайтбокса сюда не входят: они грузятся
+    // при открытии. Счётчик показывает реальную долю загруженного и плавно догоняет её.
+    let cancelled = false;
+    let done = 0;
+    let total = 1;
+    let shown = 0;
+    let finished = false;
+    let outTimer = 0;
     const started = performance.now();
-    const DURATION = 1500;
-    let frame = requestAnimationFrame(function tick(now) {
-      const t = Math.min(1, (now - started) / DURATION);
-      const eased = 1 - Math.pow(1 - t, 3);
-      if (counterRef.current) counterRef.current.textContent = String(Math.round(eased * 100)).padStart(3, "0");
-      if (barRef.current) barRef.current.style.transform = `scaleX(${eased})`;
-      if (t < 1) frame = requestAnimationFrame(tick);
+    const MIN_SHOW = 900; // заставка не мигает на быстром интернете
+    const MAX_WAIT = 15000; // и не держит дольше 15 с на очень медленном
+
+    const finish = () => {
+      if (finished || cancelled) return;
+      finished = true;
+      done = total;
+    };
+
+    const urls = new Set<string>();
+    document.querySelectorAll<HTMLImageElement>("img").forEach((img) => {
+      const src = img.currentSrc || img.getAttribute("src");
+      if (src && !src.startsWith("data:")) urls.add(new URL(src, location.href).href);
     });
-    const out = window.setTimeout(() => {
-      setPhase("out");
-      markIntroReady();
-    }, DURATION + 250);
+    const tasks: Promise<unknown>[] = [...urls].map(
+      (src) =>
+        new Promise<void>((resolve) => {
+          const img = new Image();
+          img.decoding = "async";
+          img.onload = img.onerror = () => resolve();
+          img.src = src;
+        }),
+    );
+    tasks.push(document.fonts ? document.fonts.ready : Promise.resolve());
+    tasks.push(
+      document.readyState === "complete"
+        ? Promise.resolve()
+        : new Promise<void>((resolve) => window.addEventListener("load", () => resolve(), { once: true })),
+    );
+    total = tasks.length;
+    tasks.forEach((task) =>
+      task.then(() => {
+        done += 1;
+      }),
+    );
+    Promise.all(tasks).then(finish);
+    const giveUp = window.setTimeout(finish, MAX_WAIT);
+
+    let frame = requestAnimationFrame(function tick(now) {
+      const target = Math.min(1, done / total);
+      // Плавно догоняем реальный прогресс; до конца загрузки не показываем 100.
+      shown += (target - shown) * 0.12;
+      if (!finished) shown = Math.min(shown, 0.99);
+      else if (target - shown < 0.004) shown = 1;
+      if (counterRef.current) counterRef.current.textContent = String(Math.round(shown * 100)).padStart(3, "0");
+      if (barRef.current) barRef.current.style.transform = `scaleX(${shown})`;
+      if (shown >= 1) {
+        outTimer = window.setTimeout(
+          () => {
+            setPhase("out");
+            markIntroReady();
+          },
+          Math.max(250, MIN_SHOW - (now - started)),
+        );
+        return;
+      }
+      frame = requestAnimationFrame(tick);
+    });
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(frame);
-      window.clearTimeout(out);
+      window.clearTimeout(giveUp);
+      window.clearTimeout(outTimer);
       html.style.overflow = "";
     };
   }, []);
