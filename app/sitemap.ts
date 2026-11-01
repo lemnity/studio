@@ -4,10 +4,11 @@ import { STUDIO_SITE_URL } from "@/components/studio/studio-content";
 import { STUDIO_CASES } from "@/components/studio/studio-cases";
 import { LOCALES, LOCALE_HTML, LOCALE_PATH } from "@/components/studio/studio-i18n";
 import { PROMO_PATH } from "@/components/studio/studio-promo";
+import { STUDIO_CITIES } from "@/components/studio/studio-city";
 
 export const dynamic = "force-static";
 
-/** Три языковые версии (у каждой — ссылки на остальные, hreflang), страницы кейсов и промо-игр. */
+/** Три языковые версии (у каждой — ссылки на остальные, hreflang), городские страницы, кейсы и промо-игры. */
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
   const languages = Object.fromEntries(LOCALES.map((l) => [LOCALE_HTML[l], `${STUDIO_SITE_URL}${LOCALE_PATH[l]}`]));
@@ -32,5 +33,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
   const promo: MetadataRoute.Sitemap = [{ url: `${STUDIO_SITE_URL}${PROMO_PATH}`, lastModified,
     changeFrequency: "monthly", priority: 0.8 }];
-  return [...pages, ...works, ...promo, ...cases];
+  const cities: MetadataRoute.Sitemap = STUDIO_CITIES.map((c) => ({
+    url: `${STUDIO_SITE_URL}/${c.slug}/`,
+    lastModified,
+    changeFrequency: "monthly",
+    priority: 0.9,
+  }));
+  return [...pages, ...cities, ...works, ...promo, ...cases];
 }

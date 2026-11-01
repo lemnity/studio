@@ -59,6 +59,7 @@ import {
 import { STUDIO_CASES, caseByProject, caseBySlug, type StudioCase } from "./studio-cases";
 import { StudioGame } from "./studio-game";
 import { PROMO, PROMO_PATH } from "./studio-promo";
+import { STUDIO_CITIES, cityBySlug, type StudioCity } from "./studio-city";
 import { StudioHexSphere } from "./studio-hex-sphere";
 import { LOCALES, LOCALE_HTML, LOCALE_LABEL, LOCALE_NAME, LOCALE_PATH, type Locale, type StudioContent, type Ui } from "./studio-i18n";
 import { StudioLocaleProvider, useStudioLocale } from "./studio-locale";
@@ -1947,7 +1948,7 @@ function FloatingCta({ onContact }: { onContact: () => void }) {
 }
 
 function StudioFooter() {
-  const { t } = useStudioLocale();
+  const { t, locale } = useStudioLocale();
   // Нижняя строка подвала — намеренно мельче остального сайта (исключение из минимума 16px): служебные подписи.
   // «!» нужен, потому что размер и разрядку задаёт и сам .st-micro, а его стили подключаются позже Tailwind.
   const micro = "st-micro !text-[12px] !tracking-[0.2em] text-[var(--st-muted)]";
@@ -1964,6 +1965,13 @@ function StudioFooter() {
         </div>
         <p className={cn(micro, "text-center")}>{t.footerTagline}</p>
         <nav aria-label={t.linksAria} className="flex flex-wrap items-center justify-center gap-6 md:justify-self-end md:gap-8">
+          {locale === "ru"
+            ? STUDIO_CITIES.map((city) => (
+                <a key={city.slug} href={`${BASE_PATH}/${city.slug}/`} className={link}>
+                  Сайты {city.inCity}
+                </a>
+              ))
+            : null}
           <a href={STUDIO_PLATFORM_URL} target="_blank" rel="noopener noreferrer" className={link}>{t.platform}</a>
           <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className={link}>Telegram</a>
           <a href={STUDIO_PRIVACY_URL} target="_blank" rel="noopener noreferrer" className={link}>{t.privacy}</a>
@@ -2495,6 +2503,194 @@ export function StudioPromoPage() {
         <ScrollProgress />
         <StudioHeader onContact={goContact} home={`${BASE_PATH}/`} />
         <PromoBody onContact={goContact} />
+        <StudioFooter />
+        <GrainOverlay />
+        <CustomCursor />
+      </StudioShell>
+    </StudioLocaleProvider>
+  );
+}
+
+/* ───────────────────────────── Разработка сайтов в городе ───────────────────────────── */
+
+function CityBody({ city, onContact }: { city: StudioCity; onContact: () => void }) {
+  const { t, c } = useStudioLocale();
+  // Пакеты сайтов: промо-игра на этой странице не нужна.
+  const plans = t.pricing.plans.filter((p) => !p.promo);
+  return (
+    <main>
+      <section className={cn(container, "pb-12 pt-[120px] md:pb-16 md:pt-[160px]")}>
+        <Reveal>
+          <a href={`${BASE_PATH}/`} className="st-micro st-ul inline-flex items-center gap-2 text-[var(--st-muted)] hover:text-[var(--st-text)]">
+            <ArrowLeft className="h-4 w-4" /> На главную
+          </a>
+        </Reveal>
+        <Reveal>
+          <p className="st-micro mt-10 text-[var(--st-accent)]">{city.label}</p>
+          <h1 className="mt-5 text-[clamp(48px,8.5vw,140px)] font-normal leading-[0.92] tracking-[-0.045em]">
+            {city.title[0]}
+            <br />
+            <span className="st-sheen">{city.title[1]}</span>
+          </h1>
+          <p className="mt-6 max-w-[48ch] text-[18px] leading-[1.55] text-[var(--st-text-72)] md:text-[20px]">{city.lead}</p>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <div className="mt-10 flex flex-wrap items-center gap-6 sm:gap-8">
+            <MagneticButton>
+              <button
+                type="button"
+                onClick={onContact}
+                className="group inline-flex items-center gap-4 rounded-full border border-[var(--st-accent)] px-7 py-3.5 text-[16px] font-medium transition-colors hover:border-[var(--st-accent-light)] hover:bg-[rgba(196,238,24,0.1)] md:px-9 md:py-[18px]"
+              >
+                Обсудить сайт
+                <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+              </button>
+            </MagneticButton>
+            <a href="#prices" className="st-ul text-[16px] underline decoration-[rgba(244,241,236,0.5)] underline-offset-4 transition-colors hover:text-[var(--st-accent-light)] hover:decoration-transparent">
+              Цены и сроки
+            </a>
+          </div>
+        </Reveal>
+      </section>
+
+      <section aria-labelledby="kinds-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <Reveal>
+            <h2 id="kinds-title" className="st-title mb-8 md:mb-10">{city.kindsTitle}</h2>
+          </Reveal>
+          <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 md:gap-4 lg:grid-cols-3">
+            {city.kinds.map((k, i) => (
+              <li key={k.title} className="flex">
+                <Reveal delay={(i % 3) * 0.06} className="flex min-w-0 flex-1">
+                  <div className={cn(cardClass, "flex-1 gap-2.5")}>
+                    <h3 className="text-xl font-medium leading-[1.25]">{k.title}</h3>
+                    <p className="text-[16px] leading-[1.6] text-[var(--st-muted)]">{k.text}</p>
+                  </div>
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section id="prices" aria-labelledby="prices-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <SectionHead id="prices-title" title={`Цены на сайты ${city.inCity}`} text={t.pricing.text} />
+          <ul className="m-0 grid list-none gap-3 p-0 md:grid-cols-3 md:gap-4">
+            {plans.map((plan, i) => (
+              <li key={plan.name} className="flex">
+                <Reveal delay={i * 0.06} className="flex min-w-0 flex-1">
+                  <PlanCard plan={plan} accent={i === 0} onContact={onContact} />
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-6 text-[16px] leading-[1.6] text-[var(--st-muted)]">{t.pricing.note}</p>
+        </div>
+      </section>
+
+      <section aria-labelledby="city-cases-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <SectionHead id="city-cases-title" title="Наши проекты" text="Сайты и сервисы, которые мы запустили для клиентов." />
+          <ul className="m-0 grid list-none gap-4 p-0 sm:grid-cols-2">
+            {STUDIO_CASES.map((study) => (
+              <li key={study.slug}>
+                <a href={`${BASE_PATH}/cases/${study.slug}/`} data-cursor={t.cursorView} className="st-cell group block overflow-hidden rounded border border-[var(--st-line)] bg-[var(--st-surface)]">
+                  <div className="aspect-[16/10] overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={study.shots.hero} alt={study.title} loading="lazy" decoding="async" className="h-full w-full object-cover object-top transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.035]" />
+                  </div>
+                  <div className="flex items-start justify-between gap-4 p-5 md:p-6">
+                    <div>
+                      <h3 className="text-xl font-medium leading-[1.25]">{study.title}</h3>
+                      <p className="mt-2 text-[16px] leading-[1.6] text-[var(--st-muted)]">{study.lead}</p>
+                    </div>
+                    <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-[var(--st-accent)] transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="why-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <Reveal>
+            <h2 id="why-title" className="st-title mb-8 md:mb-10">{city.whyTitle}</h2>
+          </Reveal>
+          <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
+            {city.why.map((w, i) => (
+              <li key={w.title} className="flex">
+                <Reveal delay={i * 0.06} className="flex min-w-0 flex-1">
+                  <div className={cn(cardClass, "flex-1 gap-2.5")}>
+                    <span aria-hidden className="text-[16px] tracking-[0.12em] text-[var(--st-accent)]">{pad(i + 1)}</span>
+                    <h3 className="text-xl font-medium leading-[1.25]">{w.title}</h3>
+                    <p className="text-[16px] leading-[1.6] text-[var(--st-muted)]">{w.text}</p>
+                  </div>
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+          <Reveal>
+            <h3 className="mb-6 mt-14 text-[28px] font-normal leading-[1.1] tracking-[-0.02em] md:mb-8 md:text-[34px]">{t.processTitle}</h3>
+          </Reveal>
+          <ol className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
+            {c.process.map((p, i) => (
+              <li key={p.title} className="flex">
+                <Reveal delay={i * 0.06} className="flex min-w-0 flex-1">
+                  <div className={cn(cardClass, "flex-1 gap-2.5")}>
+                    <span aria-hidden className="text-[16px] tracking-[0.12em] text-[var(--st-accent)]">{pad(i + 1)}</span>
+                    <h4 className="text-[17px] font-medium leading-[1.3]">{p.title}</h4>
+                    <p className="text-[16px] leading-[1.6] text-[var(--st-muted)]">{p.text}</p>
+                  </div>
+                </Reveal>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section aria-labelledby="city-faq-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "grid items-start gap-8 py-16 md:grid-cols-[1fr_2fr] md:gap-12 md:py-20")}>
+          <Reveal>
+            <h2 id="city-faq-title" className="st-title">{t.faqTitle}</h2>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <div className="border-t border-[var(--st-line)]">
+              {city.faq.map((f) => (
+                <details key={f.q} className="group border-b border-[var(--st-line)]">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-4 md:py-5">
+                    <span className="text-[17px] font-medium leading-[1.3] transition-colors group-hover:text-[var(--st-accent-light)] md:text-xl">{f.q}</span>
+                    <Plus className="st-faq-icon h-5 w-5 shrink-0 text-[var(--st-accent)] transition-transform duration-300" />
+                  </summary>
+                  <p className="max-w-[720px] pb-6 text-[16px] leading-[1.7] text-[var(--st-muted)]">{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <Contact />
+    </main>
+  );
+}
+
+/** Страница «Разработка сайтов в <городе>» (/<city.slug>/). Только на русском. */
+export function StudioCityPage({ slug }: { slug: string }) {
+  const city = cityBySlug(slug);
+  const goContact = useCallback(() => {
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+  if (!city) return null;
+  return (
+    <StudioLocaleProvider locale="ru">
+      <StudioShell>
+        <SmoothWheel />
+        <ScrollProgress />
+        <StudioHeader onContact={goContact} home={`${BASE_PATH}/`} />
+        <CityBody city={city} onContact={goContact} />
         <StudioFooter />
         <GrainOverlay />
         <CustomCursor />
