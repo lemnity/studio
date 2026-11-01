@@ -20,5 +20,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: "monthly",
     priority: 0.7,
   }));
-  return [...pages, ...cases];
+  const works: MetadataRoute.Sitemap = LOCALES.map((l) => ({
+    url: `${STUDIO_SITE_URL}${LOCALE_PATH[l]}works/`,
+    changeFrequency: "monthly",
+    priority: 0.8,
+  }));
+  return [...pages, ...works, ...cases];
 }

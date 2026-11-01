@@ -75,6 +75,17 @@ export type Ui = {
   nextWork: string;
   galleryTitle: string;
   galleryText: string;
+  /** Страница «Работы» (/works/): всё портфолио с фильтрами. */
+  works: {
+    title: string;
+    text: string;
+    all: string;
+    allWorks: string;
+    back: string;
+    caseBadge: string;
+    filters: { all: string; site: string; ui: string; app: string; brand: string; game: string };
+    meta: { title: string; description: string };
+  };
   openWork: (alt: string) => string;
   clientsTitle: string;
   clientsText: string;
@@ -168,6 +179,19 @@ const RU: Ui = {
   nextWork: "Следующая работа",
   galleryTitle: "Галерея работ",
   galleryText: "Сайты, интерфейсы, приложения и брендинг: подборка работ разных лет.",
+  works: {
+    title: "Работы",
+    text: "Всё портфолио студии: продукты, сайты, интерфейсы, приложения, брендинг и игры.",
+    all: "Все работы",
+    allWorks: "Смотреть все работы",
+    back: "На главную",
+    caseBadge: "Кейс",
+    filters: { all: "Все", site: "Сайты", ui: "Интерфейсы", app: "Приложения", brand: "Брендинг", game: "Игры" },
+    meta: {
+      title: "Работы — портфолио Студии Лемнити",
+      description: "Портфолио Студии Лемнити: сайты, интернет-магазины, интерфейсы, приложения, брендинг и казуальные игры.",
+    },
+  },
   openWork: (alt) => `Открыть работу: ${alt}`,
   clientsTitle: "Нам доверяют",
   clientsText: "Компании и команды, с которыми мы запускали бренды, сайты и продукты.",
@@ -265,6 +289,19 @@ const EN: Ui = {
   nextWork: "Next work",
   galleryTitle: "Work gallery",
   galleryText: "Websites, interfaces, apps and branding: a selection of work from different years.",
+  works: {
+    title: "Work",
+    text: "The studio's full portfolio: products, websites, interfaces, apps, branding and games.",
+    all: "All work",
+    allWorks: "See all work",
+    back: "Home",
+    caseBadge: "Case",
+    filters: { all: "All", site: "Websites", ui: "Interfaces", app: "Apps", brand: "Branding", game: "Games" },
+    meta: {
+      title: "Work — Lemnity Studio portfolio",
+      description: "Lemnity Studio portfolio: websites, online stores, interfaces, apps, branding and casual games.",
+    },
+  },
   openWork: (alt) => `Open work: ${alt}`,
   clientsTitle: "Trusted by",
   clientsText: "Companies and teams we have launched brands, websites and products with.",
@@ -363,6 +400,19 @@ const TJ: Ui = {
   nextWork: "Кори навбатӣ",
   galleryTitle: "Галереяи корҳо",
   galleryText: "Сайтҳо, интерфейсҳо, барномаҳо ва брендинг: интихоби корҳои солҳои гуногун.",
+  works: {
+    title: "Корҳо",
+    text: "Тамоми портфолиои студия: маҳсулот, сайтҳо, интерфейсҳо, барномаҳо, брендинг ва бозиҳо.",
+    all: "Ҳамаи корҳо",
+    allWorks: "Дидани ҳамаи корҳо",
+    back: "Ба саҳифаи асосӣ",
+    caseBadge: "Кейс",
+    filters: { all: "Ҳама", site: "Сайтҳо", ui: "Интерфейсҳо", app: "Барномаҳо", brand: "Брендинг", game: "Бозиҳо" },
+    meta: {
+      title: "Корҳо — портфолиои Студияи Лемнити",
+      description: "Портфолиои Студияи Лемнити: сайтҳо, мағозаҳои онлайн, интерфейсҳо, барномаҳо, брендинг ва бозиҳои казуалӣ.",
+    },
+  },
   openWork: (alt) => `Кушодани кор: ${alt}`,
   clientsTitle: "Ба мо эътимод доранд",
   clientsText: "Ширкатҳо ва дастаҳое, ки бо онҳо брендҳо, сайтҳо ва маҳсулот ба кор андохтем.",

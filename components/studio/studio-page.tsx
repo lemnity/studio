@@ -73,6 +73,9 @@ import {
   useIntroReady,
 } from "./studio-wow";
 
+/** Адрес страницы «Работы» на языке страницы (с учётом basePath GitHub Pages). */
+const worksPath = (locale: Locale) => `${BASE_PATH}${LOCALE_PATH[locale]}works/`;
+
 /** Якоря разделов; подписи — в словаре (t.nav), в том же порядке. */
 const NAV_HREFS = ["#work", "#gallery", "#services", "#about", "#contact"] as const;
 
@@ -307,8 +310,12 @@ const container = "mx-auto w-full max-w-[1440px] px-5 md:px-12";
 
 /** `home` — префикс якорей меню: на странице кейса разделы лежат на главной («/#work»), на главной — пусто. */
 function StudioHeader({ onContact, home = "" }: { onContact: () => void; home?: string }) {
-  const { t } = useStudioLocale();
-  const nav = NAV_HREFS.map((href, i) => ({ href: `${home}${href}`, label: t.nav[i] }));
+  const { t, locale } = useStudioLocale();
+  // «Работы» ведёт на отдельную страницу портфолио, остальные пункты — на разделы главной.
+  const nav = NAV_HREFS.map((href, i) => ({
+    href: href === "#gallery" ? worksPath(locale) : `${home}${href}`,
+    label: t.nav[i],
+  }));
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { scrollY } = useScroll();
@@ -1070,7 +1077,7 @@ function Lightbox({ index, onClose, onChange }: { index: number | null; onClose:
 }
 
 function Gallery() {
-  const { t, c } = useStudioLocale();
+  const { t, c, locale } = useStudioLocale();
   const [active, setActive] = useState<number | null>(null);
   const close = useCallback(() => setActive(null), []);
   return (
@@ -1115,6 +1122,15 @@ function Gallery() {
             </li>
           ))}
         </ul>
+        <Reveal>
+          <a
+            href={worksPath(locale)}
+            className="group mx-auto mt-10 flex w-fit items-center gap-4 rounded-full border border-[var(--st-accent)] px-8 py-4 text-[16px] font-medium transition-colors hover:bg-[rgba(196,238,24,0.1)]"
+          >
+            {t.works.allWorks}
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </a>
+        </Reveal>
       </div>
       <Lightbox index={active} onClose={close} onChange={setActive} />
     </section>
@@ -1879,6 +1895,162 @@ function StudioFooter() {
         </nav>
       </div>
     </footer>
+  );
+}
+
+/* ───────────────────────────── Страница «Работы» ───────────────────────────── */
+
+type WorkFilter = "all" | "site" | "ui" | "app" | "brand" | "game";
+const WORK_FILTERS: readonly WorkFilter[] = ["all", "site", "ui", "app", "brand", "game"];
+
+/** Карточка проекта на странице работ: ведёт на кейс (русская версия) или на сайт проекта. */
+function WorksProjectCard({ project, wide }: { project: StudioProject; wide?: boolean }) {
+  const { t, locale } = useStudioLocale();
+  const study = locale === "ru" ? caseByProject(project.id) : undefined;
+  const href = study ? `${BASE_PATH}/cases/${study.slug}/` : !project.soon ? project.url : "";
+  const Card = href ? "a" : "div";
+  const external = !study && !!href;
+  const badge = study ? t.works.caseBadge : project.game ? t.gameBadge : project.flagship ? t.ourProduct : null;
+  return (
+    <Card
+      {...(href ? { href, ...(external ? { target: "_blank", rel: "noopener noreferrer" } : {}) } : {})}
+      data-cursor={study ? t.works.caseBadge : href ? t.cursorView : project.game ? t.gameBadge : t.soon}
+      className="st-cell group flex h-full flex-col overflow-hidden rounded-xl border border-[var(--st-line)] bg-[var(--st-surface)]"
+    >
+      {/* Широкая карточка (Lemnity на две колонки) — пропорции ближе к кадру исходника, чтобы он не размывался. */}
+      <div className={cn("relative overflow-hidden border-b border-[var(--st-line)]", wide ? "aspect-[4/3] sm:aspect-[2.16/1]" : "aspect-[4/3]", project.contain && "bg-[#0d0d0d]")}>
+        {project.contain ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={project.image} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-contain p-[8%] transition-transform duration-700 group-hover:scale-[1.04]" />
+        ) : (
+          <div className="absolute inset-0 transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]">
+            <ProjectImage project={project} />
+          </div>
+        )}
+        {badge ? (
+          <span className="st-micro absolute left-3 top-3 rounded-full bg-[rgba(3,3,3,0.72)] px-3 py-1.5 text-[var(--st-accent)] backdrop-blur-md">{badge}</span>
+        ) : null}
+      </div>
+      <div className="flex flex-col gap-1.5 p-5">
+        <h3 className="text-[22px] font-normal leading-[1.15] tracking-[-0.02em] transition-colors group-hover:text-[var(--st-accent-light)]">{project.title}</h3>
+        <p className="text-[16px] leading-[1.5] text-[var(--st-text-72)]">{project.description}</p>
+        <p className="text-[16px] text-[var(--st-muted)]">{project.tags.map((tag) => `#${tag}`).join("  ")}</p>
+      </div>
+    </Card>
+  );
+}
+
+/** Всё портфолио: проекты (с кейсами) и работы галереи в одной сетке, с фильтрами по типу. */
+function WorksBody() {
+  const { t, c, locale } = useStudioLocale();
+  const [filter, setFilter] = useState<WorkFilter>("all");
+  const [active, setActive] = useState<number | null>(null);
+  const close = useCallback(() => setActive(null), []);
+
+  // Проекты — сеткой в 4 колонки, Lemnity на две: семь проектов ложатся в две ровные строки.
+  const projectKind = (p: StudioProject): WorkFilter => (p.game ? "game" : p.flagship ? "app" : "site");
+  const projects = c.projects.filter((p) => filter === "all" || projectKind(p) === filter);
+  const works = c.works.map((w, i) => ({ w, i })).filter(({ w }) => filter === "all" || w.kind === filter);
+  const count = (f: WorkFilter) =>
+    f === "all" ? c.projects.length + c.works.length : c.projects.filter((p) => projectKind(p) === f).length + c.works.filter((w) => w.kind === f).length;
+
+  return (
+    <main>
+      <section className={cn(container, "pb-10 pt-[120px] md:pt-[160px]")}>
+        <Reveal>
+          <a href={`${BASE_PATH}${LOCALE_PATH[locale]}`} className="st-micro st-ul inline-flex items-center gap-2 text-[var(--st-muted)] hover:text-[var(--st-text)]">
+            <ArrowLeft className="h-4 w-4" /> {t.works.back}
+          </a>
+        </Reveal>
+        <Reveal>
+          <h1 className="mt-10 text-[clamp(56px,9vw,150px)] font-normal leading-[0.92] tracking-[-0.045em]">{t.works.title}</h1>
+          <p className="mt-6 max-w-[48ch] text-[18px] leading-[1.55] text-[var(--st-text-72)] md:text-[20px]">{t.works.text}</p>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <div role="group" aria-label={t.works.title} className="mt-10 flex flex-wrap gap-2">
+            {WORK_FILTERS.map((f) => {
+              const n = count(f);
+              if (!n) return null;
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  aria-pressed={filter === f}
+                  onClick={() => setFilter(f)}
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-[16px] transition-colors",
+                    filter === f
+                      ? "border-[var(--st-accent)] bg-[var(--st-accent)] text-[var(--st-bg)]"
+                      : "border-[var(--st-line)] text-[var(--st-muted)] hover:border-[var(--st-accent-45)] hover:text-[var(--st-text)]",
+                  )}
+                >
+                  {t.works.filters[f]}
+                  <span className={cn("text-[14px] tabular-nums", filter === f ? "opacity-70" : "opacity-60")}>{n}</span>
+                </button>
+              );
+            })}
+          </div>
+        </Reveal>
+      </section>
+
+      <div className={cn(container, "pb-20 md:pb-28")}>
+        <motion.div key={filter} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }}>
+          {projects.length ? (
+            <ul className="m-0 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-4">
+              {projects.map((p) => (
+                <li key={p.id} className={cn(p.flagship && filter === "all" && "sm:col-span-2")}>
+                  <WorksProjectCard project={p} wide={p.flagship && filter === "all"} />
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {works.length ? (
+            <ul className={cn("m-0 list-none columns-2 gap-3 p-0 md:columns-3 md:gap-4 [&>li]:mb-3 md:[&>li]:mb-4", projects.length && "mt-4")}>
+              {works.map(({ w, i }) => (
+                <li key={w.src} className="break-inside-avoid">
+                  <button
+                    type="button"
+                    onClick={() => setActive(i)}
+                    aria-label={t.openWork(w.alt)}
+                    aria-haspopup="dialog"
+                    data-cursor={t.cursorOpen}
+                    className="st-cell group relative block w-full overflow-hidden rounded-xl border border-[var(--st-line)] bg-[var(--st-surface)] text-left"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={w.src} alt={w.alt} width={w.width} height={w.height} loading="lazy" decoding="async" className="block h-auto w-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.035]" />
+                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(3,3,3,0.85)] to-transparent px-4 pb-3 pt-10 text-[16px] leading-[1.3] opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100">
+                      {w.alt}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </motion.div>
+      </div>
+      <Lightbox index={active} onClose={close} onChange={setActive} />
+      <Contact />
+    </main>
+  );
+}
+
+/** Страница «Работы» (/works/, /en/works/, /tj/works/). */
+export function StudioWorksPage({ locale = "ru" }: { locale?: Locale }) {
+  const goContact = useCallback(() => {
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+  return (
+    <StudioLocaleProvider locale={locale}>
+      <StudioShell>
+        <SmoothWheel />
+        <ScrollProgress />
+        <StudioHeader onContact={goContact} home={`${BASE_PATH}${LOCALE_PATH[locale]}`} />
+        <WorksBody />
+        <StudioFooter />
+        <GrainOverlay />
+        <CustomCursor />
+      </StudioShell>
+    </StudioLocaleProvider>
   );
 }
 
