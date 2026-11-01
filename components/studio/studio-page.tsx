@@ -36,6 +36,7 @@ import {
   STUDIO_CONTACT_EMAIL,
   STUDIO_CONTACT_TG,
   STUDIO_LEAD_URL,
+  STUDIO_METRIKA_ID,
   STUDIO_PLATFORM_URL,
   PROMO_TOPIC,
   STUDIO_PRIVACY_URL,
@@ -1733,7 +1734,10 @@ function Contact({ initialTopic = 0 }: { initialTopic?: number }) {
         }),
       });
       const data = (await res.json().catch(() => null)) as { ok?: boolean } | null;
-      setState(res.ok && data?.ok ? "sent" : "failed");
+      const ok = res.ok && data?.ok;
+      // Цель «lead» в Яндекс Метрике (если счётчик подключён, см. studio-metrika.tsx).
+      if (ok && STUDIO_METRIKA_ID) (window as { ym?: (...a: unknown[]) => void }).ym?.(STUDIO_METRIKA_ID, "reachGoal", "lead");
+      setState(ok ? "sent" : "failed");
     } catch {
       setState("failed");
     }

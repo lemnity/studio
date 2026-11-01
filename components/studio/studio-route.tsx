@@ -128,10 +128,6 @@ export function StudioRoute({ locale }: { locale: Locale }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(locale)) }} />
-      {/* Корневой layout общий для всех языков и ставит lang="ru"; на en и tj язык документа правим до отрисовки. */}
-      {locale !== "ru" ? (
-        <script dangerouslySetInnerHTML={{ __html: `document.documentElement.lang=${JSON.stringify(LOCALE_HTML[locale])};` }} />
-      ) : null}
       {/* До контента: решает, показывать ли заставку, пока страница ещё не отрисована. */}
       <script dangerouslySetInnerHTML={{ __html: STUDIO_INTRO_BOOT_SCRIPT }} />
       <StudioPage locale={locale} />

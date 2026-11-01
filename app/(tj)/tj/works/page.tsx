@@ -21,11 +21,5 @@ export const metadata: Metadata = {
 };
 
 export default function WorksPage() {
-  return (
-    <>
-      {/* Корневой layout ставит lang="ru"; язык документа правим до отрисовки, как на главной. */}
-      <script dangerouslySetInnerHTML={{ __html: 'document.documentElement.lang="tg";' }} />
-      <StudioWorksPage locale="tj" />
-    </>
-  );
+  return <StudioWorksPage locale="tj" />;
 }

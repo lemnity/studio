@@ -23,6 +23,15 @@ export const STUDIO_CONTACT_EMAIL = "hello@lemnity.ru";
 export const STUDIO_LEAD_URL = process.env.NEXT_PUBLIC_LEAD_URL || "";
 export const STUDIO_CONTACT_TG = "https://t.me/lemnity_ru";
 
+/**
+ * Подтверждение прав в Яндекс Вебмастере и Google Search Console: содержимое content из их мета-тега.
+ * Пустая строка — тег не выводится.
+ */
+export const STUDIO_VERIFICATION = { yandex: "", google: "" };
+
+/** Номер счётчика Яндекс Метрики. Пока 0, скрипт счётчика на сайт не подключается. */
+export const STUDIO_METRIKA_ID = 0;
+
 /** Картинка-превью ссылки (1200×630) для Telegram, VK и поисковиков. */
 export const STUDIO_OG_IMAGE = { url: "/studio/og/home.png", width: 1200, height: 630 };
 
