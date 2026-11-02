@@ -59,7 +59,7 @@ import {
 import { STUDIO_CASES, caseByProject, caseBySlug, type StudioCase } from "./studio-cases";
 import { StudioGame } from "./studio-game";
 import { PROMO, PROMO_PATH } from "./studio-promo";
-import { PRICING, PRICING_PATH, type CompareMark, type PricingPackage } from "./studio-pricing";
+import { COMPARE_MARKS, PRICING, pricingPath, type CompareMark, type PricingPackage } from "./studio-pricing";
 import { STUDIO_CITIES, cityBySlug, type StudioCity } from "./studio-city";
 import { StudioHexSphere } from "./studio-hex-sphere";
 import { LOCALES, LOCALE_HTML, LOCALE_LABEL, LOCALE_NAME, LOCALE_PATH, type Locale, type StudioContent, type Ui } from "./studio-i18n";
@@ -86,10 +86,11 @@ const NAV_HREFS = ["#work", "#gallery", "#services", "#about", "#contact"] as co
 
 /**
  * Выбор языка — выпадающее меню: кнопка с текущим языком, по клику список из трёх языков. Пункты —
- * обычные ссылки на статические страницы /, /en/, /tj/ (с учётом basePath GitHub Pages).
+ * обычные ссылки на статические страницы /, /en/, /tj/ (с учётом basePath GitHub Pages). `page` — подстраница,
+ * которая есть на всех языках («works/», «pricing/»): тогда ссылки ведут на неё же, а не на главную.
  * Закрывается по клику мимо, по Escape и при выборе.
  */
-function LangSwitch({ className }: { className?: string }) {
+function LangSwitch({ className, page = "" }: { className?: string; page?: string }) {
   const { locale, t } = useStudioLocale();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -141,7 +142,7 @@ function LangSwitch({ className }: { className?: string }) {
             {LOCALES.map((l) => (
               <li key={l}>
                 <a
-                  href={`${BASE_PATH}${LOCALE_PATH[l]}`}
+                  href={`${BASE_PATH}${LOCALE_PATH[l]}${page}`}
                   hrefLang={LOCALE_HTML[l]}
                   lang={LOCALE_HTML[l]}
                   aria-current={l === locale ? "page" : undefined}
@@ -313,8 +314,11 @@ const container = "mx-auto w-full max-w-[1440px] px-5 md:px-12";
 
 /* ───────────────────────────── Шапка и меню ───────────────────────────── */
 
-/** `home` — префикс якорей меню: на странице кейса разделы лежат на главной («/#work»), на главной — пусто. */
-function StudioHeader({ onContact, home = "" }: { onContact: () => void; home?: string }) {
+/**
+ * `home` — префикс якорей меню: на странице кейса разделы лежат на главной («/#work»), на главной — пусто.
+ * `page` — подстраница для переключателя языка (см. LangSwitch).
+ */
+function StudioHeader({ onContact, home = "", page }: { onContact: () => void; home?: string; page?: string }) {
   const { t, locale } = useStudioLocale();
   // «Работы» ведёт на отдельную страницу портфолио, остальные пункты — на разделы главной.
   const nav = NAV_HREFS.map((href, i) => ({
@@ -361,7 +365,7 @@ function StudioHeader({ onContact, home = "" }: { onContact: () => void; home?: 
               ))}
             </nav>
             <div className="flex items-center gap-4 justify-self-end">
-              <LangSwitch />
+              <LangSwitch page={page} />
               <button type="button" aria-label={t.openMenu} onClick={() => setOpen(true)} className="st-round">
                 <Menu className="h-4 w-4 xl:hidden" />
                 <MoreHorizontal className="hidden h-4 w-4 xl:block" />
@@ -1349,11 +1353,9 @@ function Pricing({ onContact }: { onContact: () => void }) {
           ))}
         </ul>
         <p className="mt-6 text-[16px] leading-[1.6] text-[var(--st-muted)]">{p.note}</p>
-        {locale === "ru" ? (
-          <a href={`${BASE_PATH}${PRICING_PATH}`} className="st-ul mt-4 inline-flex items-center gap-2 text-[16px] transition-colors hover:text-[var(--st-accent-light)]">
-            Все цены, сроки и форматы оплаты <ArrowRight className="h-4 w-4 text-[var(--st-accent)]" />
-          </a>
-        ) : null}
+        <a href={`${BASE_PATH}${pricingPath(locale)}`} className="st-ul mt-4 inline-flex items-center gap-2 text-[16px] transition-colors hover:text-[var(--st-accent-light)]">
+          {PRICING[locale].homeLink} <ArrowRight className="h-4 w-4 text-[var(--st-accent)]" />
+        </a>
       </div>
     </section>
   );
@@ -1971,16 +1973,14 @@ function StudioFooter() {
         </div>
         <p className={cn(micro, "text-center")}>{t.footerTagline}</p>
         <nav aria-label={t.linksAria} className="flex flex-wrap items-center justify-center gap-6 md:justify-self-end md:gap-8">
-          {locale === "ru" ? (
-            <>
-              <a href={`${BASE_PATH}${PRICING_PATH}`} className={link}>Цены</a>
-              {STUDIO_CITIES.map((city) => (
+          <a href={`${BASE_PATH}${pricingPath(locale)}`} className={link}>{PRICING[locale].nav}</a>
+          {locale === "ru"
+            ? STUDIO_CITIES.map((city) => (
                 <a key={city.slug} href={`${BASE_PATH}/${city.slug}/`} className={link}>
                   Сайты {city.inCity}
                 </a>
-              ))}
-            </>
-          ) : null}
+              ))
+            : null}
           <a href={STUDIO_PLATFORM_URL} target="_blank" rel="noopener noreferrer" className={link}>{t.platform}</a>
           <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className={link}>Telegram</a>
           <a href={STUDIO_PRIVACY_URL} target="_blank" rel="noopener noreferrer" className={link}>{t.privacy}</a>
@@ -2136,7 +2136,7 @@ export function StudioWorksPage({ locale = "ru" }: { locale?: Locale }) {
       <StudioShell>
         <SmoothWheel />
         <ScrollProgress />
-        <StudioHeader onContact={goContact} home={`${BASE_PATH}${LOCALE_PATH[locale]}`} />
+        <StudioHeader onContact={goContact} home={`${BASE_PATH}${LOCALE_PATH[locale]}`} page="works/" />
         <WorksBody />
         <StudioFooter />
         <GrainOverlay />
@@ -2560,6 +2560,7 @@ const ctaClass =
 
 /** Карточка пакета на странице цен: номер, цена «от», срок, обычная вилка и что входит. */
 function PackageCard({ plan, index, onContact }: { plan: PricingPackage; index: number; onContact: () => void }) {
+  const P = PRICING[useStudioLocale().locale];
   return (
     <article className={cn(cardClass, "flex-1", index === 0 && "border-[var(--st-accent-45)]")}>
       <span aria-hidden className="st-micro text-[var(--st-accent)]">/ {pad(index + 1)}</span>
@@ -2570,10 +2571,10 @@ function PackageCard({ plan, index, onContact }: { plan: PricingPackage; index: 
       </p>
       <p className="text-[16px] leading-[1.6] text-[var(--st-text-72)]">{plan.text}</p>
       <p className="flex items-baseline justify-between gap-4 border-y border-[var(--st-line)] py-3 text-[16px]">
-        <span className="text-[var(--st-muted)]">{PRICING.rangeLabel}</span>
+        <span className="text-[var(--st-muted)]">{P.rangeLabel}</span>
         <span className="text-right">{plan.range}</span>
       </p>
-      <ul aria-label="Что входит" className="m-0 grid list-none gap-1.5 p-0">
+      <ul aria-label={P.includedAria} className="m-0 grid list-none gap-1.5 p-0">
         {plan.items.map((d) => (
           <li key={d} className="relative pl-[18px] text-[16px] leading-normal before:absolute before:left-0 before:top-[0.6em] before:h-px before:w-2 before:bg-[var(--st-accent)]">
             {d}
@@ -2590,22 +2591,22 @@ function PackageCard({ plan, index, onContact }: { plan: PricingPackage; index: 
   );
 }
 
-function CompareCell({ mark }: { mark: CompareMark }) {
-  const label = PRICING.compareLegend[mark];
+function CompareCell({ mark, label }: { mark: CompareMark; label: string }) {
   if (mark === "yes") return <Check aria-label={label} className="mx-auto h-5 w-5 text-[var(--st-accent)]" />;
   if (mark === "request") return <span className="text-[14px] text-[var(--st-text-72)] md:text-[16px]">{label.toLowerCase()}</span>;
   return <span aria-label={label} className="text-[var(--st-muted)]">—</span>;
 }
 
 function PricingBody({ onContact }: { onContact: () => void }) {
-  const P = PRICING;
+  const { locale } = useStudioLocale();
+  const P = PRICING[locale];
   const subTitle = "mb-6 text-[28px] font-normal leading-[1.1] tracking-[-0.02em] md:mb-8 md:text-[34px]";
   return (
     <main>
       <section className={cn(container, "pb-12 pt-[120px] md:pb-16 md:pt-[160px]")}>
         <Reveal>
-          <a href={`${BASE_PATH}/`} className="st-micro st-ul inline-flex items-center gap-2 text-[var(--st-muted)] hover:text-[var(--st-text)]">
-            <ArrowLeft className="h-4 w-4" /> На главную
+          <a href={`${BASE_PATH}${LOCALE_PATH[locale]}`} className="st-micro st-ul inline-flex items-center gap-2 text-[var(--st-muted)] hover:text-[var(--st-text)]">
+            <ArrowLeft className="h-4 w-4" /> {P.back}
           </a>
         </Reveal>
         <Reveal>
@@ -2645,7 +2646,7 @@ function PricingBody({ onContact }: { onContact: () => void }) {
             {P.packages.map((plan, i) => (
               <li key={plan.name}>
                 <Reveal delay={i * 0.06}>
-                  <p className="text-[clamp(40px,5vw,72px)] font-normal leading-none tracking-[-0.04em]">{plan.price.replace(/^от\s*/, "")}</p>
+                  <p className="text-[clamp(40px,5vw,72px)] font-normal leading-none tracking-[-0.04em]">{plan.price.replace(`${P.from} `, "")}</p>
                   <p className="mt-3 text-[16px] text-[var(--st-muted)]">{plan.name}</p>
                 </Reveal>
               </li>
@@ -2752,7 +2753,7 @@ function PricingBody({ onContact }: { onContact: () => void }) {
                 <caption className="st-micro pb-5 text-left text-[var(--st-muted)]">{P.receipt.title}</caption>
                 <thead>
                   <tr className="border-b border-dashed border-[var(--st-line)] text-[var(--st-muted)]">
-                    <th scope="col" className="py-3 pr-4 font-normal"><span className="sr-only">Что</span></th>
+                    <th scope="col" className="py-3 pr-4 font-normal"><span className="sr-only">{P.itemCol}</span></th>
                     <th scope="col" className="py-3 pr-4 text-right font-normal">{P.receipt.elsewhere}</th>
                     <th scope="col" className="py-3 text-right font-normal">{P.receipt.withUs}</th>
                   </tr>
@@ -2814,19 +2815,19 @@ function PricingBody({ onContact }: { onContact: () => void }) {
               <table className="w-full min-w-[340px] border-collapse text-[16px]">
                 <thead>
                   <tr className="border-b border-[var(--st-line)]">
-                    <th scope="col" className="py-4 pr-4 text-left font-normal text-[var(--st-muted)]"><span className="sr-only">Что входит</span></th>
+                    <th scope="col" className="py-4 pr-4 text-left font-normal text-[var(--st-muted)]"><span className="sr-only">{P.includedAria}</span></th>
                     {P.packages.map((plan) => (
                       <th key={plan.name} scope="col" title={plan.name} className="w-[22%] px-1 py-4 text-center font-medium leading-[1.3] md:px-2">{plan.short}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {P.compareRows.map((row) => (
-                    <tr key={row.item} className="border-b border-[var(--st-line)]">
-                      <th scope="row" className="py-4 pr-4 text-left font-normal">{row.item}</th>
-                      {row.values.map((mark, i) => (
+                  {P.compareRows.map((item, r) => (
+                    <tr key={item} className="border-b border-[var(--st-line)]">
+                      <th scope="row" className="py-4 pr-4 text-left font-normal">{item}</th>
+                      {COMPARE_MARKS[r].map((mark, i) => (
                         <td key={i} className="px-2 py-4 text-center">
-                          <CompareCell mark={mark} />
+                          <CompareCell mark={mark} label={P.compareLegend[mark]} />
                         </td>
                       ))}
                     </tr>
@@ -2839,7 +2840,20 @@ function PricingBody({ onContact }: { onContact: () => void }) {
         </div>
       </section>
 
-      <CasesSection id="pricing-cases-title" title={P.casesTitle} text={P.casesText} />
+      {locale === "ru" ? (
+        <CasesSection id="pricing-cases-title" title={P.casesTitle} text={P.casesText} />
+      ) : (
+        // Кейсы написаны только на русском: на других языках ведём на страницу работ.
+        <section aria-labelledby="pricing-cases-title" className="border-t border-[var(--st-line)]">
+          <div className={cn(container, "py-16 md:py-20")}>
+            <SectionHead id="pricing-cases-title" title={P.casesTitle} text={P.casesText} />
+            <a href={worksPath(locale)} className={ctaClass}>
+              {P.worksLink}
+              <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+            </a>
+          </div>
+        </section>
+      )}
 
       <section aria-labelledby="pricing-faq-title" className="border-t border-[var(--st-line)]">
         <div className={cn(container, "grid items-start gap-8 py-16 md:grid-cols-[1fr_2fr] md:gap-12 md:py-20")}>
@@ -2870,17 +2884,17 @@ function PricingBody({ onContact }: { onContact: () => void }) {
   );
 }
 
-/** Страница «Цены» (/pricing/). Только на русском, как кейсы и промо. */
-export function StudioPricingPage() {
+/** Страница «Цены» на языке `locale`: /pricing/, /en/pricing/, /tj/pricing/. */
+export function StudioPricingPage({ locale = "ru" }: { locale?: Locale }) {
   const goContact = useCallback(() => {
     document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
   return (
-    <StudioLocaleProvider locale="ru">
+    <StudioLocaleProvider locale={locale}>
       <StudioShell>
         <SmoothWheel />
         <ScrollProgress />
-        <StudioHeader onContact={goContact} home={`${BASE_PATH}/`} />
+        <StudioHeader onContact={goContact} home={`${BASE_PATH}${LOCALE_PATH[locale]}`} page="pricing/" />
         <PricingBody onContact={goContact} />
         <StudioFooter />
         <GrainOverlay />
