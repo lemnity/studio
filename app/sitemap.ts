@@ -4,6 +4,7 @@ import { STUDIO_SITE_URL } from "@/components/studio/studio-content";
 import { STUDIO_CASES } from "@/components/studio/studio-cases";
 import { LOCALES, LOCALE_HTML, LOCALE_PATH } from "@/components/studio/studio-i18n";
 import { PROMO_PATH } from "@/components/studio/studio-promo";
+import { PRICING_PATH } from "@/components/studio/studio-pricing";
 import { STUDIO_CITIES } from "@/components/studio/studio-city";
 
 export const dynamic = "force-static";
@@ -31,8 +32,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: "monthly",
     priority: 0.8,
   }));
-  const promo: MetadataRoute.Sitemap = [{ url: `${STUDIO_SITE_URL}${PROMO_PATH}`, lastModified,
-    changeFrequency: "monthly", priority: 0.8 }];
+  const promo: MetadataRoute.Sitemap = [PROMO_PATH, PRICING_PATH].map((path) => ({
+    url: `${STUDIO_SITE_URL}${path}`,
+    lastModified,
+    changeFrequency: "monthly",
+    priority: 0.8,
+  }));
   const cities: MetadataRoute.Sitemap = STUDIO_CITIES.map((c) => ({
     url: `${STUDIO_SITE_URL}/${c.slug}/`,
     lastModified,

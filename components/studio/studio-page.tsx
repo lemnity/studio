@@ -59,6 +59,7 @@ import {
 import { STUDIO_CASES, caseByProject, caseBySlug, type StudioCase } from "./studio-cases";
 import { StudioGame } from "./studio-game";
 import { PROMO, PROMO_PATH } from "./studio-promo";
+import { PRICING, PRICING_PATH, type CompareMark, type PricingPackage } from "./studio-pricing";
 import { STUDIO_CITIES, cityBySlug, type StudioCity } from "./studio-city";
 import { StudioHexSphere } from "./studio-hex-sphere";
 import { LOCALES, LOCALE_HTML, LOCALE_LABEL, LOCALE_NAME, LOCALE_PATH, type Locale, type StudioContent, type Ui } from "./studio-i18n";
@@ -1348,6 +1349,11 @@ function Pricing({ onContact }: { onContact: () => void }) {
           ))}
         </ul>
         <p className="mt-6 text-[16px] leading-[1.6] text-[var(--st-muted)]">{p.note}</p>
+        {locale === "ru" ? (
+          <a href={`${BASE_PATH}${PRICING_PATH}`} className="st-ul mt-4 inline-flex items-center gap-2 text-[16px] transition-colors hover:text-[var(--st-accent-light)]">
+            Все цены, сроки и форматы оплаты <ArrowRight className="h-4 w-4 text-[var(--st-accent)]" />
+          </a>
+        ) : null}
       </div>
     </section>
   );
@@ -1965,13 +1971,16 @@ function StudioFooter() {
         </div>
         <p className={cn(micro, "text-center")}>{t.footerTagline}</p>
         <nav aria-label={t.linksAria} className="flex flex-wrap items-center justify-center gap-6 md:justify-self-end md:gap-8">
-          {locale === "ru"
-            ? STUDIO_CITIES.map((city) => (
+          {locale === "ru" ? (
+            <>
+              <a href={`${BASE_PATH}${PRICING_PATH}`} className={link}>Цены</a>
+              {STUDIO_CITIES.map((city) => (
                 <a key={city.slug} href={`${BASE_PATH}/${city.slug}/`} className={link}>
                   Сайты {city.inCity}
                 </a>
-              ))
-            : null}
+              ))}
+            </>
+          ) : null}
           <a href={STUDIO_PLATFORM_URL} target="_blank" rel="noopener noreferrer" className={link}>{t.platform}</a>
           <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className={link}>Telegram</a>
           <a href={STUDIO_PRIVACY_URL} target="_blank" rel="noopener noreferrer" className={link}>{t.privacy}</a>
@@ -2511,6 +2520,376 @@ export function StudioPromoPage() {
   );
 }
 
+/* ───────────────────────────── Кейсы ───────────────────────────── */
+
+/** Карточки кейсов со скриншотом — на страницах городов и цен (кейсы есть только на русском). */
+function CasesSection({ id, title, text }: { id: string; title: string; text: string }) {
+  const { t } = useStudioLocale();
+  return (
+    <section aria-labelledby={id} className="border-t border-[var(--st-line)]">
+      <div className={cn(container, "py-16 md:py-20")}>
+        <SectionHead id={id} title={title} text={text} />
+        <ul className="m-0 grid list-none gap-4 p-0 sm:grid-cols-2">
+          {STUDIO_CASES.map((study) => (
+            <li key={study.slug}>
+              <a href={`${BASE_PATH}/cases/${study.slug}/`} data-cursor={t.cursorView} className="st-cell group block overflow-hidden rounded border border-[var(--st-line)] bg-[var(--st-surface)]">
+                <div className="aspect-[16/10] overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={study.shots.hero} alt={study.title} loading="lazy" decoding="async" className="h-full w-full object-cover object-top transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.035]" />
+                </div>
+                <div className="flex items-start justify-between gap-4 p-5 md:p-6">
+                  <div>
+                    <h3 className="text-xl font-medium leading-[1.25]">{study.title}</h3>
+                    <p className="mt-2 text-[16px] leading-[1.6] text-[var(--st-muted)]">{study.lead}</p>
+                  </div>
+                  <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-[var(--st-accent)] transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+/* ───────────────────────────── Цены ───────────────────────────── */
+
+const ctaClass =
+  "group inline-flex items-center gap-3 rounded-full border border-[var(--st-accent)] px-5 py-2.5 text-[16px] font-medium transition-colors hover:border-[var(--st-accent-light)] hover:bg-[rgba(196,238,24,0.1)]";
+
+/** Карточка пакета на странице цен: номер, цена «от», срок, обычная вилка и что входит. */
+function PackageCard({ plan, index, onContact }: { plan: PricingPackage; index: number; onContact: () => void }) {
+  return (
+    <article className={cn(cardClass, "flex-1", index === 0 && "border-[var(--st-accent-45)]")}>
+      <span aria-hidden className="st-micro text-[var(--st-accent)]">/ {pad(index + 1)}</span>
+      <h3 className="text-xl font-medium leading-[1.25] tracking-[-0.01em] md:text-[22px]">{plan.name}</h3>
+      <p className="grid gap-2">
+        <span className="text-[32px] font-normal leading-none tracking-[-0.03em] md:text-[36px]">{plan.price}</span>
+        <span className="text-[16px] text-[var(--st-muted)]">{plan.term}</span>
+      </p>
+      <p className="text-[16px] leading-[1.6] text-[var(--st-text-72)]">{plan.text}</p>
+      <p className="flex items-baseline justify-between gap-4 border-y border-[var(--st-line)] py-3 text-[16px]">
+        <span className="text-[var(--st-muted)]">{PRICING.rangeLabel}</span>
+        <span className="text-right">{plan.range}</span>
+      </p>
+      <ul aria-label="Что входит" className="m-0 grid list-none gap-1.5 p-0">
+        {plan.items.map((d) => (
+          <li key={d} className="relative pl-[18px] text-[16px] leading-normal before:absolute before:left-0 before:top-[0.6em] before:h-px before:w-2 before:bg-[var(--st-accent)]">
+            {d}
+          </li>
+        ))}
+      </ul>
+      <div className="mt-auto pt-4">
+        <button type="button" onClick={onContact} className={ctaClass}>
+          {plan.cta}
+          <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function CompareCell({ mark }: { mark: CompareMark }) {
+  const label = PRICING.compareLegend[mark];
+  if (mark === "yes") return <Check aria-label={label} className="mx-auto h-5 w-5 text-[var(--st-accent)]" />;
+  if (mark === "request") return <span className="text-[14px] text-[var(--st-text-72)] md:text-[16px]">{label.toLowerCase()}</span>;
+  return <span aria-label={label} className="text-[var(--st-muted)]">—</span>;
+}
+
+function PricingBody({ onContact }: { onContact: () => void }) {
+  const P = PRICING;
+  const subTitle = "mb-6 text-[28px] font-normal leading-[1.1] tracking-[-0.02em] md:mb-8 md:text-[34px]";
+  return (
+    <main>
+      <section className={cn(container, "pb-12 pt-[120px] md:pb-16 md:pt-[160px]")}>
+        <Reveal>
+          <a href={`${BASE_PATH}/`} className="st-micro st-ul inline-flex items-center gap-2 text-[var(--st-muted)] hover:text-[var(--st-text)]">
+            <ArrowLeft className="h-4 w-4" /> На главную
+          </a>
+        </Reveal>
+        <Reveal>
+          <p className="st-micro mt-10 text-[var(--st-accent)]">{P.label}</p>
+          <h1 className="mt-5 text-[clamp(48px,8.5vw,140px)] font-normal leading-[0.92] tracking-[-0.045em]">
+            {P.title[0]}
+            <br />
+            <span className="st-sheen">{P.title[1]}</span>
+          </h1>
+          <p className="mt-6 max-w-[48ch] text-[18px] leading-[1.55] text-[var(--st-text-72)] md:text-[20px]">{P.lead}</p>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <div className="mt-10 flex flex-wrap items-center gap-6 sm:gap-8">
+            <MagneticButton>
+              <button
+                type="button"
+                onClick={onContact}
+                className="group inline-flex items-center gap-4 rounded-full border border-[var(--st-accent)] px-7 py-3.5 text-[16px] font-medium transition-colors hover:border-[var(--st-accent-light)] hover:bg-[rgba(196,238,24,0.1)] md:px-9 md:py-[18px]"
+              >
+                {P.cta}
+                <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+              </button>
+            </MagneticButton>
+            <a href="#packages" className="st-ul text-[16px] underline decoration-[rgba(244,241,236,0.5)] underline-offset-4 transition-colors hover:text-[var(--st-accent-light)] hover:decoration-transparent">
+              {P.seePackages}
+            </a>
+          </div>
+        </Reveal>
+      </section>
+
+      <section aria-labelledby="budgets-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <Reveal>
+            <h2 id="budgets-title" className="st-micro mb-8 text-[var(--st-muted)] md:mb-10">{P.budgetsTitle}</h2>
+          </Reveal>
+          <ul className="m-0 grid list-none gap-8 p-0 md:grid-cols-3">
+            {P.packages.map((plan, i) => (
+              <li key={plan.name}>
+                <Reveal delay={i * 0.06}>
+                  <p className="text-[clamp(40px,5vw,72px)] font-normal leading-none tracking-[-0.04em]">{plan.price.replace(/^от\s*/, "")}</p>
+                  <p className="mt-3 text-[16px] text-[var(--st-muted)]">{plan.name}</p>
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+          <ul className="m-0 mt-12 grid list-none border-t border-[var(--st-line)] p-0 sm:grid-cols-3">
+            {P.stats.map((s) => (
+              <li key={s.label} className="flex items-baseline gap-4 border-b border-[var(--st-line)] py-5 sm:pr-8">
+                <span className="text-[28px] leading-none tracking-[-0.02em] text-[var(--st-accent)]">{s.value}</span>
+                <span className="text-[16px] text-[var(--st-muted)]">{s.label}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section id="packages" aria-labelledby="packages-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <SectionHead id="packages-title" title={P.packagesTitle} text={P.packagesText} />
+          <ul className="m-0 grid list-none gap-3 p-0 md:grid-cols-3 md:gap-4">
+            {P.packages.map((plan, i) => (
+              <li key={plan.name} className="flex">
+                <Reveal delay={i * 0.06} className="flex min-w-0 flex-1">
+                  <PackageCard plan={plan} index={i} onContact={onContact} />
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+          <Reveal>
+            <div className={cn(cardClass, "mt-3 gap-5 md:mt-4 md:flex-row md:items-center md:justify-between")}>
+              <div className="grid gap-2">
+                <span className="st-micro text-[var(--st-accent)]">{P.care.label}</span>
+                <h3 className="text-xl font-medium leading-[1.25] md:text-[22px]">{P.care.name}</h3>
+                <p className="max-w-[60ch] text-[16px] leading-[1.6] text-[var(--st-muted)]">{P.care.text}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+                <p className="whitespace-nowrap">
+                  <span className="text-[28px] tracking-[-0.02em]">{P.care.price}</span>{" "}
+                  <span className="text-[16px] text-[var(--st-muted)]">{P.care.term}</span>
+                </p>
+                <button type="button" onClick={onContact} className={ctaClass}>
+                  {P.care.cta}
+                  <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+                </button>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <section aria-labelledby="timeline-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <SectionHead id="timeline-title" title={P.timelineTitle} text={P.timelineText} />
+          <ol className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 md:gap-4 lg:grid-cols-6">
+            {P.timeline.map((step, i) => (
+              <li key={step.title} className="flex">
+                <Reveal delay={i * 0.05} className="flex min-w-0 flex-1">
+                  <div className={cn(cardClass, "flex-1 gap-2.5", !step.pay && i === P.timeline.length - 1 && "border-dashed")}>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="st-micro text-[var(--st-accent)]">{step.when}</span>
+                      {step.pay ? (
+                        <span className="rounded-full border border-[var(--st-accent-45)] px-2.5 py-0.5 text-[14px] text-[var(--st-accent)]" title={P.payLabel}>
+                          {step.pay}
+                        </span>
+                      ) : null}
+                    </div>
+                    <h3 className="text-[17px] font-medium leading-[1.3]">{step.title}</h3>
+                    <p className="text-[16px] leading-[1.6] text-[var(--st-muted)]">
+                      <span className="sr-only">{P.timelineSee}: </span>
+                      {step.see}
+                    </p>
+                    {step.pay ? <span className="sr-only">{`${P.payLabel} ${step.pay}`}</span> : null}
+                  </div>
+                </Reveal>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section aria-labelledby="extras-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "grid items-start gap-10 py-16 md:grid-cols-2 md:gap-12 md:py-20")}>
+          <div>
+            <Reveal>
+              <h2 id="extras-title" className="st-title mb-8 md:mb-10">{P.extrasTitle}</h2>
+            </Reveal>
+            <ol className="m-0 grid list-none gap-6 p-0">
+              {P.extrasPoints.map((x, i) => (
+                <li key={x.title}>
+                  <Reveal delay={i * 0.06}>
+                    <div className="grid grid-cols-[auto_1fr] gap-x-5 gap-y-1.5">
+                      <span aria-hidden className="text-[16px] tracking-[0.12em] text-[var(--st-accent)]">{pad(i + 1)}</span>
+                      <h3 className="text-xl font-medium leading-[1.25]">{x.title}</h3>
+                      <p className="col-start-2 text-[16px] leading-[1.6] text-[var(--st-muted)]">{x.text}</p>
+                    </div>
+                  </Reveal>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <Reveal delay={0.1}>
+            <div className="rounded border border-[var(--st-line)] bg-[var(--st-surface)] p-5 md:p-7">
+              <table className="w-full border-collapse text-left text-[16px]">
+                <caption className="st-micro pb-5 text-left text-[var(--st-muted)]">{P.receipt.title}</caption>
+                <thead>
+                  <tr className="border-b border-dashed border-[var(--st-line)] text-[var(--st-muted)]">
+                    <th scope="col" className="py-3 pr-4 font-normal"><span className="sr-only">Что</span></th>
+                    <th scope="col" className="py-3 pr-4 text-right font-normal">{P.receipt.elsewhere}</th>
+                    <th scope="col" className="py-3 text-right font-normal">{P.receipt.withUs}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {P.receipt.rows.map((r) => (
+                    <tr key={r.item} className="border-b border-dashed border-[var(--st-line)]">
+                      <th scope="row" className="py-3 pr-4 font-normal">{r.item}</th>
+                      <td className="py-3 pr-4 text-right text-[var(--st-muted)] line-through decoration-[rgba(244,241,236,0.35)]">{r.elsewhere}</td>
+                      <td className="py-3 text-right text-[var(--st-accent)]">{P.receipt.included}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th scope="row" colSpan={2} className="pt-5 text-[18px] font-medium">{P.receipt.total}</th>
+                    <td className="pt-5 text-right text-[28px] leading-none tracking-[-0.02em] text-[var(--st-accent)]">{P.receipt.totalValue}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <section aria-labelledby="formats-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <SectionHead id="formats-title" title={P.formatsTitle} text={P.formatsText} />
+          <ul className="m-0 grid list-none gap-3 p-0 md:grid-cols-3 md:gap-4">
+            {P.formats.map((f, i) => (
+              <li key={f.name} className="flex">
+                <Reveal delay={i * 0.06} className="flex min-w-0 flex-1">
+                  <article className={cn(cardClass, "flex-1")}>
+                    <span aria-hidden className="st-micro text-[var(--st-accent)]">/ {pad(i + 1)}</span>
+                    <h3 className="text-xl font-medium leading-[1.25] md:text-[22px]">{f.name}</h3>
+                    <dl className="m-0 grid gap-3">
+                      {(["fit", "cost", "pay", "extra"] as const).map((k) => (
+                        <div key={k} className="grid gap-1 border-t border-[var(--st-line)] pt-3">
+                          <dt className="text-[14px] uppercase tracking-[0.12em] text-[var(--st-muted)]">{P.formatLabels[k]}</dt>
+                          <dd className="m-0 text-[16px] leading-[1.5]">{f[k]}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </article>
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="compare-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <Reveal>
+            <h2 id="compare-title" className={subTitle}>{P.compareTitle}</h2>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[340px] border-collapse text-[16px]">
+                <thead>
+                  <tr className="border-b border-[var(--st-line)]">
+                    <th scope="col" className="py-4 pr-4 text-left font-normal text-[var(--st-muted)]"><span className="sr-only">Что входит</span></th>
+                    {P.packages.map((plan) => (
+                      <th key={plan.name} scope="col" title={plan.name} className="w-[22%] px-1 py-4 text-center font-medium leading-[1.3] md:px-2">{plan.short}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {P.compareRows.map((row) => (
+                    <tr key={row.item} className="border-b border-[var(--st-line)]">
+                      <th scope="row" className="py-4 pr-4 text-left font-normal">{row.item}</th>
+                      {row.values.map((mark, i) => (
+                        <td key={i} className="px-2 py-4 text-center">
+                          <CompareCell mark={mark} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-6 max-w-[80ch] text-[16px] leading-[1.6] text-[var(--st-muted)]">{P.compareNote}</p>
+          </Reveal>
+        </div>
+      </section>
+
+      <CasesSection id="pricing-cases-title" title={P.casesTitle} text={P.casesText} />
+
+      <section aria-labelledby="pricing-faq-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "grid items-start gap-8 py-16 md:grid-cols-[1fr_2fr] md:gap-12 md:py-20")}>
+          <Reveal>
+            <h2 id="pricing-faq-title" className="st-title">{P.faqTitle}</h2>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <div className="border-t border-[var(--st-line)]">
+              {P.faq.map((f, i) => (
+                <details key={f.q} className="group border-b border-[var(--st-line)]">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-4 md:py-5">
+                    <span className="flex gap-4 text-[17px] font-medium leading-[1.3] transition-colors group-hover:text-[var(--st-accent-light)] md:text-xl">
+                      <span aria-hidden className="text-[var(--st-accent)]">{pad(i + 1)}</span>
+                      {f.q}
+                    </span>
+                    <Plus className="st-faq-icon h-5 w-5 shrink-0 text-[var(--st-accent)] transition-transform duration-300" />
+                  </summary>
+                  <p className="max-w-[720px] pb-6 text-[16px] leading-[1.7] text-[var(--st-muted)]">{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <Contact />
+    </main>
+  );
+}
+
+/** Страница «Цены» (/pricing/). Только на русском, как кейсы и промо. */
+export function StudioPricingPage() {
+  const goContact = useCallback(() => {
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+  return (
+    <StudioLocaleProvider locale="ru">
+      <StudioShell>
+        <SmoothWheel />
+        <ScrollProgress />
+        <StudioHeader onContact={goContact} home={`${BASE_PATH}/`} />
+        <PricingBody onContact={goContact} />
+        <StudioFooter />
+        <GrainOverlay />
+        <CustomCursor />
+      </StudioShell>
+    </StudioLocaleProvider>
+  );
+}
+
 /* ───────────────────────────── Разработка сайтов в городе ───────────────────────────── */
 
 function CityBody({ city, onContact }: { city: StudioCity; onContact: () => void }) {
@@ -2589,30 +2968,7 @@ function CityBody({ city, onContact }: { city: StudioCity; onContact: () => void
         </div>
       </section>
 
-      <section aria-labelledby="city-cases-title" className="border-t border-[var(--st-line)]">
-        <div className={cn(container, "py-16 md:py-20")}>
-          <SectionHead id="city-cases-title" title="Наши проекты" text="Сайты и сервисы, которые мы запустили для клиентов." />
-          <ul className="m-0 grid list-none gap-4 p-0 sm:grid-cols-2">
-            {STUDIO_CASES.map((study) => (
-              <li key={study.slug}>
-                <a href={`${BASE_PATH}/cases/${study.slug}/`} data-cursor={t.cursorView} className="st-cell group block overflow-hidden rounded border border-[var(--st-line)] bg-[var(--st-surface)]">
-                  <div className="aspect-[16/10] overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={study.shots.hero} alt={study.title} loading="lazy" decoding="async" className="h-full w-full object-cover object-top transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.035]" />
-                  </div>
-                  <div className="flex items-start justify-between gap-4 p-5 md:p-6">
-                    <div>
-                      <h3 className="text-xl font-medium leading-[1.25]">{study.title}</h3>
-                      <p className="mt-2 text-[16px] leading-[1.6] text-[var(--st-muted)]">{study.lead}</p>
-                    </div>
-                    <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-[var(--st-accent)] transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
-                  </div>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      <CasesSection id="city-cases-title" title="Наши проекты" text="Сайты и сервисы, которые мы запустили для клиентов." />
 
       <section aria-labelledby="why-title" className="border-t border-[var(--st-line)]">
         <div className={cn(container, "py-16 md:py-20")}>
