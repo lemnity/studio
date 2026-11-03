@@ -60,6 +60,7 @@ import { STUDIO_CASES, caseByProject, caseBySlug, type StudioCase } from "./stud
 import { StudioGame } from "./studio-game";
 import { PROMO, PROMO_PATH } from "./studio-promo";
 import { COMPARE_MARKS, PRICING, pricingPath, type CompareMark, type PricingPackage } from "./studio-pricing";
+import { SERVICES, servicesPath } from "./studio-services";
 import { STUDIO_CITIES, cityBySlug, type StudioCity } from "./studio-city";
 import { StudioHexSphere } from "./studio-hex-sphere";
 import { LOCALES, LOCALE_HTML, LOCALE_LABEL, LOCALE_NAME, LOCALE_PATH, type Locale, type StudioContent, type Ui } from "./studio-i18n";
@@ -320,9 +321,9 @@ const container = "mx-auto w-full max-w-[1440px] px-5 md:px-12";
  */
 function StudioHeader({ onContact, home = "", page }: { onContact: () => void; home?: string; page?: string }) {
   const { t, locale } = useStudioLocale();
-  // «Работы» ведёт на отдельную страницу портфолио, остальные пункты — на разделы главной.
+  // «Работы» и «Услуги» ведут на отдельные страницы, остальные пункты — на разделы главной.
   const nav = NAV_HREFS.map((href, i) => ({
-    href: href === "#gallery" ? worksPath(locale) : `${home}${href}`,
+    href: href === "#gallery" ? worksPath(locale) : href === "#services" ? `${BASE_PATH}${servicesPath(locale)}` : `${home}${href}`,
     label: t.nav[i],
   }));
   const [scrolled, setScrolled] = useState(false);
@@ -1973,6 +1974,7 @@ function StudioFooter() {
         </div>
         <p className={cn(micro, "text-center")}>{t.footerTagline}</p>
         <nav aria-label={t.linksAria} className="flex flex-wrap items-center justify-center gap-6 md:justify-self-end md:gap-8">
+          <a href={`${BASE_PATH}${servicesPath(locale)}`} className={link}>{SERVICES[locale].nav}</a>
           <a href={`${BASE_PATH}${pricingPath(locale)}`} className={link}>{PRICING[locale].nav}</a>
           {locale === "ru"
             ? STUDIO_CITIES.map((city) => (
@@ -2553,10 +2555,221 @@ function CasesSection({ id, title, text }: { id: string; title: string; text: st
   );
 }
 
-/* ───────────────────────────── Цены ───────────────────────────── */
-
 const ctaClass =
   "group inline-flex items-center gap-3 rounded-full border border-[var(--st-accent)] px-5 py-2.5 text-[16px] font-medium transition-colors hover:border-[var(--st-accent-light)] hover:bg-[rgba(196,238,24,0.1)]";
+
+/** Кейсы на русском; на других языках кейсов нет — вместо них ссылка на страницу работ. */
+function CasesOrWorks({ id, title, text, worksLink }: { id: string; title: string; text: string; worksLink: string }) {
+  const { locale } = useStudioLocale();
+  if (locale === "ru") return <CasesSection id={id} title={title} text={text} />;
+  return (
+    <section aria-labelledby={id} className="border-t border-[var(--st-line)]">
+      <div className={cn(container, "py-16 md:py-20")}>
+        <SectionHead id={id} title={title} text={text} />
+        <a href={worksPath(locale)} className={ctaClass}>
+          {worksLink}
+          <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+        </a>
+      </div>
+    </section>
+  );
+}
+
+/* ───────────────────────────── Услуги ───────────────────────────── */
+
+function ServicesBody({ onContact }: { onContact: () => void }) {
+  const { locale } = useStudioLocale();
+  const S = SERVICES[locale];
+  return (
+    <main>
+      <section className={cn(container, "pb-12 pt-[120px] md:pb-16 md:pt-[160px]")}>
+        <Reveal>
+          <a href={`${BASE_PATH}${LOCALE_PATH[locale]}`} className="st-micro st-ul inline-flex items-center gap-2 text-[var(--st-muted)] hover:text-[var(--st-text)]">
+            <ArrowLeft className="h-4 w-4" /> {S.back}
+          </a>
+        </Reveal>
+        <Reveal>
+          <p className="st-micro mt-10 text-[var(--st-accent)]">{S.label}</p>
+          <h1 className="mt-5 text-[clamp(44px,7.5vw,124px)] font-normal leading-[0.95] tracking-[-0.045em]">
+            {S.title[0]}
+            <br />
+            <span className="st-sheen">{S.title[1]}</span>
+          </h1>
+          <p className="mt-6 max-w-[52ch] text-[18px] leading-[1.55] text-[var(--st-text-72)] md:text-[20px]">{S.lead}</p>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <div className="mt-10 flex flex-wrap items-center gap-6 sm:gap-8">
+            <MagneticButton>
+              <a
+                href="#choose"
+                className="group inline-flex items-center gap-4 rounded-full border border-[var(--st-accent)] px-7 py-3.5 text-[16px] font-medium transition-colors hover:border-[var(--st-accent-light)] hover:bg-[rgba(196,238,24,0.1)] md:px-9 md:py-[18px]"
+              >
+                {S.cta}
+                <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+              </a>
+            </MagneticButton>
+            <button
+              type="button"
+              onClick={onContact}
+              className="st-ul text-[16px] underline decoration-[rgba(244,241,236,0.5)] underline-offset-4 transition-colors hover:text-[var(--st-accent-light)] hover:decoration-transparent"
+            >
+              {S.ctaSecondary}
+            </button>
+          </div>
+          <p className="mt-10 max-w-[60ch] border-l border-[var(--st-accent-45)] pl-5 text-[16px] leading-[1.6] text-[var(--st-muted)]">{S.note}</p>
+        </Reveal>
+      </section>
+
+      <section id="choose" aria-labelledby="choose-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <Reveal>
+            <p className="st-micro mb-4 text-[var(--st-accent)]">[ {S.chooseLabel} ]</p>
+          </Reveal>
+          <SectionHead id="choose-title" title={S.chooseTitle} text={S.chooseText} />
+          <ul className="m-0 grid list-none gap-3 p-0 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
+            {S.directions.map((d, i) => (
+              <li key={d.title} className="flex">
+                <Reveal delay={(i % 3) * 0.06} className="flex min-w-0 flex-1">
+                  <article className={cn(cardClass, "flex-1")}>
+                    <div className="flex items-baseline justify-between gap-4">
+                      <span aria-hidden className="st-micro text-[var(--st-accent)]">/ {pad(i + 1)}</span>
+                      <h3 className="text-right text-[16px] font-medium uppercase tracking-[0.08em] text-[var(--st-text-72)]">{d.title}</h3>
+                    </div>
+                    <p className="text-[24px] font-normal leading-[1.2] tracking-[-0.02em] md:text-[26px]">{S.quotes[0]}{d.need}{S.quotes[1]}</p>
+                    <p className="text-[16px] leading-[1.6] text-[var(--st-muted)]">{d.text}</p>
+                    <ul aria-label={d.title} className="m-0 flex list-none flex-wrap gap-2 p-0">
+                      {d.tags.map((tag) => (
+                        <li key={tag} className="rounded-full border border-[var(--st-line)] px-3 py-1 text-[14px] text-[var(--st-text-72)]">{tag}</li>
+                      ))}
+                    </ul>
+                    <dl className="m-0 mt-auto grid grid-cols-2 gap-4 border-t border-[var(--st-line)] pt-4">
+                      <div>
+                        <dt className="text-[14px] uppercase tracking-[0.12em] text-[var(--st-muted)]">{S.termLabel}</dt>
+                        <dd className="m-0 mt-1 text-[16px]">{d.term}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-[14px] uppercase tracking-[0.12em] text-[var(--st-muted)]">{S.priceLabel}</dt>
+                        <dd className="m-0 mt-1 text-[16px]">{d.price}</dd>
+                      </div>
+                    </dl>
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+                      <button type="button" onClick={onContact} className={ctaClass}>
+                        {S.discuss}
+                        <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+                      </button>
+                      {d.promo && locale === "ru" ? (
+                        <a href={`${BASE_PATH}${PROMO_PATH}`} className="st-ul text-[16px] text-[var(--st-muted)] transition-colors hover:text-[var(--st-text)]">
+                          {S.promoMore}
+                        </a>
+                      ) : null}
+                    </div>
+                  </article>
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="change-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <SectionHead id="change-title" title={S.changeTitle} text={S.changeText} />
+          <Reveal delay={0.1}>
+            <table className="w-full border-collapse text-left text-[16px]">
+              <thead className="hidden md:table-header-group">
+                <tr className="border-b border-[var(--st-line)] text-[var(--st-muted)]">
+                  {S.changeCols.map((col) => (
+                    <th key={col} scope="col" className="py-4 pr-6 text-[14px] font-normal uppercase tracking-[0.12em]">{col}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {S.changes.map((row) => (
+                  <tr key={row.area} className="grid gap-2 border-b border-[var(--st-line)] py-5 md:table-row md:py-0">
+                    <th scope="row" className="text-[20px] font-normal leading-[1.25] md:w-[18%] md:py-6 md:pr-6 md:align-top md:text-[22px]">{row.area}</th>
+                    <td className="leading-[1.6] text-[var(--st-muted)] md:w-[41%] md:py-6 md:pr-6 md:align-top">
+                      <span className="st-micro mr-2 text-[var(--st-muted)] md:hidden">{S.changeCols[1]}:</span>
+                      {row.before}
+                    </td>
+                    <td className="leading-[1.6] md:py-6 md:align-top">
+                      <span className="st-micro mr-2 text-[var(--st-accent)] md:hidden">{S.changeCols[2]}:</span>
+                      <ArrowRight aria-hidden className="mr-2 hidden h-4 w-4 -translate-y-px text-[var(--st-accent)] md:inline" />
+                      {row.after}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Reveal>
+
+          <ol className="m-0 mt-14 grid list-none gap-3 p-0 md:grid-cols-3 md:gap-4">
+            {S.benefits.map((b, i) => (
+              <li key={b.title} className="flex">
+                <Reveal delay={i * 0.06} className="flex min-w-0 flex-1">
+                  <div className={cn(cardClass, "flex-1 gap-2.5")}>
+                    <span aria-hidden className="text-[16px] tracking-[0.12em] text-[var(--st-accent)]">{pad(i + 1)}</span>
+                    <h3 className="text-xl font-medium leading-[1.25]">{b.title}</h3>
+                    <p className="text-[16px] leading-[1.6] text-[var(--st-muted)]">{b.text}</p>
+                  </div>
+                </Reveal>
+              </li>
+            ))}
+          </ol>
+          <Reveal>
+            <div className="mt-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <p className="max-w-[60ch] text-[18px] leading-[1.55] text-[var(--st-text-72)]">{S.planText}</p>
+              <button type="button" onClick={onContact} className={cn(ctaClass, "shrink-0")}>
+                {S.planCta}
+                <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+              </button>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <CasesOrWorks id="services-cases-title" title={S.casesTitle} text={S.casesText} worksLink={S.worksLink} />
+
+      <section aria-labelledby="services-prices-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "flex flex-col gap-6 py-16 md:flex-row md:items-end md:justify-between md:py-20")}>
+          <Reveal>
+            <h2 id="services-prices-title" className="st-title">{S.pricesTitle}</h2>
+            <p className="mt-4 max-w-[48ch] text-[16px] leading-[1.6] text-[var(--st-muted)]">{S.pricesText}</p>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <a href={`${BASE_PATH}${pricingPath(locale)}`} className={ctaClass}>
+              {S.pricesCta}
+              <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+            </a>
+          </Reveal>
+        </div>
+      </section>
+
+      <Contact />
+    </main>
+  );
+}
+
+/** Страница «Услуги» на языке `locale`: /services/, /en/services/, /tj/services/. */
+export function StudioServicesPage({ locale = "ru" }: { locale?: Locale }) {
+  const goContact = useCallback(() => {
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+  return (
+    <StudioLocaleProvider locale={locale}>
+      <StudioShell>
+        <SmoothWheel />
+        <ScrollProgress />
+        <StudioHeader onContact={goContact} home={`${BASE_PATH}${LOCALE_PATH[locale]}`} page="services/" />
+        <ServicesBody onContact={goContact} />
+        <StudioFooter />
+        <GrainOverlay />
+        <CustomCursor />
+      </StudioShell>
+    </StudioLocaleProvider>
+  );
+}
+
+/* ───────────────────────────── Цены ───────────────────────────── */
 
 /** Карточка пакета на странице цен: номер, цена «от», срок, обычная вилка и что входит. */
 function PackageCard({ plan, index, onContact }: { plan: PricingPackage; index: number; onContact: () => void }) {
@@ -2840,20 +3053,7 @@ function PricingBody({ onContact }: { onContact: () => void }) {
         </div>
       </section>
 
-      {locale === "ru" ? (
-        <CasesSection id="pricing-cases-title" title={P.casesTitle} text={P.casesText} />
-      ) : (
-        // Кейсы написаны только на русском: на других языках ведём на страницу работ.
-        <section aria-labelledby="pricing-cases-title" className="border-t border-[var(--st-line)]">
-          <div className={cn(container, "py-16 md:py-20")}>
-            <SectionHead id="pricing-cases-title" title={P.casesTitle} text={P.casesText} />
-            <a href={worksPath(locale)} className={ctaClass}>
-              {P.worksLink}
-              <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
-            </a>
-          </div>
-        </section>
-      )}
+      <CasesOrWorks id="pricing-cases-title" title={P.casesTitle} text={P.casesText} worksLink={P.worksLink} />
 
       <section aria-labelledby="pricing-faq-title" className="border-t border-[var(--st-line)]">
         <div className={cn(container, "grid items-start gap-8 py-16 md:grid-cols-[1fr_2fr] md:gap-12 md:py-20")}>

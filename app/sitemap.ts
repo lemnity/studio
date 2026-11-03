@@ -5,11 +5,12 @@ import { STUDIO_CASES } from "@/components/studio/studio-cases";
 import { LOCALES, LOCALE_HTML, LOCALE_PATH } from "@/components/studio/studio-i18n";
 import { PROMO_PATH } from "@/components/studio/studio-promo";
 import { pricingPath } from "@/components/studio/studio-pricing";
+import { servicesPath } from "@/components/studio/studio-services";
 import { STUDIO_CITIES } from "@/components/studio/studio-city";
 
 export const dynamic = "force-static";
 
-/** Три языковые версии главной и цен (у каждой — ссылки на остальные, hreflang), городские страницы, кейсы и промо-игры. */
+/** Три языковые версии главной, услуг и цен (у каждой — ссылки на остальные, hreflang), городские страницы, кейсы и промо-игры. */
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
   const languages = Object.fromEntries(LOCALES.map((l) => [LOCALE_HTML[l], `${STUDIO_SITE_URL}${LOCALE_PATH[l]}`]));
@@ -34,19 +35,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
   const promo: MetadataRoute.Sitemap = [{ url: `${STUDIO_SITE_URL}${PROMO_PATH}`, lastModified,
     changeFrequency: "monthly", priority: 0.8 }];
-  const pricingLanguages = Object.fromEntries(LOCALES.map((l) => [LOCALE_HTML[l], `${STUDIO_SITE_URL}${pricingPath(l)}`]));
-  const pricing: MetadataRoute.Sitemap = LOCALES.map((l) => ({
-    url: `${STUDIO_SITE_URL}${pricingPath(l)}`,
-    lastModified,
-    changeFrequency: "monthly",
-    priority: 0.8,
-    alternates: { languages: pricingLanguages },
-  }));
+  // Страницы услуг и цен есть на всех языках: у каждой версии ссылки на остальные.
+  const translated: MetadataRoute.Sitemap = [servicesPath, pricingPath].flatMap((path) => {
+    const languages = Object.fromEntries(LOCALES.map((l) => [LOCALE_HTML[l], `${STUDIO_SITE_URL}${path(l)}`]));
+    return LOCALES.map((l) => ({
+      url: `${STUDIO_SITE_URL}${path(l)}`,
+      lastModified,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+      alternates: { languages },
+    }));
+  });
   const cities: MetadataRoute.Sitemap = STUDIO_CITIES.map((c) => ({
     url: `${STUDIO_SITE_URL}/${c.slug}/`,
     lastModified,
     changeFrequency: "monthly",
     priority: 0.9,
   }));
-  return [...pages, ...cities, ...works, ...pricing, ...promo, ...cases];
+  return [...pages, ...cities, ...works, ...translated, ...promo, ...cases];
 }
