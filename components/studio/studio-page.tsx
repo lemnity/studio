@@ -2059,10 +2059,11 @@ function StudioFooter() {
           © {new Date().getFullYear()} {t.heroSide.since}
         </span>
         <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
-          {/* Город в «Сайты в …» определяется по базе DB-IP Lite — её лицензия (CC BY 4.0) требует указать источник. */}
+          {/* Город в «Сайты в …» определяется по базе DB-IP Lite (CC BY 4.0): ссылка на источник есть в разметке,
+              но на экране не показывается. */}
           {locale === "ru" ? (
-            <a href="https://db-ip.com" target="_blank" rel="noopener noreferrer" className={link}>
-              Геоданные: DB-IP
+            <a href="https://db-ip.com" target="_blank" rel="noopener noreferrer" className="sr-only" tabIndex={-1}>
+              IP Geolocation by DB-IP
             </a>
           ) : null}
           <a href={STUDIO_PRIVACY_URL} target="_blank" rel="noopener noreferrer" className={link}>{t.privacy}</a>
