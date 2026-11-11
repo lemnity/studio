@@ -12,6 +12,9 @@
   ALLOWED_ORIGINS     через запятую; по умолчанию lemmus.studio, www и GitHub Pages
 Без токена и id группы сервис отвечает 503, а форма предлагает написать в Telegram или на почту.
 
+Чат с ИИ-ассистентом «Леммус» (бриф → КП): POST /api/brief, /api/brief/kp, /api/brief/file и GET /kp/<id>,
+см. brief.py; ключ RouterAI — ROUTERAI_TOKEN в том же /etc/lemnity-lead.env.
+
 GET /api/geo — город посетителя по IP для ссылки «Сайты в …» в подвале: {"city": "Moscow", "country": "RU"}.
 База — DB-IP IP to City Lite (CC BY 4.0) в GEO_DB, обновляется раз в месяц. IP не пишется в журнал и не хранится.
 Без базы (нет файла или пакета python3-maxminddb) отвечает пустым городом.
@@ -25,6 +28,8 @@ import urllib.error
 import urllib.request
 from collections import defaultdict, deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+import brief
 
 HOST = "127.0.0.1"
 PORT = int(os.environ.get("LEAD_PORT", "8787"))
@@ -40,11 +45,15 @@ ALLOWED_ORIGINS = {
 }
 
 MAX_BODY = 16 * 1024
+BRIEF_MAX_BODY = 256 * 1024
+FILE_MAX_BODY = 6 * 1024 * 1024
 LIMITS = {"name": 120, "contact": 160, "topic": 80, "message": 4000, "lang": 8, "page": 300, "source": 400}
 # Не больше 5 заявок с одного адреса за 10 минут.
 RATE_WINDOW = 600
 RATE_MAX = 5
 _hits: dict[str, deque] = defaultdict(deque)
+# Лимиты чата: реплики (бриф обычно 10–20 сообщений), КП (дорого — модель с поиском) и файлы.
+BRIEF_LIMITS = {"chat": (600, 40), "kp": (3600, 4), "file": (600, 6)}
 
 LANG_FLAG = {"ru": "🇷🇺 RU", "en": "🇬🇧 EN", "tj": "🇹🇯 TJ"}
 
@@ -68,12 +77,13 @@ def geo_lookup(ip: str) -> dict:
     return {"city": city, "country": country}
 
 
-def rate_limited(ip: str) -> bool:
+def rate_limited(ip: str, bucket: str = "lead") -> bool:
+    window, limit = BRIEF_LIMITS.get(bucket, (RATE_WINDOW, RATE_MAX))
     now = time.monotonic()
-    q = _hits[ip]
-    while q and now - q[0] > RATE_WINDOW:
+    q = _hits[f"{bucket}:{ip}"]
+    while q and now - q[0] > window:
         q.popleft()
-    if len(q) >= RATE_MAX:
+    if len(q) >= limit:
         return True
     q.append(now)
     return False
@@ -153,21 +163,41 @@ class Handler(BaseHTTPRequestHandler):
         self._cors()
         self.end_headers()
 
-    def do_POST(self):
-        if self.path.rstrip("/") != "/api/lead":
-            return self._reply(404, {"ok": False, "error": "not_found"})
+    def _read_json(self, limit: int):
+        """Тело запроса как dict или None (ответ с ошибкой уже отправлен)."""
         origin = self.headers.get("Origin", "")
         if origin and origin not in ALLOWED_ORIGINS:
-            return self._reply(403, {"ok": False, "error": "origin"})
+            self._reply(403, {"ok": False, "error": "origin"})
+            return None
         length = int(self.headers.get("Content-Length") or 0)
-        if length <= 0 or length > MAX_BODY:
-            return self._reply(413, {"ok": False, "error": "size"})
+        if length <= 0 or length > limit:
+            self._reply(413, {"ok": False, "error": "size"})
+            return None
         try:
             data = json.loads(self.rfile.read(length))
             if not isinstance(data, dict):
                 raise ValueError
         except ValueError:
-            return self._reply(400, {"ok": False, "error": "json"})
+            self._reply(400, {"ok": False, "error": "json"})
+            return None
+        return data
+
+    def _ip(self) -> str:
+        return self.headers.get("X-Real-IP") or self.client_address[0]
+
+    def do_POST(self):
+        path = self.path.split("?")[0].rstrip("/")
+        if path == "/api/brief":
+            return self._brief_chat()
+        if path == "/api/brief/kp":
+            return self._brief_kp()
+        if path == "/api/brief/file":
+            return self._brief_file()
+        if path != "/api/lead":
+            return self._reply(404, {"ok": False, "error": "not_found"})
+        data = self._read_json(MAX_BODY)
+        if data is None:
+            return
 
         # Ловушка для ботов: скрытое поле, человек его не видит и не заполняет. Боту отвечаем «ок».
         if str(data.get("website", "")).strip():
@@ -177,7 +207,7 @@ class Handler(BaseHTTPRequestHandler):
         if not lead["name"] or not lead["contact"] or len(lead["message"]) < 10:
             return self._reply(422, {"ok": False, "error": "invalid"})
 
-        ip = self.headers.get("X-Real-IP") or self.client_address[0]
+        ip = self._ip()
         if rate_limited(ip):
             return self._reply(429, {"ok": False, "error": "rate"})
         if not TOKEN or not CHAT_ID:
@@ -186,10 +216,101 @@ class Handler(BaseHTTPRequestHandler):
             return self._reply(502, {"ok": False, "error": "telegram"})
         return self._reply(200, {"ok": True})
 
+    # ───────────── ИИ-ассистент: бриф → КП (brief.py) ─────────────
+
+    def _brief_ready(self, bucket: str) -> bool:
+        if not brief.ROUTER_TOKEN:
+            self._reply(503, {"ok": False, "error": "not_configured"})
+            return False
+        if rate_limited(self._ip(), bucket):
+            self._reply(429, {"ok": False, "error": "rate"})
+            return False
+        return True
+
+    def _brief_chat(self):
+        data = self._read_json(BRIEF_MAX_BODY)
+        if data is None:
+            return
+        if str(data.get("website", "")).strip():
+            return self._reply(200, {"ok": True, "reply": "", "brief": None})
+        messages = brief.clean_messages(data.get("messages"))
+        if messages is None:
+            return self._reply(422, {"ok": False, "error": "invalid"})
+        if not self._brief_ready("chat"):
+            return
+        lang = str(data.get("lang", "ru"))[:4]
+        try:
+            res = brief.chat_reply(messages, lang, geo_lookup(self._ip()))
+        except Exception as exc:
+            print(f"brief chat error: {exc}", flush=True)
+            return self._reply(502, {"ok": False, "error": "model"})
+        return self._reply(200, {"ok": True, **res})
+
+    def _brief_kp(self):
+        data = self._read_json(BRIEF_MAX_BODY)
+        if data is None:
+            return
+        info = brief.clean_brief(data.get("brief"))
+        if info is None:
+            return self._reply(422, {"ok": False, "error": "invalid"})
+        if not self._brief_ready("kp"):
+            return
+        lang = str(data.get("lang", "ru"))[:4]
+        geo = geo_lookup(self._ip())
+        try:
+            result = brief.make_kp(info, lang, geo)
+        except Exception as exc:
+            print(f"brief kp error: {exc}", flush=True)
+            return self._reply(502, {"ok": False, "error": "model"})
+        if TOKEN and CHAT_ID:
+            page = str(data.get("page", ""))[:300]
+            source = str(data.get("source", ""))[:300]
+            send_to_telegram(brief.telegram_text(info, result, geo, page, source))
+        kp = result["kp"]
+        return self._reply(
+            200,
+            {
+                "ok": True,
+                "url": result["url"],
+                "title": str(kp.get("title", "")),
+                "total": f"{brief.money(kp.get('total_min'), str(kp.get('currency_sign') or '₽'))} – "
+                f"{brief.money(kp.get('total_max'), str(kp.get('currency_sign') or '₽'))}",
+                "duration": str(kp.get("duration", "")),
+            },
+        )
+
+    def _brief_file(self):
+        data = self._read_json(FILE_MAX_BODY)
+        if data is None:
+            return
+        if rate_limited(self._ip(), "file"):
+            return self._reply(429, {"ok": False, "error": "rate"})
+        try:
+            text = brief.extract_text(str(data.get("name", ""))[:200], str(data.get("data", "")))
+        except Exception as exc:
+            return self._reply(422, {"ok": False, "error": str(exc) if str(exc) in ("size", "pdf", "type") else "read"})
+        text = "\n".join(line.rstrip() for line in text.splitlines())
+        text = "\n".join(p for p in text.split("\n\n\n") if p.strip()).strip()
+        if not text:
+            return self._reply(422, {"ok": False, "error": "empty"})
+        return self._reply(200, {"ok": True, "text": text[:20000], "cut": len(text) > 20000})
+
     def do_GET(self):
+        if self.path.startswith("/kp/"):
+            page = brief.read_kp(self.path.split("?")[0][4:].strip("/"))
+            if page is None:
+                return self._reply(404, {"ok": False, "error": "not_found"})
+            body = page.encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "private, max-age=600")
+            self.send_header("X-Robots-Tag", "noindex, nofollow")
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if self.path.split("?")[0].rstrip("/") == "/api/geo":
-            ip = self.headers.get("X-Real-IP") or self.client_address[0]
-            data = json.dumps(geo_lookup(ip)).encode()
+            data = json.dumps(geo_lookup(self._ip())).encode()
             self.send_response(200)
             self._cors_get()
             self.send_header("Content-Type", "application/json")
@@ -204,5 +325,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"lead service on {HOST}:{PORT}, configured={bool(TOKEN and CHAT_ID)}", flush=True)
+    print(
+        f"lead service on {HOST}:{PORT}, telegram={bool(TOKEN and CHAT_ID)}, brief={bool(brief.ROUTER_TOKEN)}",
+        flush=True,
+    )
     ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()

@@ -57,6 +57,7 @@ import {
   VariableProximity,
   useMediaQuery,
 } from "./studio-effects";
+import { BriefChat, openBrief } from "./studio-brief";
 import { STUDIO_CASES, caseByProject, caseBySlug, type StudioCase } from "./studio-cases";
 import { GEO_CITY_IN, STUDIO_GEO_URL, geoCityKey } from "./studio-geo";
 import { StudioGame } from "./studio-game";
@@ -424,16 +425,12 @@ function StudioHeader({ onContact, home = "", page }: { onContact: () => void; h
                   <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 text-[16px] hover:text-[var(--st-accent-light)]">
                     <Send className="h-5 w-5 text-[var(--st-accent)]" /> Telegram
                   </a>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOpen(false);
-                      onContact();
-                    }}
+                  <a
+                    href={`mailto:${STUDIO_CONTACT_EMAIL}`}
                     className="inline-flex items-center gap-3 text-left text-[16px] hover:text-[var(--st-accent-light)]"
                   >
                     <Mail className="h-5 w-5 text-[var(--st-accent)]" /> {STUDIO_CONTACT_EMAIL}
-                  </button>
+                  </a>
                 </div>
               </div>
             </motion.aside>
@@ -1762,7 +1759,14 @@ function Contact({ initialTopic = 0 }: { initialTopic?: number }) {
       const data = (await res.json().catch(() => null)) as { ok?: boolean } | null;
       const ok = res.ok && data?.ok;
       // Цель «lead» в Яндекс Метрике (если счётчик подключён, см. studio-metrika.tsx).
-      if (ok && STUDIO_METRIKA_ID) (window as { ym?: (...a: unknown[]) => void }).ym?.(STUDIO_METRIKA_ID, "reachGoal", "lead");
+      const ym = (window as { ym?: unknown }).ym;
+      if (ok && STUDIO_METRIKA_ID && typeof ym === "function") {
+        try {
+          ym(STUDIO_METRIKA_ID, "reachGoal", "lead");
+        } catch {
+          /* счётчик недоступен — заявка всё равно ушла */
+        }
+      }
       setState(ok ? "sent" : "failed");
     } catch {
       setState("failed");
@@ -2211,9 +2215,8 @@ function WorksBody() {
 
 /** Страница «Работы» (/works/, /en/works/, /tj/works/). */
 export function StudioWorksPage({ locale = "ru" }: { locale?: Locale }) {
-  const goContact = useCallback(() => {
-    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+  // «Заказать проект» открывает чат с ИИ-ассистентом (studio-brief.tsx); форма остаётся в блоке «Контакты».
+  const goContact = useCallback(() => openBrief(), []);
   return (
     <StudioLocaleProvider locale={locale}>
       <StudioShell>
@@ -2409,9 +2412,8 @@ function CaseBody({ study, onContact }: { study: StudioCase; onContact: () => vo
 /** Страница кейса проекта (/cases/<slug>/). Шапка, контакты и подвал — те же, что на главной. */
 export function StudioCasePage({ slug }: { slug: string }) {
   const study = caseBySlug(slug);
-  const goContact = useCallback(() => {
-    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+  // «Заказать проект» открывает чат с ИИ-ассистентом (studio-brief.tsx); форма остаётся в блоке «Контакты».
+  const goContact = useCallback(() => openBrief(), []);
   if (!study) return null;
   return (
     <StudioLocaleProvider locale="ru">
@@ -2585,9 +2587,8 @@ function PromoBody({ onContact }: { onContact: () => void }) {
 
 /** Страница «Промо-игра для бренда» (/promo-game/). Только на русском, как и кейсы. */
 export function StudioPromoPage() {
-  const goContact = useCallback(() => {
-    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+  // «Заказать проект» открывает чат с ИИ-ассистентом (studio-brief.tsx); форма остаётся в блоке «Контакты».
+  const goContact = useCallback(() => openBrief(), []);
   return (
     <StudioLocaleProvider locale="ru">
       <StudioShell>
@@ -2832,9 +2833,8 @@ function ServicesBody({ onContact }: { onContact: () => void }) {
 
 /** Страница «Услуги» на языке `locale`: /services/, /en/services/, /tj/services/. */
 export function StudioServicesPage({ locale = "ru" }: { locale?: Locale }) {
-  const goContact = useCallback(() => {
-    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+  // «Заказать проект» открывает чат с ИИ-ассистентом (studio-brief.tsx); форма остаётся в блоке «Контакты».
+  const goContact = useCallback(() => openBrief(), []);
   return (
     <StudioLocaleProvider locale={locale}>
       <StudioShell>
@@ -3167,9 +3167,8 @@ function PricingBody({ onContact }: { onContact: () => void }) {
 
 /** Страница «Цены» на языке `locale`: /pricing/, /en/pricing/, /tj/pricing/. */
 export function StudioPricingPage({ locale = "ru" }: { locale?: Locale }) {
-  const goContact = useCallback(() => {
-    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+  // «Заказать проект» открывает чат с ИИ-ассистентом (studio-brief.tsx); форма остаётся в блоке «Контакты».
+  const goContact = useCallback(() => openBrief(), []);
   return (
     <StudioLocaleProvider locale={locale}>
       <StudioShell>
@@ -3359,9 +3358,8 @@ function CityBody({ city: base, onContact }: { city: StudioCity; onContact: () =
 /** Страница «Разработка сайтов в <городе>» (/<city.slug>/). Только на русском. */
 export function StudioCityPage({ slug }: { slug: string }) {
   const city = cityBySlug(slug);
-  const goContact = useCallback(() => {
-    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+  // «Заказать проект» открывает чат с ИИ-ассистентом (studio-brief.tsx); форма остаётся в блоке «Контакты».
+  const goContact = useCallback(() => openBrief(), []);
   if (!city) return null;
   return (
     <StudioLocaleProvider locale="ru">
@@ -3387,15 +3385,15 @@ function StudioShell({ children }: { children: ReactNode }) {
         {STYLES}
       </style>
       {children}
+      <BriefChat />
     </div>
   );
 }
 
 /** Страница студии на языке `locale` (по умолчанию русский). */
 export function StudioPage({ locale = "ru" }: { locale?: Locale }) {
-  const goContact = useCallback(() => {
-    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+  // «Заказать проект» открывает чат с ИИ-ассистентом (studio-brief.tsx); форма остаётся в блоке «Контакты».
+  const goContact = useCallback(() => openBrief(), []);
 
   return (
     <StudioLocaleProvider locale={locale}>

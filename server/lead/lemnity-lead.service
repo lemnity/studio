@@ -2,7 +2,7 @@
 # Установка: /etc/systemd/system/lemnity-lead.service; код — /opt/lemnity-lead/lead_service.py;
 # токен и id группы — /etc/lemnity-lead.env (права 600, владелец root).
 [Unit]
-Description=Lemnity Studio lead form -> Telegram
+Description=Lemmus Studio lead form and AI brief assistant -> Telegram
 After=network-online.target
 Wants=network-online.target
 
@@ -16,6 +16,8 @@ NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
+# КП ассистента: /var/lib/lemnity-lead/kp (brief.py).
+StateDirectory=lemnity-lead
 
 [Install]
 WantedBy=multi-user.target
