@@ -4,7 +4,7 @@
  * Эффекты страницы «Студия Леммус» по мотивам illan.ru (там они собраны на GSAP + ScrollTrigger +
  * SplitType + Lenis + Lottie). Здесь — без новых зависимостей, на framer-motion и CSS:
  *
- *  - StudioPreloader   — заставка с буквами Lemnity, держится до реальной загрузки страницы и картинок;
+ *  - StudioPreloader   — заставка со знаком Леммус, держится до реальной загрузки страницы и картинок;
  *  - SmoothWheel       — плавная прокрутка колесом на ПК (аналог Lenis, lerp ≈ 0.07);
  *  - LineReveal        — заголовок выезжает из маски построчно с лёгким поворотом (SplitType lines);
  *  - VelocityTicker    — две ленты крест-накрест, разгоняются от прокрутки и меняют направление;
@@ -30,7 +30,7 @@ import {
 } from "framer-motion";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
-import { LETTERS, LETTER_COLORS } from "@/components/lemnity-wordmark";
+import { LEMMUS_LETTERS_VIEWBOX, LEMMUS_PARTS, LEMMUS_PART_COLORS, LemmusRunner } from "@/components/lemmus-logo";
 import { cn } from "@/lib/utils";
 
 import { STUDIO_CLIENTS, clientLogoFilter } from "./studio-content";
@@ -75,7 +75,7 @@ export function StudioPreloader() {
   const { t } = useStudioLocale();
   const [phase, setPhase] = useState<IntroPhase>("in");
   const counterRef = useRef<HTMLSpanElement>(null);
-  const barRef = useRef<HTMLDivElement>(null);
+  const runnerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -142,7 +142,11 @@ export function StudioPreloader() {
       if (!finished) shown = Math.min(shown, 0.99);
       else if (target - shown < 0.004) shown = 1;
       if (counterRef.current) counterRef.current.textContent = String(Math.round(shown * 100)).padStart(3, "0");
-      if (barRef.current) barRef.current.style.transform = `scaleX(${shown})`;
+      // Лемминг бежит по дорожке слева направо до цифр: left и обратный сдвиг на свою ширину держат его в дорожке.
+      if (runnerRef.current) {
+        runnerRef.current.style.left = `${shown * 100}%`;
+        runnerRef.current.style.transform = `translateX(-${shown * 100}%)`;
+      }
       if (shown >= 1) {
         outTimer = window.setTimeout(
           () => {
@@ -189,13 +193,14 @@ export function StudioPreloader() {
         <span className="st-micro hidden text-[16px] tracking-[0.12em] text-[var(--st-muted)] sm:inline">{t.preloaderTagline}</span>
       </div>
 
-      <svg viewBox="0 0 169 38" className="mx-auto block w-[min(78vw,880px)] overflow-hidden text-[var(--st-text)]" fill="currentColor">
-        {LETTERS.map((l) => (
+      {/* Только надпись: лемминг на заставке бежит внизу вместо полоски загрузки. */}
+      <svg viewBox={LEMMUS_LETTERS_VIEWBOX} className="mx-auto block w-[min(70vw,760px)] overflow-hidden text-[var(--st-text)]" fill="currentColor">
+        {LEMMUS_PARTS.slice(1).map((l) => (
           <motion.path
             key={l.order}
             d={l.d}
-            initial={{ y: 42 }}
-            animate={{ y: phase === "out" ? -42 : 0 }}
+            initial={{ y: 34 }}
+            animate={{ y: phase === "out" ? -34 : 0 }}
             transition={{
               duration: 0.9,
               delay: phase === "out" ? l.order * 0.035 : 0.15 + l.order * 0.07,
@@ -206,8 +211,12 @@ export function StudioPreloader() {
       </svg>
 
       <div className="flex items-end justify-between gap-6">
-        <div className="mb-3 h-px flex-1 bg-[var(--st-line)]">
-          <div ref={barRef} className="h-px origin-left bg-[var(--st-accent)]" style={{ transform: "scaleX(0)" }} />
+        {/* Дорожка: тонкая линия, по которой лемминг бежит к цифрам, пока грузится страница. */}
+        <div className="relative mb-1 h-10 flex-1 md:h-14">
+          <div className="absolute inset-x-0 bottom-0 h-px bg-[var(--st-line)]" />
+          <div ref={runnerRef} className="absolute bottom-0 left-0 h-full" style={{ transform: "translateX(0)" }}>
+            <LemmusRunner className="h-full w-auto text-[var(--st-accent)]" />
+          </div>
         </div>
         <span ref={counterRef} className="text-[42px] font-normal leading-none tracking-[-0.03em] tabular-nums md:text-[64px]">
           000
@@ -612,9 +621,8 @@ export function DrawnUnderline({ children, delay = 0.5 }: { children: ReactNode;
 /* ───────────────────────────── Гигантский знак в подвале ───────────────────────────── */
 
 /**
- * Знак Lemnity во всю ширину: при входе в экран буквы поднимаются волной, при уходе — опускаются
- * (у illan: `toggleActions: "play none none reverse"`). Над буквой курсор зажигает её цвет из той
- * же палитры, что у знака на экране входа.
+ * Надпись «lemmus» во всю ширину (без лемминга): при входе в экран буквы поднимаются волной, при уходе —
+ * опускаются (у illan: `toggleActions: "play none none reverse"`). Над буквой курсор зажигает лайм.
  */
 export function FooterMark() {
   const ref = useRef<SVGSVGElement>(null);
@@ -622,14 +630,14 @@ export function FooterMark() {
   const reduce = useReducedMotion();
   const shown = inView || !!reduce;
   return (
-    <svg ref={ref} aria-hidden viewBox="0 0 169 38" fill="currentColor" className="st-fm block h-auto w-full overflow-hidden text-[var(--st-text)]">
-      {LETTERS.map((l) => (
+    <svg ref={ref} aria-hidden viewBox={LEMMUS_LETTERS_VIEWBOX} fill="currentColor" className="st-fm block h-auto w-full overflow-hidden text-[var(--st-text)]">
+      {LEMMUS_PARTS.slice(1).map((l) => (
         <motion.path
           key={l.order}
           d={l.d}
-          style={{ "--c": LETTER_COLORS[l.order] } as React.CSSProperties}
-          initial={reduce ? false : { y: 40 }}
-          animate={{ y: shown ? 0 : 40 }}
+          style={{ "--c": LEMMUS_PART_COLORS[l.order] } as React.CSSProperties}
+          initial={reduce ? false : { y: 44 }}
+          animate={{ y: shown ? 0 : 44 }}
           transition={{ duration: 0.9, delay: shown ? l.order * 0.07 : 0, ease: EASE }}
         />
       ))}

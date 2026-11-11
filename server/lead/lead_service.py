@@ -11,6 +11,10 @@
   TELEGRAM_CHAT_ID    id группы (отрицательное число, у супергрупп начинается с -100)
   ALLOWED_ORIGINS     через запятую; по умолчанию lemmus.studio, www и GitHub Pages
 Без токена и id группы сервис отвечает 503, а форма предлагает написать в Telegram или на почту.
+
+GET /api/geo — город посетителя по IP для ссылки «Сайты в …» в подвале: {"city": "Moscow", "country": "RU"}.
+База — DB-IP IP to City Lite (CC BY 4.0) в GEO_DB, обновляется раз в месяц. IP не пишется в журнал и не хранится.
+Без базы (нет файла или пакета python3-maxminddb) отвечает пустым городом.
 """
 
 import html
@@ -36,13 +40,32 @@ ALLOWED_ORIGINS = {
 }
 
 MAX_BODY = 16 * 1024
-LIMITS = {"name": 120, "contact": 160, "topic": 80, "message": 4000, "lang": 8, "page": 300}
+LIMITS = {"name": 120, "contact": 160, "topic": 80, "message": 4000, "lang": 8, "page": 300, "source": 400}
 # Не больше 5 заявок с одного адреса за 10 минут.
 RATE_WINDOW = 600
 RATE_MAX = 5
 _hits: dict[str, deque] = defaultdict(deque)
 
 LANG_FLAG = {"ru": "🇷🇺 RU", "en": "🇬🇧 EN", "tj": "🇹🇯 TJ"}
+
+GEO_DB = os.environ.get("GEO_DB", "/var/lib/lemnity-geo/city.mmdb")
+_geo_reader = None
+
+
+def geo_lookup(ip: str) -> dict:
+    """Город и страна по IP; при любой ошибке — пустой ответ, сайт просто оставит город по умолчанию."""
+    global _geo_reader
+    try:
+        if _geo_reader is None:
+            import maxminddb
+
+            _geo_reader = maxminddb.open_database(GEO_DB)
+        rec = _geo_reader.get(ip) or {}
+    except Exception:
+        return {"city": "", "country": ""}
+    city = (rec.get("city") or {}).get("names", {}).get("en", "")
+    country = (rec.get("country") or {}).get("iso_code", "")
+    return {"city": city, "country": country}
 
 
 def rate_limited(ip: str) -> bool:
@@ -69,6 +92,9 @@ def format_lead(lead: dict) -> str:
         "",
         e("message"),
     ]
+    if lead.get("source"):
+        # UTM-метки и yclid из рекламы: видно, какая кампания и какой запрос привели клиента.
+        lines += ["", f"<b>📣 Реклама:</b> {e('source')}"]
     if lead.get("page"):
         lines += ["", f"<i>{e('page')}</i>"]
     return "\n".join(lines)
@@ -116,6 +142,12 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def _cors_get(self):
+        origin = self.headers.get("Origin", "")
+        if origin in ALLOWED_ORIGINS:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
+
     def do_OPTIONS(self):
         self.send_response(204)
         self._cors()
@@ -155,6 +187,17 @@ class Handler(BaseHTTPRequestHandler):
         return self._reply(200, {"ok": True})
 
     def do_GET(self):
+        if self.path.split("?")[0].rstrip("/") == "/api/geo":
+            ip = self.headers.get("X-Real-IP") or self.client_address[0]
+            data = json.dumps(geo_lookup(ip)).encode()
+            self.send_response(200)
+            self._cors_get()
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "private, max-age=3600")
+            self.end_headers()
+            self.wfile.write(data)
+            return
         if self.path.rstrip("/") == "/api/lead/health":
             return self._reply(200, {"ok": True, "configured": bool(TOKEN and CHAT_ID)})
         return self._reply(404, {"ok": False, "error": "not_found"})

@@ -29,7 +29,7 @@ import {
 import { ArrowLeft, ArrowRight, Check, ChevronDown, Globe, Heart, Mail, Menu, MoreHorizontal, Plus, Quote, Send, X, ZoomIn } from "lucide-react";
 import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 
-import { LemnityWordmark } from "@/components/lemnity-wordmark";
+import { LemmusLogo } from "@/components/lemmus-logo";
 import { BASE_PATH, cn } from "@/lib/utils";
 
 import {
@@ -37,6 +37,7 @@ import {
   STUDIO_CONTACT_TG,
   STUDIO_LEAD_URL,
   STUDIO_METRIKA_ID,
+  AD_SOURCE_KEY,
   STUDIO_PLATFORM_URL,
   PROMO_TOPIC,
   STUDIO_PRIVACY_URL,
@@ -57,6 +58,7 @@ import {
   useMediaQuery,
 } from "./studio-effects";
 import { STUDIO_CASES, caseByProject, caseBySlug, type StudioCase } from "./studio-cases";
+import { GEO_CITY_IN, STUDIO_GEO_URL, geoCityKey } from "./studio-geo";
 import { StudioGame } from "./studio-game";
 import { PROMO, PROMO_PATH } from "./studio-promo";
 import { COMPARE_MARKS, PRICING, pricingPath, type CompareMark, type PricingPackage } from "./studio-pricing";
@@ -354,8 +356,7 @@ function StudioHeader({ onContact, home = "", page }: { onContact: () => void; h
         <motion.div initial={{ opacity: 0, y: -24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}>
           <div className={cn(container, "grid h-[72px] grid-cols-[1fr_auto] items-center md:h-[88px] xl:grid-cols-[1fr_auto_1fr]")}>
             <a href={`${home}#top`} aria-label={t.homeAria} className="flex items-center gap-3 justify-self-start">
-              <LemnityWordmark className="h-[18px] w-auto text-[var(--st-text)] md:h-5" />
-              <span className="st-micro border-l border-[var(--st-line)] pl-3 text-[16px] text-[var(--st-muted)]">{t.studio}</span>
+              <LemmusLogo sniff className="h-6 w-auto text-[var(--st-text)] md:h-7" />
             </a>
             {/* На 16px меню и фраза справа помещаются в строку только на широком экране; уже — кнопка меню. */}
             <nav aria-label={t.sectionsAria} className="hidden items-center gap-8 xl:flex 2xl:gap-12">
@@ -397,7 +398,7 @@ function StudioHeader({ onContact, home = "", page }: { onContact: () => void; h
               className="absolute right-0 top-0 flex h-full w-full flex-col border-l border-[var(--st-line)] bg-[var(--st-bg)] p-5 sm:w-[420px] sm:p-10"
             >
               <div className="flex items-center justify-between">
-                <LemnityWordmark className="h-5 w-auto text-[var(--st-text)]" />
+                <LemmusLogo sniff className="h-7 w-auto text-[var(--st-text)]" />
                 <button type="button" aria-label={t.closeMenu} onClick={() => setOpen(false)} className="st-round">
                   <X className="h-4 w-4" />
                 </button>
@@ -1717,6 +1718,20 @@ function Contact({ initialTopic = 0 }: { initialTopic?: number }) {
   const formY = useTransform(scrollYProgress, [0, 1], [reduce || !wide ? 0 : 224, 0]);
 
   // Заявка уходит в группу Telegram через приёмник на сервере; если он недоступен — предлагаем Telegram и почту.
+  /** Источник визита из рекламы (см. studio-metrika.tsx) одной строкой: «yandex / cpc / кампания / запрос». */
+  const readAdSource = () => {
+    try {
+      const src = JSON.parse(sessionStorage.getItem(AD_SOURCE_KEY) || "null") as Record<string, string> | null;
+      if (!src) return "";
+      return ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "yclid"]
+        .filter((k) => src[k])
+        .map((k) => `${k.replace("utm_", "")}=${src[k]}`)
+        .join(" · ");
+    } catch {
+      return "";
+    }
+  };
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (state === "sending") return;
@@ -1740,6 +1755,7 @@ function Contact({ initialTopic = 0 }: { initialTopic?: number }) {
           message: message.trim(),
           lang: locale,
           page: window.location.href,
+          source: readAdSource(),
           website,
         }),
       });
@@ -1956,6 +1972,63 @@ function FloatingCta({ onContact }: { onContact: () => void }) {
   );
 }
 
+/**
+ * Город посетителя в предложном падеже («в Москве») по ответу нашего сервера (см. studio-geo.ts) или null,
+ * пока ответа нет или город не из списка. Ответ запоминается на время сессии, чтобы не спрашивать сервер
+ * на каждой странице.
+ */
+function useGeoInCity(): string | null {
+  const [inCity, setInCity] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const apply = (city: string) => {
+      const phrase = city ? GEO_CITY_IN[geoCityKey(city)] : undefined;
+      if (phrase && !cancelled) setInCity(phrase);
+    };
+    let cached: string | null = null;
+    try {
+      cached = sessionStorage.getItem("lmm-geo-city");
+    } catch {
+      /* хранилище недоступно — просто спросим сервер */
+    }
+    if (cached !== null) {
+      apply(cached);
+      return () => {
+        cancelled = true;
+      };
+    }
+    fetch(STUDIO_GEO_URL)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { city?: string } | null) => {
+        const city = d?.city ?? "";
+        try {
+          sessionStorage.setItem("lmm-geo-city", city);
+        } catch {
+          /* не страшно */
+        }
+        apply(city);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return inCity;
+}
+
+/** «Сайты в …» в подвале: город посетителя или город по умолчанию; ведёт на страницу «Разработка сайтов». */
+function GeoCityLink({ className }: { className: string }) {
+  const page = STUDIO_CITIES[0];
+  const inCity = useGeoInCity() ?? page.inCity;
+  return (
+    <a href={`${BASE_PATH}/${page.slug}/`} className={className}>
+      Сайты {inCity}
+    </a>
+  );
+}
+
 function StudioFooter() {
   const { t, locale } = useStudioLocale();
   // Нижняя строка подвала — намеренно мельче остального сайта (исключение из минимума 16px): служебные подписи.
@@ -1967,26 +2040,33 @@ function StudioFooter() {
       <div className={cn(container, "pt-14 md:pt-20")}>
         <FooterMark />
       </div>
-      <div className={cn(container, "grid items-center justify-items-center gap-y-6 py-10 md:grid-cols-[1fr_auto_1fr] md:justify-items-stretch md:py-8")}>
-        <div className="flex items-center gap-5 md:justify-self-start">
-          <LemnityWordmark className="h-4 w-auto text-[var(--st-text)]" />
-          <span className={micro}>© {new Date().getFullYear()}</span>
+      {/* Две строки: слева знак и слоган, справа разделы одной строкой; ниже — копирайт и политика. */}
+      <div className={cn(container, "grid gap-8 pb-8 pt-10 md:grid-cols-[auto_1fr] md:items-end md:gap-12 md:pt-12")}>
+        <div className="flex flex-col gap-3">
+          <LemmusLogo mark={false} className="h-6 w-auto self-start text-[var(--st-text)]" />
+          <p className={micro}>{t.footerTagline}</p>
         </div>
-        <p className={cn(micro, "text-center")}>{t.footerTagline}</p>
-        <nav aria-label={t.linksAria} className="flex flex-wrap items-center justify-center gap-6 md:justify-self-end md:gap-8">
+        <nav aria-label={t.linksAria} className="flex flex-wrap gap-x-8 gap-y-3 md:justify-end">
           <a href={`${BASE_PATH}${servicesPath(locale)}`} className={link}>{SERVICES[locale].nav}</a>
           <a href={`${BASE_PATH}${pricingPath(locale)}`} className={link}>{PRICING[locale].nav}</a>
-          {locale === "ru"
-            ? STUDIO_CITIES.map((city) => (
-                <a key={city.slug} href={`${BASE_PATH}/${city.slug}/`} className={link}>
-                  Сайты {city.inCity}
-                </a>
-              ))
-            : null}
+          {locale === "ru" ? <GeoCityLink className={link} /> : null}
           <a href={STUDIO_PLATFORM_URL} target="_blank" rel="noopener noreferrer" className={link}>{t.platform}</a>
           <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className={link}>Telegram</a>
-          <a href={STUDIO_PRIVACY_URL} target="_blank" rel="noopener noreferrer" className={link}>{t.privacy}</a>
         </nav>
+      </div>
+      <div className={cn(container, "flex flex-wrap items-center justify-between gap-x-8 gap-y-3 border-t border-[var(--st-line)] py-6")}>
+        <span className={micro}>
+          © {new Date().getFullYear()} {t.heroSide.since}
+        </span>
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+          {/* Город в «Сайты в …» определяется по базе DB-IP Lite — её лицензия (CC BY 4.0) требует указать источник. */}
+          {locale === "ru" ? (
+            <a href="https://db-ip.com" target="_blank" rel="noopener noreferrer" className={link}>
+              Геоданные: DB-IP
+            </a>
+          ) : null}
+          <a href={STUDIO_PRIVACY_URL} target="_blank" rel="noopener noreferrer" className={link}>{t.privacy}</a>
+        </div>
       </div>
     </footer>
   );
@@ -3106,8 +3186,36 @@ export function StudioPricingPage({ locale = "ru" }: { locale?: Locale }) {
 
 /* ───────────────────────────── Разработка сайтов в городе ───────────────────────────── */
 
-function CityBody({ city, onContact }: { city: StudioCity; onContact: () => void }) {
+/**
+ * Тексты страницы под город посетителя: «в Тюмени» → «в Москве» в заголовке, тексте, ценах и вопросах.
+ * Факты о самой студии (она в Тюмени, можно встретиться лично) для другого города заменяются на
+ * «работаем удалённо», а не на чужой город. Для поисковиков в HTML остаётся город по умолчанию.
+ */
+function cityForVisitor(city: StudioCity, inCity: string | null): StudioCity {
+  if (!inCity || inCity === city.inCity) return city;
+  const swap = (text: string) => text.split(city.inCity).join(inCity);
+  return {
+    ...city,
+    inCity,
+    label: "Студия Леммус · работаем удалённо",
+    title: [city.title[0], swap(city.title[1])],
+    lead: swap(city.lead),
+    why: city.why.map((w) =>
+      w.title.includes(city.inCity)
+        ? { title: "Работаем удалённо", text: "Созвоны по видео, общение в мессенджере, все материалы — в одном месте." }
+        : w,
+    ),
+    faq: city.faq.map((f) =>
+      f.a.includes("студия находится")
+        ? { q: "Как работаете с клиентами из другого города?", a: "Удалённо: созваниваемся по видео, общаемся в мессенджере, показываем промежуточные версии по ходу работы. Студия находится в Тюмени." }
+        : { q: swap(f.q), a: swap(f.a) },
+    ),
+  };
+}
+
+function CityBody({ city: base, onContact }: { city: StudioCity; onContact: () => void }) {
   const { t, c } = useStudioLocale();
+  const city = cityForVisitor(base, useGeoInCity());
   // Пакеты сайтов: промо-игра на этой странице не нужна.
   const plans = t.pricing.plans.filter((p) => !p.promo);
   return (
