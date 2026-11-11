@@ -26,7 +26,7 @@ const jsonLd = {
       description: PROMO.meta.description,
       url,
       areaServed: "RU",
-      provider: { "@type": "ProfessionalService", "@id": `${STUDIO_SITE_URL}/#service`, name: "Студия Лемнити", url: `${STUDIO_SITE_URL}/` },
+      provider: { "@type": "ProfessionalService", "@id": `${STUDIO_SITE_URL}/#service`, name: "Студия Леммус", url: `${STUDIO_SITE_URL}/` },
       offers: PROMO.plans.map((p) => ({
         "@type": "Offer",
         name: p.name,

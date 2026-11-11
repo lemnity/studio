@@ -28,7 +28,7 @@ jobs:
         env:
           STATIC_EXPORT: "1"
           NEXT_PUBLIC_BASE_PATH: /studio
-          NEXT_PUBLIC_SITE_URL: https://lemnity.github.io/studio
+          NEXT_PUBLIC_SITE_URL: https://lemmus.studio
       - run: touch out/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:

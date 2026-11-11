@@ -75,9 +75,9 @@ const tj = plans("tj");
 
 const RU: ServicesContent = {
   meta: {
-    title: "Услуги: сайты, магазины, MVP, дизайн, брендинг и игры — Студия Лемнити",
+    title: "Услуги: сайты, магазины, MVP, дизайн, брендинг и игры — Студия Леммус",
     description:
-      "Что делает Студия Лемнити: сайты и лендинги, интернет-магазины, веб-сервисы и MVP, UI/UX-дизайн, брендинг и игры. Начинаем с задачи бизнеса, а не со списка технологий. Сроки и цены «от» для каждого направления.",
+      "Что делает Студия Леммус: сайты и лендинги, интернет-магазины, веб-сервисы и MVP, UI/UX-дизайн, брендинг и игры. Начинаем с задачи бизнеса, а не со списка технологий. Сроки и цены «от» для каждого направления.",
   },
   back: "На главную",
   nav: "Услуги",
@@ -174,9 +174,9 @@ const RU: ServicesContent = {
 
 const EN: ServicesContent = {
   meta: {
-    title: "Services: websites, stores, MVPs, design, branding and games — Lemnity Studio",
+    title: "Services: websites, stores, MVPs, design, branding and games — Lemmus Studio",
     description:
-      "What Lemnity Studio does: websites and landing pages, online stores, web services and MVPs, UI/UX design, branding and games. We start with the business need, not a list of technologies. Timelines and starting prices for each area.",
+      "What Lemmus Studio does: websites and landing pages, online stores, web services and MVPs, UI/UX design, branding and games. We start with the business need, not a list of technologies. Timelines and starting prices for each area.",
   },
   back: "Back to home",
   nav: "Services",
@@ -273,9 +273,9 @@ const EN: ServicesContent = {
 
 const TJ: ServicesContent = {
   meta: {
-    title: "Хизматҳо: сайтҳо, мағозаҳо, MVP, дизайн, брендинг ва бозиҳо — Студияи Лемнити",
+    title: "Хизматҳо: сайтҳо, мағозаҳо, MVP, дизайн, брендинг ва бозиҳо — Студияи Леммус",
     description:
-      "Студияи Лемнити чӣ кор мекунад: сайтҳо ва лендингҳо, мағозаҳои онлайн, веб-хизматрасониҳо ва MVP, дизайни UI/UX, брендинг ва бозиҳо. Аз вазифаи тиҷорат оғоз мекунем, на аз рӯйхати технологияҳо. Мӯҳлат ва нархи «аз» барои ҳар самт.",
+      "Студияи Леммус чӣ кор мекунад: сайтҳо ва лендингҳо, мағозаҳои онлайн, веб-хизматрасониҳо ва MVP, дизайни UI/UX, брендинг ва бозиҳо. Аз вазифаи тиҷорат оғоз мекунем, на аз рӯйхати технологияҳо. Мӯҳлат ва нархи «аз» барои ҳар самт.",
   },
   back: "Ба саҳифаи асосӣ",
   nav: "Хизматҳо",
@@ -417,7 +417,7 @@ export function servicesJsonLd(locale: Locale) {
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          // Название студии — вторая половина заголовка («… — Студия Лемнити»).
+          // Название студии — вторая половина заголовка («… — Студия Леммус»).
           { "@type": "ListItem", position: 1, name: S.meta.title.split(" — ").pop(), item: `${STUDIO_SITE_URL}${LOCALE_PATH[locale]}` },
           { "@type": "ListItem", position: 2, name: S.nav, item: url },
         ],

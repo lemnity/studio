@@ -6,7 +6,7 @@ import { BASE_PATH } from "@/lib/utils";
 import "./globals.css";
 
 // noindex Next.js ставит на 404 сам.
-export const metadata: Metadata = { title: "Страница не найдена — Студия Лемнити" };
+export const metadata: Metadata = { title: "Страница не найдена — Студия Леммус" };
 export const viewport = rootViewport;
 
 /** 404 для всего сайта: корневых layout несколько (по языкам), поэтому страница сама задаёт html и body. */

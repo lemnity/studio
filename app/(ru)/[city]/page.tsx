@@ -42,7 +42,7 @@ function jsonLd(city: StudioCity) {
         description: city.meta.description,
         url,
         areaServed: { "@type": "City", name: city.name },
-        provider: { "@type": "ProfessionalService", "@id": `${STUDIO_SITE_URL}/#service`, name: "Студия Лемнити", url: `${STUDIO_SITE_URL}/` },
+        provider: { "@type": "ProfessionalService", "@id": `${STUDIO_SITE_URL}/#service`, name: "Студия Леммус", url: `${STUDIO_SITE_URL}/` },
         offers: UI.ru.pricing.plans
           .filter((p) => !p.promo)
           .map((p) => ({
@@ -60,7 +60,7 @@ function jsonLd(city: StudioCity) {
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Студия Лемнити", item: `${STUDIO_SITE_URL}/` },
+          { "@type": "ListItem", position: 1, name: "Студия Леммус", item: `${STUDIO_SITE_URL}/` },
           { "@type": "ListItem", position: 2, name: `Разработка сайтов ${city.inCity}`, item: url },
         ],
       },

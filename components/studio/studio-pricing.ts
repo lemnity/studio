@@ -103,9 +103,9 @@ const tj = plans("tj");
 
 const RU: PricingContent = {
   meta: {
-    title: "Цены на разработку сайтов и игр — Студия Лемнити",
+    title: "Цены на разработку сайтов и игр — Студия Леммус",
     description:
-      "Сколько стоит сайт, интернет-магазин или промо-игра в Студии Лемнити: лендинг от 70 000 ₽, сайт под ключ от 250 000 ₽, промо-игра от 150 000 ₽. Вилки бюджета, сроки по неделям и что входит в цену.",
+      "Сколько стоит сайт, интернет-магазин или промо-игра в Студии Леммус: лендинг от 70 000 ₽, сайт под ключ от 250 000 ₽, промо-игра от 150 000 ₽. Вилки бюджета, сроки по неделям и что входит в цену.",
   },
   back: "На главную",
   nav: "Цены",
@@ -246,9 +246,9 @@ const RU: PricingContent = {
 
 const EN: PricingContent = {
   meta: {
-    title: "Website and game development prices — Lemnity Studio",
+    title: "Website and game development prices — Lemmus Studio",
     description:
-      "What a website, online store or promo game costs at Lemnity Studio: landing pages from ₽70,000, turnkey websites from ₽250,000, promo games from ₽150,000. Budget ranges, week-by-week timelines and what the price includes.",
+      "What a website, online store or promo game costs at Lemmus Studio: landing pages from ₽70,000, turnkey websites from ₽250,000, promo games from ₽150,000. Budget ranges, week-by-week timelines and what the price includes.",
   },
   back: "Back to home",
   nav: "Pricing",
@@ -389,9 +389,9 @@ const EN: PricingContent = {
 
 const TJ: PricingContent = {
   meta: {
-    title: "Нархи сохтани сайтҳо ва бозиҳо — Студияи Лемнити",
+    title: "Нархи сохтани сайтҳо ва бозиҳо — Студияи Леммус",
     description:
-      "Сайт, мағозаи онлайн ё бозии промо дар Студияи Лемнити чанд арзиш дорад: лендинг аз 70 000 ₽, сайти пурра аз 250 000 ₽, бозии промо аз 150 000 ₽. Доираи буҷет, мӯҳлатҳо аз рӯи ҳафтаҳо ва он чи ба нарх дохил мешавад.",
+      "Сайт, мағозаи онлайн ё бозии промо дар Студияи Леммус чанд арзиш дорад: лендинг аз 70 000 ₽, сайти пурра аз 250 000 ₽, бозии промо аз 150 000 ₽. Доираи буҷет, мӯҳлатҳо аз рӯи ҳафтаҳо ва он чи ба нарх дохил мешавад.",
   },
   back: "Ба саҳифаи асосӣ",
   nav: "Нархҳо",
@@ -580,7 +580,7 @@ export function pricingJsonLd(locale: Locale) {
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          // Название студии — вторая половина заголовка («… — Студия Лемнити»).
+          // Название студии — вторая половина заголовка («… — Студия Леммус»).
           { "@type": "ListItem", position: 1, name: P.meta.title.split(" — ").pop(), item: home },
           { "@type": "ListItem", position: 2, name: P.nav, item: url },
         ],

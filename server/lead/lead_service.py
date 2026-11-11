@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Приёмник заявок с формы «Обсудим проект» (lemnity.digital) — пересылает их в группу Telegram.
+Приёмник заявок с формы «Обсудим проект» (lemmus.studio) — пересылает их в группу Telegram.
 
 Сайт статический, поэтому токен бота нельзя держать в браузере: форма отправляет заявку сюда,
 сервис проверяет её и шлёт сообщение через Bot API. Только стандартная библиотека Python.
@@ -9,7 +9,7 @@
 Настройки — переменные окружения из /etc/lemnity-lead.env (см. lemnity-lead.service):
   TELEGRAM_BOT_TOKEN  токен бота от @BotFather
   TELEGRAM_CHAT_ID    id группы (отрицательное число, у супергрупп начинается с -100)
-  ALLOWED_ORIGINS     через запятую; по умолчанию lemnity.digital, www и GitHub Pages
+  ALLOWED_ORIGINS     через запятую; по умолчанию lemmus.studio, www и GitHub Pages
 Без токена и id группы сервис отвечает 503, а форма предлагает написать в Telegram или на почту.
 """
 
@@ -30,7 +30,7 @@ ALLOWED_ORIGINS = {
     o.strip()
     for o in os.environ.get(
         "ALLOWED_ORIGINS",
-        "https://lemnity.digital,https://www.lemnity.digital,https://lemnity.github.io",
+        "https://lemmus.studio,https://www.lemmus.studio,https://lemnity.github.io",
     ).split(",")
     if o.strip()
 }

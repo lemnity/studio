@@ -13,10 +13,10 @@ import { StudioPage } from "./studio-page";
 /** `country` — страна студии в адресе (ISO 3166): у каждой языковой версии своя. */
 const SEO: Record<Locale, { title: string; description: string; areaServed: string[]; services: string[]; name: string; country: string }> = {
   ru: {
-    title: "Студия Лемнити: разработка сайтов, UI/UX-дизайн и брендинг",
+    title: "Студия Леммус: разработка сайтов, UI/UX-дизайн и брендинг",
     description:
-      "Студия разработки Lemnity: сайты и веб-приложения, интерфейсы, лендинги и интернет-магазины, брендинг, MVP и казуальные игры. 12+ лет опыта, 50+ проектов, работаем удалённо.",
-    name: "Студия Лемнити",
+      "Студия разработки Леммус: сайты и веб-приложения, интерфейсы, лендинги и интернет-магазины, брендинг, MVP и казуальные игры. 12+ лет опыта, 50+ проектов, работаем удалённо.",
+    name: "Студия Леммус",
     areaServed: ["Тюмень", "Россия", "весь мир"],
     country: "RU",
     services: [
@@ -29,10 +29,10 @@ const SEO: Record<Locale, { title: string; description: string; areaServed: stri
     ],
   },
   en: {
-    title: "Lemnity Studio: website development, UI/UX design and branding",
+    title: "Lemmus Studio: website development, UI/UX design and branding",
     description:
-      "Lemnity development studio: websites and web apps, interfaces, landing pages and online stores, branding, MVPs and casual games. 12+ years of experience, 50+ projects, working remotely.",
-    name: "Lemnity Studio",
+      "Lemmus development studio: websites and web apps, interfaces, landing pages and online stores, branding, MVPs and casual games. 12+ years of experience, 50+ projects, working remotely.",
+    name: "Lemmus Studio",
     areaServed: ["Cyprus", "Russia", "Worldwide"],
     country: "CY",
     services: [
@@ -45,10 +45,10 @@ const SEO: Record<Locale, { title: string; description: string; areaServed: stri
     ],
   },
   tj: {
-    title: "Студияи Лемнити: таҳияи сайтҳо, дизайни UI/UX ва брендинг",
+    title: "Студияи Леммус: таҳияи сайтҳо, дизайни UI/UX ва брендинг",
     description:
-      "Студияи таҳияи Lemnity: сайтҳо ва веб-барномаҳо, интерфейсҳо, лендингҳо ва мағозаҳои онлайн, брендинг, MVP ва бозиҳои казуалӣ. Зиёда аз 12 сол таҷриба, 50+ лоиҳа, кори фосилавӣ.",
-    name: "Студияи Лемнити",
+      "Студияи таҳияи Леммус: сайтҳо ва веб-барномаҳо, интерфейсҳо, лендингҳо ва мағозаҳои онлайн, брендинг, MVP ва бозиҳои казуалӣ. Зиёда аз 12 сол таҷриба, 50+ лоиҳа, кори фосилавӣ.",
+    name: "Студияи Леммус",
     areaServed: ["Тоҷикистон", "Русия", "Тамоми ҷаҳон"],
     country: "TJ",
     services: [
@@ -96,6 +96,8 @@ function jsonLd(locale: Locale) {
         "@type": "ProfessionalService",
         "@id": `${url}#service`,
         name: seo.name,
+        // Одно имя студии на всех языках сайта — так поисковики и ИИ-ассистенты связывают версии между собой.
+        alternateName: ["Lemmus Studio", "Студия Леммус", "Lemmus"].filter((n) => n !== seo.name),
         url,
         areaServed: seo.areaServed,
         address: { "@type": "PostalAddress", addressLocality: seo.areaServed[0], addressCountry: seo.country },

@@ -14,7 +14,7 @@ import "@/app/globals.css";
 
 export const rootMetadata: Metadata = {
   metadataBase: new URL(STUDIO_SITE_URL),
-  applicationName: "Студия Лемнити",
+  applicationName: "Студия Леммус",
   verification: {
     ...(STUDIO_VERIFICATION.google ? { google: STUDIO_VERIFICATION.google } : {}),
     ...(STUDIO_VERIFICATION.yandex ? { yandex: STUDIO_VERIFICATION.yandex } : {}),

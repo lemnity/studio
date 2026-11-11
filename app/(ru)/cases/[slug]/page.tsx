@@ -14,7 +14,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const study = caseBySlug((await params).slug);
   if (!study) return {};
-  const title = `${study.title} — кейс Студии Лемнити`;
+  const title = `${study.title} — кейс Студии Леммус`;
   const url = `${STUDIO_SITE_URL}/cases/${study.slug}/`;
   return {
     title,
