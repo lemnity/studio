@@ -286,6 +286,14 @@ html[data-st-intro="play"] .st-preloader { display: flex; }
   font-size: 16px; color: var(--st-text); outline: none; transition: border-color .3s; }
 .st-input::placeholder { color: var(--st-muted); }
 .st-input:focus { border-color: var(--st-accent); }
+.st-check { display: flex; align-items: flex-start; gap: 16px; cursor: pointer; font-size: 16px; line-height: 1.55; color: var(--st-text-72); }
+.st-check input { -webkit-appearance: none; appearance: none; flex: none; width: 24px; height: 24px; margin: 0; border: 2px solid var(--st-muted); border-radius: 4px;
+  display: grid; place-items: center; cursor: pointer; transition: border-color .2s, background-color .2s; }
+.st-check input::after { content: ""; width: 6px; height: 11px; border: solid var(--st-bg); border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); opacity: 0; }
+.st-check input:checked { background: var(--st-accent); border-color: var(--st-accent); }
+.st-check input:checked::after { opacity: 1; }
+.st-check input:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 2px; }
+.st-check:hover input:not(:checked) { border-color: var(--st-text); }
 @media (prefers-reduced-motion: reduce) {
   .st-grain, .st-sheen, .st-spin, .st-spin-slow, .st-inf-run, .st-beat-host:hover .st-beat { animation: none !important; }
   .st-inf-run { opacity: 1; }
@@ -1687,9 +1695,13 @@ function BuildTogether() {
 
 /* ───────────────────────────── Контакты ───────────────────────────── */
 
-function buildMailto(form: Ui["form"], topic: string, name: string, contact: string, message: string): string {
+/** Отмеченные необязательные галочки формы: рассылка, NDA, можно позвонить. */
+type ContactOptions = { newsletter: boolean; nda: boolean; call: boolean };
+
+function buildMailto(form: Ui["form"], topic: string, name: string, contact: string, message: string, options?: ContactOptions): string {
   const subject = form.subject(topic);
-  const body = [`${form.name}: ${name}`, `${form.contact}: ${contact}`, `${form.topic}: ${topic}`, "", message].join("\n");
+  const picked = options ? (Object.keys(form.options) as (keyof ContactOptions)[]).filter((k) => options[k]).map((k) => `✓ ${form.options[k]}`) : [];
+  const body = [`${form.name}: ${name}`, `${form.contact}: ${contact}`, `${form.topic}: ${topic}`, "", message, ...(picked.length ? ["", ...picked] : [])].join("\n");
   return `mailto:${STUDIO_CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
@@ -1704,6 +1716,8 @@ function Contact({ initialTopic = 0 }: { initialTopic?: number }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<SendState>("idle");
+  const [consent, setConsent] = useState(false);
+  const [options, setOptions] = useState<ContactOptions>({ newsletter: false, nda: false, call: false });
   // Скрытое поле-ловушка: человек его не видит, бот заполняет — сервер такие заявки молча отбрасывает.
   const [website, setWebsite] = useState("");
 
@@ -1735,9 +1749,10 @@ function Contact({ initialTopic = 0 }: { initialTopic?: number }) {
     if (!name.trim()) return setError(f.errName);
     if (!contact.trim()) return setError(f.errContact);
     if (message.trim().length < 10) return setError(f.errMessage);
+    if (!consent) return setError(f.errConsent);
     setError(null);
     if (!STUDIO_LEAD_URL) {
-      window.location.href = buildMailto(f, topic, name.trim(), contact.trim(), message.trim());
+      window.location.href = buildMailto(f, topic, name.trim(), contact.trim(), message.trim(), options);
       return;
     }
     setState("sending");
@@ -1753,6 +1768,8 @@ function Contact({ initialTopic = 0 }: { initialTopic?: number }) {
           lang: locale,
           page: window.location.href,
           source: readAdSource(),
+          consent,
+          ...options,
           website,
         }),
       });
@@ -1777,12 +1794,15 @@ function Contact({ initialTopic = 0 }: { initialTopic?: number }) {
     setName("");
     setContact("");
     setMessage("");
+    setOptions({ newsletter: false, nda: false, call: false });
     setState("idle");
   };
 
   return (
     <section ref={sectionRef} id="contact" aria-labelledby="contact-title" className="border-t border-[var(--st-line)]">
       <div className={cn(container, "grid gap-12 py-16 md:grid-cols-2 md:py-24")}>
+        {/* Левая колонка (заголовок и контакты) остаётся на месте, пока форма справа прокручивается. */}
+        <div className="md:sticky md:top-[120px] md:self-start">
         <Reveal>
           <p className="st-micro text-[var(--st-accent)]">{f.label}</p>
           <h2 id="contact-title" className="mt-4 text-[48px] font-normal leading-[0.95] tracking-[-0.04em] md:text-[88px]">
@@ -1804,6 +1824,7 @@ function Contact({ initialTopic = 0 }: { initialTopic?: number }) {
             </a>
           </div>
         </Reveal>
+        </div>
 
         <motion.div style={{ y: formY }}>
           {state === "sent" ? (
@@ -1857,6 +1878,27 @@ function Contact({ initialTopic = 0 }: { initialTopic?: number }) {
                 className="absolute -left-[9999px] h-px w-px opacity-0"
               />
             </div>
+            <div className="mt-6 grid gap-4">
+              <label className="st-check">
+                <input type="checkbox" checked={consent} onChange={(e) => {
+                    setConsent(e.target.checked);
+                    if (e.target.checked && error === f.errConsent) setError(null);
+                  }} required aria-required="true" />
+                <span>
+                  {f.consent[0]}{" "}
+                  <a href={STUDIO_PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-[var(--st-text)] underline underline-offset-4 hover:text-[var(--st-accent-light)]">
+                    {f.consent[1]}
+                  </a>
+                  {f.consent[2]} <span aria-hidden className="text-[var(--st-accent)]">*</span>
+                </span>
+              </label>
+              {(Object.keys(f.options) as (keyof ContactOptions)[]).map((key) => (
+                <label key={key} className="st-check">
+                  <input type="checkbox" checked={options[key]} onChange={(e) => setOptions((o) => ({ ...o, [key]: e.target.checked }))} />
+                  <span>{f.options[key]}</span>
+                </label>
+              ))}
+            </div>
             {error ? (
               <p role="alert" className="mt-4 text-[16px] text-[#ff7b6b]">
                 {error}
@@ -1869,7 +1911,7 @@ function Contact({ initialTopic = 0 }: { initialTopic?: number }) {
                   <a href={STUDIO_CONTACT_TG} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 underline underline-offset-4 hover:text-[var(--st-accent-light)]">
                     <Send className="h-4 w-4 text-[var(--st-accent)]" /> Telegram
                   </a>
-                  <a href={buildMailto(f, topic, name.trim(), contact.trim(), message.trim())} className="inline-flex items-center gap-2 underline underline-offset-4 hover:text-[var(--st-accent-light)]">
+                  <a href={buildMailto(f, topic, name.trim(), contact.trim(), message.trim(), options)} className="inline-flex items-center gap-2 underline underline-offset-4 hover:text-[var(--st-accent-light)]">
                     <Mail className="h-4 w-4 text-[var(--st-accent)]" /> {f.failMail}
                   </a>
                 </div>
@@ -1887,13 +1929,6 @@ function Contact({ initialTopic = 0 }: { initialTopic?: number }) {
                 </span>
               </button>
             </MagneticButton>
-            <p className="mt-5 text-[16px] leading-relaxed text-[var(--st-muted)]">
-              {f.consent[0]}{" "}
-              <a href={STUDIO_PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-[var(--st-text)]">
-                {f.consent[1]}
-              </a>
-              {f.consent[2] ? ` ${f.consent[2]}` : ""}.
-            </p>
           </form>
           )}
         </motion.div>
@@ -2892,7 +2927,7 @@ function CompareCell({ mark, label }: { mark: CompareMark; label: string }) {
 }
 
 function PricingBody({ onContact }: { onContact: () => void }) {
-  const { locale } = useStudioLocale();
+  const { locale, c } = useStudioLocale();
   const P = PRICING[locale];
   const subTitle = "mb-6 text-[28px] font-normal leading-[1.1] tracking-[-0.02em] md:mb-8 md:text-[34px]";
   return (
@@ -2988,6 +3023,50 @@ function PricingBody({ onContact }: { onContact: () => void }) {
               </div>
             </div>
           </Reveal>
+        </div>
+      </section>
+
+      <section id="solutions" aria-labelledby="solutions-title" className="border-t border-[var(--st-line)]">
+        <div className={cn(container, "py-16 md:py-20")}>
+          <SectionHead id="solutions-title" title={P.solutions.title} text={P.solutions.text} />
+          <ul className="m-0 grid list-none gap-3 p-0 md:grid-cols-2 md:gap-4">
+            {P.solutions.items.map((item, i) => (
+              <li key={item.name} className="flex">
+                <Reveal delay={i * 0.06} className="flex min-w-0 flex-1">
+                  <div className={cn(cardClass, "flex-1 gap-4")}>
+                    <h3 className="text-xl font-medium leading-[1.25] md:text-[22px]">{item.name}</h3>
+                    <p className="text-[16px] leading-[1.6] text-[var(--st-muted)]">{item.text}</p>
+                    <p className="mt-auto">
+                      <span className="text-[22px] tracking-[-0.02em] md:text-[24px]">{item.price}</span>{" "}
+                      <span className="whitespace-nowrap text-[16px] text-[var(--st-muted)]">· {item.term}</span>
+                    </p>
+                    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                      <p className="flex flex-wrap gap-x-4 gap-y-1 text-[15px] text-[var(--st-muted)]">
+                        <span>{P.solutions.caseLabel}:</span>
+                        {item.cases.map((slug) => {
+                          const study = caseBySlug(slug);
+                          if (!study) return null;
+                          const href = locale === "ru" ? `${BASE_PATH}/cases/${study.slug}/` : study.url;
+                          const title = c.projects.find((p) => p.id === study.projectId)?.title ?? study.title;
+                          return href ? (
+                            <a key={slug} href={href} className="st-ul text-[var(--st-text)] underline decoration-[rgba(244,241,236,0.4)] underline-offset-4 hover:text-[var(--st-accent-light)] hover:decoration-transparent">
+                              {title}
+                            </a>
+                          ) : (
+                            <span key={slug}>{title}</span>
+                          );
+                        })}
+                      </p>
+                      <button type="button" onClick={onContact} className={ctaClass}>
+                        {P.solutions.cta}
+                        <ArrowRight className="h-4 w-4 transition-transform duration-[350ms] group-hover:translate-x-[5px]" />
+                      </button>
+                    </div>
+                  </div>
+                </Reveal>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 

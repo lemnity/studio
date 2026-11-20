@@ -4,7 +4,7 @@
 Модели вызываются через RouterAI (OpenAI-совместимый API, работает с российского сервера):
   ROUTERAI_TOKEN         ключ RouterAI (обязателен; без него чат отвечает 503 и сайт предлагает форму)
   ROUTERAI_URL           по умолчанию https://routerai.ru/api/v1/chat/completions
-  BRIEF_MODEL            модель диалога и КП, по умолчанию anthropic/claude-sonnet-5.5
+  BRIEF_MODEL            модель диалога и КП, по умолчанию openai/gpt-5.6-luna
   BRIEF_RESEARCH_MODEL   модель с поиском в интернете для средних цен, по умолчанию perplexity/sonar-pro-search
   KP_DIR                 где хранятся КП, по умолчанию /var/lib/lemnity-lead/kp (StateDirectory сервиса)
   SITE_URL               адрес сайта для ссылок на КП, по умолчанию https://lemmus.studio
@@ -36,7 +36,7 @@ from datetime import date, timedelta
 
 ROUTER_TOKEN = os.environ.get("ROUTERAI_TOKEN", "").strip()
 ROUTER_URL = os.environ.get("ROUTERAI_URL", "https://routerai.ru/api/v1/chat/completions").strip()
-CHAT_MODEL = os.environ.get("BRIEF_MODEL", "anthropic/claude-sonnet-5.5").strip()
+CHAT_MODEL = os.environ.get("BRIEF_MODEL", "openai/gpt-5.6-luna").strip()
 RESEARCH_MODEL = os.environ.get("BRIEF_RESEARCH_MODEL", "perplexity/sonar-pro-search").strip()
 KP_DIR = os.environ.get("KP_DIR", "/var/lib/lemnity-lead/kp")
 SITE_URL = os.environ.get("SITE_URL", "https://lemmus.studio").rstrip("/")

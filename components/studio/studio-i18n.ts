@@ -135,7 +135,11 @@ export type Ui = {
     /** Заявка не ушла: предлагаем написать напрямую. */
     failText: string;
     failMail: string;
+    /** Обязательная галочка согласия: текст до ссылки, ссылка на политику, текст после (с пробелом, если нужен). */
     consent: readonly [before: string, link: string, after: string];
+    errConsent: string;
+    /** Необязательные галочки: рассылка, NDA до обсуждения, можно позвонить. */
+    options: { newsletter: string; nda: string; call: string };
   };
   orderProject: string;
   footerTagline: string;
@@ -229,7 +233,7 @@ const RU: Ui = {
         price: "от 70 000 ₽",
         term: "за 10 дней",
         text: "Лендинг или небольшой сайт для бизнеса, которым потом легко управлять самим.",
-        items: ["дизайн под ваш бренд", "адаптив для телефона", "формы заявок и аналитика", "обучение работе с сайтом"],
+        items: ["дизайн под ваш бренд", "адаптив для телефона", "формы заявок и аналитика", "инструкция по работе с сайтом"],
       },
       {
         name: "Промо-игра для бренда",
@@ -244,7 +248,7 @@ const RU: Ui = {
         price: "от 250 000 ₽",
         term: "4–8 недель",
         text: "Корпоративный сайт, интернет-магазин, веб-сервис или программа для бизнеса: CRM, личные кабинеты, внутренние системы.",
-        items: ["структура и прототип", "индивидуальный дизайн", "каталог, корзина, интеграции", "своя логика, роли и админка", "запуск и проверка на устройствах"],
+        items: ["структура и прототип", "индивидуальный дизайн", "каталог, корзина, интеграции", "своя логика, роли и админка", "запуск и обучение сотрудников"],
       },
       {
         name: "Поддержка и развитие",
@@ -279,7 +283,13 @@ const RU: Ui = {
     sendAnother: "Отправить ещё одну",
     failText: "Не получилось отправить заявку. Напишите нам в Telegram или на почту — ответим так же быстро.",
     failMail: "Отправить письмом",
-    consent: ["Нажимая кнопку, вы соглашаетесь с", "политикой конфиденциальности", ""],
+    consent: ["Даю согласие на обработку персональных данных и принимаю", "Политику конфиденциальности", ""],
+    errConsent: "Отметьте согласие на обработку персональных данных",
+    options: {
+      newsletter: "Хочу получать рассылку Студии Леммус: кейсы, новости и полезные материалы — не чаще раза в месяц",
+      nda: "Перед обсуждением деталей нужно подписать NDA",
+      call: "Можно позвонить или написать в мессенджер для уточнения деталей",
+    },
   },
   orderProject: "Заказать проект",
   footerTagline: "Дизайн. Продукты. Идеи.",
@@ -377,7 +387,7 @@ const EN: Ui = {
         price: "from ₽70,000",
         term: "in 10 days",
         text: "A landing page or small business website you can easily manage yourself.",
-        items: ["design in your brand style", "mobile-friendly layout", "request forms and analytics", "training on how to manage it"],
+        items: ["design in your brand style", "mobile-friendly layout", "request forms and analytics", "a guide to managing the site"],
       },
       {
         name: "Promo game for a brand",
@@ -392,7 +402,7 @@ const EN: Ui = {
         price: "from ₽250,000",
         term: "4–8 weeks",
         text: "A corporate website, online store, web service or business software: CRM, customer accounts, internal systems.",
-        items: ["structure and prototype", "custom design", "catalog, cart, integrations", "custom logic, roles and admin panel", "launch and device testing"],
+        items: ["structure and prototype", "custom design", "catalog, cart, integrations", "custom logic, roles and admin panel", "launch and team training"],
       },
       {
         name: "Support and growth",
@@ -427,7 +437,13 @@ const EN: Ui = {
     sendAnother: "Send another",
     failText: "We couldn't send your request. Please message us on Telegram or by email, and we'll reply just as fast.",
     failMail: "Send by email",
-    consent: ["By clicking the button, you agree to the", "privacy policy", ""],
+    consent: ["I consent to the processing of my personal data and accept the", "Privacy Policy", ""],
+    errConsent: "Please tick the consent to personal data processing",
+    options: {
+      newsletter: "I'd like to receive the Lemmus Studio newsletter: case studies, news and useful materials — no more than once a month",
+      nda: "We need to sign an NDA before discussing details",
+      call: "You can call or message me to clarify details",
+    },
   },
   orderProject: "Start a project",
   footerTagline: "Design. Products. Ideas.",
@@ -526,7 +542,7 @@ const TJ: Ui = {
         price: "аз 70 000 ₽",
         term: "дар 10 рӯз",
         text: "Лендинг ё сайти хурд барои тиҷорат, ки баъд идора карданаш осон аст.",
-        items: ["дизайн дар услуби бренди шумо", "мутобиқ барои телефон", "шаклҳои дархост ва таҳлил", "омӯзиши кор бо сайт"],
+        items: ["дизайн дар услуби бренди шумо", "мутобиқ барои телефон", "шаклҳои дархост ва таҳлил", "дастур барои кор бо сайт"],
       },
       {
         name: "Бозии промо барои бренд",
@@ -541,7 +557,7 @@ const TJ: Ui = {
         price: "аз 250 000 ₽",
         term: "4–8 ҳафта",
         text: "Сайти корпоративӣ, мағозаи онлайн, веб-хизматрасонӣ ё барнома барои тиҷорат: CRM, кабинетҳои шахсӣ, системаҳои дохилӣ.",
-        items: ["сохтор ва прототип", "дизайни инфиродӣ", "каталог, сабад, интегратсияҳо", "мантиқи худ, нақшҳо ва панели админ", "оғоз ва санҷиш дар дастгоҳҳо"],
+        items: ["сохтор ва прототип", "дизайни инфиродӣ", "каталог, сабад, интегратсияҳо", "мантиқи худ, нақшҳо ва панели админ", "оғоз ва омӯзиши кормандон"],
       },
       {
         name: "Дастгирӣ ва рушд",
@@ -576,7 +592,13 @@ const TJ: Ui = {
     sendAnother: "Боз як дархост",
     failText: "Дархостро фиристода натавонистем. Ба мо дар Telegram ё ба почта нависед, ҳамон қадар зуд ҷавоб медиҳем.",
     failMail: "Бо почта фиристодан",
-    consent: ["Бо пахш кардани тугма, шумо ба", "сиёсати махфият", "розӣ мешавед"],
+    consent: ["Ба коркарди маълумоти шахсӣ розигӣ медиҳам ва", "Сиёсати махфият", "ро қабул мекунам"],
+    errConsent: "Розигӣ ба коркарди маълумоти шахсиро қайд кунед",
+    options: {
+      newsletter: "Мехоҳам хабарномаи Студияи Леммусро гирам: кейсҳо, хабарҳо ва маводи муфид — на бештар аз як бор дар як моҳ",
+      nda: "Пеш аз муҳокимаи тафсилот бояд NDA имзо карда шавад",
+      call: "Барои аниқ кардани тафсилот занг задан ё дар мессенҷер навиштан мумкин аст",
+    },
   },
   orderProject: "Фармоиши лоиҳа",
   footerTagline: "Дизайн. Маҳсулот. Ғояҳо.",

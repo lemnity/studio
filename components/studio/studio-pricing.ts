@@ -23,6 +23,8 @@ export type PricingPackage = (typeof UI.ru.pricing.plans)[number] & { short: str
 export type CompareMark = "yes" | "request" | "no";
 
 type Step = { when: string; title: string; see: string; pay?: string };
+/** Решение под задачу. `cases` — slug кейсов из STUDIO_CASES, которые его подтверждают. */
+type Solution = { name: string; price: string; term: string; text: string; cases: readonly string[] };
 type Format = { name: string; fit: string; cost: string; pay: string; extra: string };
 
 export type PricingContent = {
@@ -48,6 +50,8 @@ export type PricingContent = {
   rangeLabel: string;
   packages: readonly PricingPackage[];
   care: Omit<PricingPackage, "short" | "range"> & { label: string };
+  /** Решения под типовые задачи клиентов: своя вилка, срок и кейсы, где мы это уже делали. */
+  solutions: { title: string; text: string; caseLabel: string; cta: string; items: readonly Solution[] };
   timelineTitle: string;
   timelineText: string;
   timelineSee: string;
@@ -116,7 +120,7 @@ const RU: PricingContent = {
   itemCol: "Что",
   label: "Цены и сметы",
   title: ["Цена — это", "размер задачи"],
-  lead: "Показываем реальные вилки бюджета, что в них входит и от чего можно отказаться. Без «от 9 990 ₽», после которых смета вырастает втрое.",
+  lead: "Мы не самые дешёвые, а самые предсказуемые: смета фиксируется в договоре, сайт под ключ запускаем за шесть недель, а ИИ встраиваем там, где он экономит вам работу. Ниже — реальные вилки бюджета и что в них входит.",
   cta: "Получить точную смету",
   seePackages: "Смотреть пакеты",
   budgetsTitle: "Обычные бюджеты проектов",
@@ -139,6 +143,42 @@ const RU: PricingContent = {
     text: "После запуска: правки, мелкие задачи, обновления и приоритет в очереди. Оплачивается отдельно, отказаться можно в любой месяц.",
     cta: "Добавить поддержку",
   },
+  solutions: {
+    title: "Решения под задачу",
+    text: "Готовые сценарии для частых задач: известны вилка, срок и проект, где мы это уже делали.",
+    caseLabel: "Кейс",
+    cta: "Обсудить",
+    items: [
+      {
+        name: "Аудит старого сайта и план переезда",
+        price: "до 30 000 ₽",
+        term: "3–5 дней",
+        text: "Смотрим, что на сайте работает, что мешает заявкам и как переехать без потери данных и позиций в поиске. Стоимость аудита засчитываем в проект.",
+        cases: ["dom-nauki"],
+      },
+      {
+        name: "Свой магазин вместо маркетплейса",
+        price: "250 000 – 600 000 ₽",
+        term: "4–6 недель",
+        text: "Каталог из выгрузки маркетплейса или склада, своя оплата и своя база покупателей — без комиссий и штрафов площадки.",
+        cases: ["prostyle"],
+      },
+      {
+        name: "Сайт или личный кабинет с переездом",
+        price: "500 000 – 1 500 000 ₽",
+        term: "6–12 недель",
+        text: "Новый сайт или кабинет на смену системе из 2000-х: переезд без простоя, заявки и документы без ручной работы.",
+        cases: ["dom-nauki", "turdus"],
+      },
+      {
+        name: "ИИ-ассистент: заявки, консультации, CRM",
+        price: "80 000 – 200 000 ₽ + от 10 000 ₽/мес",
+        term: "2–3 недели",
+        text: "Отвечает клиентам ночью и в выходные, подбирает товар или программу и передаёт заявку менеджеру в CRM.",
+        cases: ["prostyle", "dom-nauki"],
+      },
+    ],
+  },
   timelineTitle: "Шесть недель — и сайт работает",
   timelineText: "Обычный календарь сайта под ключ на 5–7 страниц. Каждую неделю показываем результат, а не отчёт.",
   timelineSee: "Что вы увидите",
@@ -148,7 +188,7 @@ const RU: PricingContent = {
     { when: "3 неделя", title: "Дизайн", see: "главная и внутренние страницы в стиле бренда" },
     { when: "4–5 неделя", title: "Разработка", see: "рабочий сайт на тестовом адресе" },
     { when: "6 неделя", title: "Запуск", see: "сайт на вашем домене, аналитика и обучение", pay: "50%" },
-    { when: "После запуска", title: "Гарантия", see: "30 дней исправляем недочёты бесплатно" },
+    { when: "После запуска", title: "Гарантия", see: "30 дней исправляем недочёты бесплатно, в проектах от 500 000 ₽ — 90 дней" },
   ],
   payLabel: "оплата",
   extrasTitle: "Без скрытых доплат",
@@ -218,6 +258,10 @@ const RU: PricingContent = {
   faqTitle: "Вопросы о деньгах",
   faq: [
     {
+      q: "Какая гарантия после запуска?",
+      a: "30 дней бесплатно исправляем недочёты, в проектах от 500 000 ₽ — 90 дней. Срок гарантии прописываем в договоре. Дальше можно перейти на абонемент поддержки от 15 000 ₽ в месяц.",
+    },
+    {
       q: "Почему нельзя сразу назвать точную цену?",
       a: "Два сайта на пять страниц могут отличаться по цене вдвое: всё решают интеграции, количество уникальных макетов и тексты. После короткого созвона называем точную смету за один рабочий день и объясняем, из чего она складывается.",
     },
@@ -259,7 +303,7 @@ const EN: PricingContent = {
   itemCol: "Item",
   label: "Pricing and estimates",
   title: ["Price is", "the size of the job"],
-  lead: "We show real budget ranges, what they include and what you can skip. No “from ₽9,990” that triples once the estimate arrives.",
+  lead: "Not the cheapest, but the most predictable: the estimate is fixed in the contract, a turnkey site launches in six weeks, and we build in AI where it saves you work. Below are real budget ranges and what they include.",
   cta: "Get an exact estimate",
   seePackages: "See the packages",
   budgetsTitle: "Typical project budgets",
@@ -282,6 +326,42 @@ const EN: PricingContent = {
     text: "After launch: fixes, small tasks, updates and queue priority. Billed separately, cancel any month.",
     cta: "Add support",
   },
+  solutions: {
+    title: "Solutions for common tasks",
+    text: "Ready scenarios for frequent requests: the range, the timeline and a project where we have already done it.",
+    caseLabel: "Case",
+    cta: "Discuss",
+    items: [
+      {
+        name: "Audit of an old website and a migration plan",
+        price: "up to ₽30,000",
+        term: "3–5 days",
+        text: "We check what works, what blocks leads and how to move without losing data or search rankings. The audit fee is credited to the project.",
+        cases: ["dom-nauki"],
+      },
+      {
+        name: "Your own store instead of a marketplace",
+        price: "₽250,000 – ₽600,000",
+        term: "4–6 weeks",
+        text: "A catalogue from your marketplace or warehouse feed, your own payments and your own customer base — no platform fees or fines.",
+        cases: ["prostyle"],
+      },
+      {
+        name: "Website or customer portal with migration",
+        price: "₽500,000 – ₽1,500,000",
+        term: "6–12 weeks",
+        text: "A new site or portal to replace a system from the 2000s: migration without downtime, leads and documents without manual work.",
+        cases: ["dom-nauki", "turdus"],
+      },
+      {
+        name: "AI assistant: leads, consulting, CRM",
+        price: "₽80,000 – ₽200,000 + from ₽10,000/mo",
+        term: "2–3 weeks",
+        text: "Answers customers at night and on weekends, suggests a product or programme and hands the lead to a manager in your CRM.",
+        cases: ["prostyle", "dom-nauki"],
+      },
+    ],
+  },
   timelineTitle: "Six weeks to a live website",
   timelineText: "A typical calendar for a 5–7 page turnkey website. Every week we show results, not reports.",
   timelineSee: "What you'll see",
@@ -291,7 +371,7 @@ const EN: PricingContent = {
     { when: "Week 3", title: "Design", see: "home and inner pages in your brand style" },
     { when: "Weeks 4–5", title: "Development", see: "a working site on a staging address" },
     { when: "Week 6", title: "Launch", see: "the site on your domain, analytics and training", pay: "50%" },
-    { when: "After launch", title: "Warranty", see: "30 days of free fixes" },
+    { when: "After launch", title: "Warranty", see: "30 days of free fixes, 90 days for projects from ₽500,000" },
   ],
   payLabel: "payment",
   extrasTitle: "No hidden extras",
@@ -361,6 +441,10 @@ const EN: PricingContent = {
   faqTitle: "Questions about money",
   faq: [
     {
+      q: "What warranty do you give after launch?",
+      a: "We fix defects for free for 30 days, and for 90 days on projects from ₽500,000. The warranty period is written into the contract. After that you can switch to a support plan from ₽15,000 a month.",
+    },
+    {
       q: "Why can't you name an exact price right away?",
       a: "Two five-page websites can differ in price by a factor of two: integrations, the number of unique layouts and the copy decide it. After a short call we give an exact estimate within one business day and explain what it's made of.",
     },
@@ -402,7 +486,7 @@ const TJ: PricingContent = {
   itemCol: "Банд",
   label: "Нархҳо ва сметаҳо",
   title: ["Нарх —", "андозаи вазифа"],
-  lead: "Доираҳои воқеии буҷет, он чи ба онҳо дохил мешавад ва аз чӣ даст кашидан мумкинро нишон медиҳем. Бе «аз 9 990 ₽», ки баъд смета се баробар меафзояд.",
+  lead: "Мо арзонтарин нестем, балки пешбинишавандатарин: смета дар шартнома собит мешавад, сайти пурраро дар шаш ҳафта оғоз мекунем ва СИ-ро дар ҷое ҷорӣ мекунем, ки кори шуморо сарфа мекунад. Дар поён — доираҳои воқеии буҷет ва он чи ба онҳо дохил мешавад.",
   cta: "Сметаи дақиқ гирифтан",
   seePackages: "Бастаҳоро дидан",
   budgetsTitle: "Буҷетҳои маъмулии лоиҳаҳо",
@@ -425,6 +509,42 @@ const TJ: PricingContent = {
     text: "Пас аз оғоз: ислоҳҳо, вазифаҳои хурд, навсозӣ ва афзалият дар навбат. Алоҳида пардохт мешавад, ҳар моҳ метавонед бекор кунед.",
     cta: "Дастгириро илова кардан",
   },
+  solutions: {
+    title: "Ҳалҳо барои вазифаҳо",
+    text: "Сенарияҳои тайёр барои вазифаҳои маъмул: доираи нарх, мӯҳлат ва лоиҳае, ки мо инро аллакай иҷро кардаем.",
+    caseLabel: "Кейс",
+    cta: "Муҳокима кардан",
+    items: [
+      {
+        name: "Аудити сайти кӯҳна ва нақшаи гузариш",
+        price: "то 30 000 ₽",
+        term: "3–5 рӯз",
+        text: "Месанҷем, ки дар сайт чӣ кор мекунад, чӣ ба дархостҳо халал мерасонад ва чӣ тавр бе гум кардани маълумот ва мавқеъ дар ҷустуҷӯ гузаштан мумкин аст. Арзиши аудит ба лоиҳа ҳисоб карда мешавад.",
+        cases: ["dom-nauki"],
+      },
+      {
+        name: "Мағозаи худ ба ҷои маркетплейс",
+        price: "250 000 – 600 000 ₽",
+        term: "4–6 ҳафта",
+        text: "Каталог аз содироти маркетплейс ё анбор, пардохти худ ва пойгоҳи харидорони худ — бе комиссия ва ҷаримаҳои платформа.",
+        cases: ["prostyle"],
+      },
+      {
+        name: "Сайт ё кабинети шахсӣ бо гузариш",
+        price: "500 000 – 1 500 000 ₽",
+        term: "6–12 ҳафта",
+        text: "Сайт ё кабинети нав ба ҷои системаи солҳои 2000-ум: гузариш бе танаффус, дархостҳо ва ҳуҷҷатҳо бе кори дастӣ.",
+        cases: ["dom-nauki", "turdus"],
+      },
+      {
+        name: "Ёрдамчии СИ: дархостҳо, машваратҳо, CRM",
+        price: "80 000 – 200 000 ₽ + аз 10 000 ₽/моҳ",
+        term: "2–3 ҳафта",
+        text: "Шабона ва дар рӯзҳои истироҳат ба мизоҷон ҷавоб медиҳад, мол ё барномаро интихоб мекунад ва дархостро ба менеҷер дар CRM мефиристад.",
+        cases: ["prostyle", "dom-nauki"],
+      },
+    ],
+  },
   timelineTitle: "Шаш ҳафта — ва сайт кор мекунад",
   timelineText: "Тақвими маъмулии сайти пурра бо 5–7 саҳифа. Ҳар ҳафта натиҷаро нишон медиҳем, на ҳисобот.",
   timelineSee: "Шумо чӣ мебинед",
@@ -434,7 +554,7 @@ const TJ: PricingContent = {
     { when: "Ҳафтаи 3", title: "Дизайн", see: "саҳифаи асосӣ ва дохилӣ дар услуби бренд" },
     { when: "Ҳафтаҳои 4–5", title: "Таҳия", see: "сайти корӣ дар суроғаи санҷишӣ" },
     { when: "Ҳафтаи 6", title: "Оғози сайт", see: "сайт дар домени шумо, таҳлил ва омӯзиш", pay: "50%" },
-    { when: "Пас аз оғоз", title: "Кафолат", see: "30 рӯз камбудиҳоро ройгон ислоҳ мекунем" },
+    { when: "Пас аз оғоз", title: "Кафолат", see: "30 рӯз камбудиҳоро ройгон ислоҳ мекунем, дар лоиҳаҳо аз 500 000 ₽ — 90 рӯз" },
   ],
   payLabel: "пардохт",
   extrasTitle: "Бе пардохтҳои пинҳонӣ",
@@ -503,6 +623,10 @@ const TJ: PricingContent = {
   casesText: "Сайтҳо, хизматрасониҳо ва бозиҳое, ки барои мизоҷон оғоз кардем.",
   faqTitle: "Саволҳо дар бораи пул",
   faq: [
+    {
+      q: "Пас аз оғоз чӣ кафолат медиҳед?",
+      a: "30 рӯз камбудиҳоро ройгон ислоҳ мекунем, дар лоиҳаҳо аз 500 000 ₽ — 90 рӯз. Мӯҳлати кафолат дар шартнома навишта мешавад. Баъд метавонед ба обунаи дастгирӣ аз 15 000 ₽ дар як моҳ гузаред.",
+    },
     {
       q: "Чаро нархи дақиқро фавран гуфтан мумкин нест?",
       a: "Ду сайти панҷсаҳифагӣ метавонанд аз рӯи нарх ду баробар фарқ кунанд: ҳамаашро интегратсияҳо, шумораи макетҳои нодир ва матнҳо ҳал мекунанд. Пас аз сӯҳбати кӯтоҳ сметаи дақиқро дар як рӯзи корӣ мегӯем ва мефаҳмонем, ки он аз чӣ иборат аст.",

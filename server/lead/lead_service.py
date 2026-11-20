@@ -56,6 +56,12 @@ _hits: dict[str, deque] = defaultdict(deque)
 BRIEF_LIMITS = {"chat": (600, 40), "kp": (3600, 4), "file": (600, 6)}
 
 LANG_FLAG = {"ru": "🇷🇺 RU", "en": "🇬🇧 EN", "tj": "🇹🇯 TJ"}
+OPTIONS = ("newsletter", "nda", "call")
+OPTION_LABELS = {
+    "nda": "🔒 <b>Нужно NDA</b> до обсуждения деталей",
+    "call": "📞 Можно позвонить или написать в мессенджер",
+    "newsletter": "📬 Подписка на рассылку",
+}
 
 GEO_DB = os.environ.get("GEO_DB", "/var/lib/lemnity-geo/city.mmdb")
 _geo_reader = None
@@ -102,6 +108,10 @@ def format_lead(lead: dict) -> str:
         "",
         e("message"),
     ]
+    # Галочки формы: согласие обязательно (без него заявку не принимаем), остальные — пожелания клиента.
+    marks = [label for key, label in OPTION_LABELS.items() if lead.get(key)]
+    if marks:
+        lines += ["", *marks]
     if lead.get("source"):
         # UTM-метки и yclid из рекламы: видно, какая кампания и какой запрос привели клиента.
         lines += ["", f"<b>📣 Реклама:</b> {e('source')}"]
@@ -206,6 +216,10 @@ class Handler(BaseHTTPRequestHandler):
         lead = {k: str(data.get(k, "")).strip()[:n] for k, n in LIMITS.items()}
         if not lead["name"] or not lead["contact"] or len(lead["message"]) < 10:
             return self._reply(422, {"ok": False, "error": "invalid"})
+        # Без согласия на обработку персональных данных заявку не принимаем (152-ФЗ).
+        if data.get("consent") is not True:
+            return self._reply(422, {"ok": False, "error": "consent"})
+        lead.update({k: data.get(k) is True for k in OPTIONS})
 
         ip = self._ip()
         if rate_limited(ip):
